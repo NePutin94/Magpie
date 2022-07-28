@@ -5,6 +5,7 @@
 #ifndef BILLET_SOLVER_H
 #define BILLET_SOLVER_H
 
+#include <utility>
 #include <vector>
 #include <cassert>
 #include <valarray>
@@ -204,6 +205,8 @@ namespace Billet
         T c;
         int sign;
 
+        Plot2() = default;
+
         Plot2(T a, T b, T c) : a(a), b(b), c(c)
         {}
 
@@ -242,34 +245,180 @@ namespace Billet
         }
     };
 
-    template<class T>
+    template<class T, class Result>
     class Solver
     {
     private:
     protected:
     public:
+        virtual Result solve() = 0;
     };
 
-    template<class T>
-    class GraphicMet2D
+    class GraphicsResult
     {
     private:
-        MatrixStorage<T> data;
-        int var_count;
-        int limitations_count;
+        std::vector<palka::Vec2f> Union;
+        palka::Vec2f resultPoint;
+        double resultValue;
     public:
-        GraphicMet2D(const MatrixStorage<T>& data, int var_count, int limitations_count) : var_count(var_count), limitations_count(limitations_count)
+        GraphicsResult(std::vector<palka::Vec2f> Union, const palka::Vec2f& resultPoint, double resultValue) : Union(std::move(Union)),
+                                                                                                               resultPoint(resultPoint),
+                                                                                                               resultValue(resultValue)
         {
-            data = data;
+
         }
 
-        GraphicMet2D(std::vector<T> target_func, std::vector<T> limiters, std::vector<short> res_sign)
+        std::pair<std::vector<double>, std::vector<double>> getVisualUnion()
         {
+            std::vector<double> X;
+            std::vector<double> Y;
+            for(auto vec: Union)
+            {
+                X.emplace_back(vec.x);
+                Y.emplace_back(vec.y);
+            }
+            X.emplace_back(Union.front().x);
+            X.emplace_back(Union.front().y);
+            return {X, Y};
         }
 
-        void solve()
+        palka::Vec2f getResPoint()
         {
+            return resultPoint;
+        }
 
+        double getResultValue()
+        {
+            return resultValue;
+        }
+    };
+
+    enum Sign
+    {
+        EQUAL = 0,
+        GREATEROREQUAL = -1,
+        LESSOREQUAL = 1
+    };
+
+    inline std::string signToStr(Sign s)
+    {
+        std::string arr[] = {"=", ">=", "<="};
+        switch(s)
+        {
+            case EQUAL:
+                return arr[0];
+                break;
+            case GREATEROREQUAL:
+                return arr[1];
+                break;
+            case LESSOREQUAL:
+                return arr[2];
+                break;
+        }
+        return "";
+    }
+
+    template<class T>
+    class GraphicMet2D : Solver<T, GraphicsResult>
+    {
+    private:
+        Billet::Plot2<T> F;
+        std::vector<Billet::Plot2<T>> testArr;
+        std::vector<palka::Vec2f> Union;
+        using f_pair = std::pair<T, T>;
+
+        auto intersection(f_pair A, f_pair B, f_pair C)
+        {
+            f_pair out;
+            float det = A.first * B.second - A.second * B.first;
+            out.second = -(A.second * C.first - A.first * C.second) / det;
+            out.first = -(B.first * C.second - B.second * C.first) / det;
+            return out;
+        }
+
+    public:
+        GraphicMet2D(const MatrixStorage<T>& data, int var_count, int limitations_count)
+        {
+            F = Billet::Plot2<T>{data.get(0, 0), data.get(1, 0), 0};
+            for(int i = 1; i < limitations_count; ++i)
+            {
+                auto a = data.get(0, i);
+                auto b = data.get(1, i);
+                auto c = data.get(3, i);
+                auto s = (int)data.get(2, i);
+                testArr.emplace_back(Billet::Plot2<T>{a, b, c, s});
+            }
+            testArr.emplace_back(Billet::Plot2<T>{1, 0, 0, Sign::GREATEROREQUAL});
+            testArr.emplace_back(Billet::Plot2<T>{0, 1, 0, Sign::GREATEROREQUAL});
+        }
+
+        GraphicsResult solve() override
+        {
+            std::vector<palka::Vec2f> points;
+            for(int i = 0; i < testArr.size(); ++i)
+            {
+                for(int j = i + 1; j < testArr.size(); ++j)
+                {
+                    auto& v = testArr[i];
+                    auto& v2 = testArr[j];
+                    if(v != v2)
+                    {
+                        auto in = intersection({v.a, v2.a}, {v.b, v2.b}, {v.c, v2.c});
+                        if(in.first >= 0 && in.second >= 0)
+                        {
+                            points.emplace_back(palka::Vec2f{in.first, in.second});
+                        }
+                    }
+                }
+            }
+
+            for(auto& p: points)
+            {
+                bool all = true;
+                for(auto& val: testArr)
+                {
+                    switch((Sign) val.sign)
+                    {
+                        case LESSOREQUAL:
+                            if(val.a * p.x + val.b * p.y > val.c)
+                            {
+                                all = false;
+                                break;
+                            }
+                            break;
+                        case GREATEROREQUAL:
+                            if(val.a * p.x + val.b * p.y < val.c)
+                            {
+                                all = false;
+                                break;
+                            }
+                            break;
+                        case EQUAL:
+                            if(val.a * p.x + val.b * p.y != val.c)
+                            {
+                                all = false;
+                                break;
+                            }
+                            break;
+                    }
+
+                }
+                if(all)
+                    Union.emplace_back(abs(p.x), abs(p.y));
+            }
+            float min = FLT_MAX;
+            palka::Vec2f resVec;
+            for(auto vec: Union)
+            {
+                if(auto val = F.a * vec.x + F.a * vec.y; val < min)
+                {
+                    min = F.a * vec.x + F.a * vec.y;
+                    resVec = vec;
+                }
+            }
+            double resValue = min;
+
+            return {Union, resVec, resValue};
         }
     };
 }

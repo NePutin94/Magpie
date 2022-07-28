@@ -1,35 +1,46 @@
 
 #include <gtest/gtest.h>
-#include <Application.h>
+#include <Solver.h>
 
-class TheClassTest : public ::testing::Test
+class TestSolver : public ::testing::Test
 {
 protected:
-    TheClassTest()
+    TestSolver()
     {}
 
-    virtual ~TheClassTest()
+    virtual ~TestSolver()
     {}
 
-    void SetUp(double a, double b, double c)
+    void SetUp(const std::vector<std::vector<double>>& vec)
     {
-        data = new Billet::Plot2<double>(a, b, c);
-        tc = new Billet::Plot2<double>(*data);
+        Billet::MatrixStorage<double> dataMatrix(vec.size(), vec[1].size());
+        for(int i = 0; i < vec.size(); ++i)
+        {
+            for(int j = 0; j < vec[0].size(); ++j)
+            {
+                dataMatrix.get(j, i) = vec[i][j];
+            }
+        }
+        data = new Billet::GraphicMet2D<double>(dataMatrix, 2, 3);
     }
 
     virtual void TearDown()
     {
-        delete tc;
+       // delete tc;
         delete data;
     }
 
-    Billet::Plot2<double>* data;
-    Billet::Plot2<double>* tc;
+    Billet::GraphicMet2D<double>* data;
+    Billet::GraphicMet2D<double>* tc;
 };
 
-TEST_F(TheClassTest, param1)
+TEST_F(TestSolver, param1)
 {
-    SetUp(1, 2, 3);
+    SetUp({{-3, -2, 0, 0},
+           {1,  2,  1, 7},
+           {2,  1,  1, 8},
+           {0,  1,  1, 3}});
+    EXPECT_EQ(0, 0);
 }
 
 int main(int argc, char** argv)

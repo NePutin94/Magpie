@@ -139,12 +139,6 @@ namespace Billet
         }
 
         std::vector<Billet::Plot2<float>> testArr;
-        // std::array<double, 100> mainX = {0};
-//        std::array<double, 100> mainY = {0};
-//        std::array<double, 100> dataX;
-//        std::array<double, 100> dataY;
-//        std::array<double, 100> dataX2;
-//        std::array<double, 100> dataY2;
         std::vector<double> dataX;
         std::vector<double> dataY;
         std::vector<double> FilteredPX;
@@ -155,7 +149,20 @@ namespace Billet
         Test(palka::Vec2f pos, palka::Vec2f size, bool open = true, ImGuiWindowFlags w_flag = ImGuiWindowFlags_None)
                 : UiView("MagicInput", pos, size, open, w_flag), storage(4, 4)
         {
-
+            storage.get(0,0) = -3;
+            storage.get(1,0) = -2;
+            storage.get(0,1) = 1;
+            storage.get(1,1) = 2;
+            storage.get(2,1) = 1;
+            storage.get(3,1) = 7;
+            storage.get(0,2) = 2;
+            storage.get(1,2) = 1;
+            storage.get(2,2) = 1;
+            storage.get(3,2) = 8;
+            storage.get(0,3) = 0;
+            storage.get(1,3) = 1;
+            storage.get(2,3) = 1;
+            storage.get(3,3) = 3;
         }
 
         using f_pair = std::pair<float, float>;
@@ -189,15 +196,13 @@ namespace Billet
         {
             palka::Vec2f centroid = {0, 0};
             double signedArea = 0.0;
-            double x0 = 0.0; // Current vertex X
-            double y0 = 0.0; // Current vertex Y
-            double x1 = 0.0; // Next vertex X
-            double y1 = 0.0; // Next vertex Y
-            double a = 0.0;  // Partial signed area
+            double x0 = 0.0;
+            double y0 = 0.0;
+            double x1 = 0.0;
+            double y1 = 0.0;
+            double a = 0.0;
 
-            // For all vertices
-            int i = 0;
-            for(i = 0; i < vertexCount; ++i)
+            for(int i = 0; i < vertexCount; ++i)
             {
                 x0 = vertices[i].x;
                 y0 = vertices[i].y;
@@ -587,15 +592,10 @@ namespace Billet
             if(ImPlot::BeginPlot("My Plot"))
             {
                 ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.25f);
-
-//                ImPlot::PlotShaded("Stock 1", dataX.data(), dataY.data(), 100, 0, 0);
-//                ImPlot::PlotShaded("Stock 2", dataX2.data(), dataY2.data(), 100, 0, 0);
                 ImPlot::PlotLine("My Line Plot", dataX.data(), dataY.data(), dataX.size());
                 ImPlot::PlotScatter("Data", &center.x, &center.y, 1);
                 ImPlot::PlotScatter("Data2", FilteredPX.data(), FilteredPY.data(), FilteredPX.size());
-                ImPlot::PlotScatter("REsult", &result.x, &result.y, 1);
-//                ImPlot::PlotLine("My Line Plot2", dataX2.data(), dataY2.data(), 100);
-//                ImPlot::PlotLine("My Line Plot3", mainX.data(), mainY.data(), 100);
+                ImPlot::PlotScatter("Result", &result.x, &result.y, 1);
                 ImPlot::EndPlot();
                 ImPlot::PopStyleVar();
             }
