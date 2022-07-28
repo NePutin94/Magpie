@@ -150,6 +150,7 @@ namespace Billet
         std::vector<double> FilteredPX;
         std::vector<double> FilteredPY;
         palka::Vec2f center;
+        palka::Vec2f result;
     public:
         Test(palka::Vec2f pos, palka::Vec2f size, bool open = true, ImGuiWindowFlags w_flag = ImGuiWindowFlags_None)
                 : UiView("MagicInput", pos, size, open, w_flag), storage(4, 4)
@@ -356,16 +357,17 @@ namespace Billet
                         outP.emplace_back(vec);
                     }
                 }
-                std::sort(outP.begin(), outP.end(), [&](palka::Vec2f& l, palka::Vec2f& r)
+
+                float min = FLT_MAX;
+
+                for(auto vec: pointsready)
                 {
-                    if(pos > 0)
+                    if(auto val = a * vec.x + a * vec.y; val < min)
                     {
-                        return l.x < r.x;
-                    } else
-                    {
-                        return l.x > r.x;
+                        min = a * vec.x + a * vec.y;
+                        result = vec;
                     }
-                });
+                }
 
             }
 //            for(int i = 0; i < pointsready.size(); i++)
@@ -378,7 +380,7 @@ namespace Billet
 //                        auto next = pointsready[i + 1];
 //                        auto inc = glm::normalize(next - vec);
 //                        for(int i = 0; i < 100; ++i)
-//                        {
+//                        {уж
 //                            vec += inc;
 //                            dataX.emplace_back(vec.x);
 //                            dataY.emplace_back(vec.y);
@@ -589,8 +591,9 @@ namespace Billet
 //                ImPlot::PlotShaded("Stock 1", dataX.data(), dataY.data(), 100, 0, 0);
 //                ImPlot::PlotShaded("Stock 2", dataX2.data(), dataY2.data(), 100, 0, 0);
                 ImPlot::PlotLine("My Line Plot", dataX.data(), dataY.data(), dataX.size());
-                ImPlot::PlotScatter("Data 2", &center.x, &center.y, 1);
-                ImPlot::PlotScatter("Data 2", FilteredPX.data(), FilteredPY.data(), FilteredPX.size());
+                ImPlot::PlotScatter("Data", &center.x, &center.y, 1);
+                ImPlot::PlotScatter("Data2", FilteredPX.data(), FilteredPY.data(), FilteredPX.size());
+                ImPlot::PlotScatter("REsult", &result.x, &result.y, 1);
 //                ImPlot::PlotLine("My Line Plot2", dataX2.data(), dataY2.data(), 100);
 //                ImPlot::PlotLine("My Line Plot3", mainX.data(), mainY.data(), 100);
                 ImPlot::EndPlot();

@@ -203,11 +203,14 @@ namespace Billet
         T b;
         T c;
         int sign;
+
         Plot2(T a, T b, T c) : a(a), b(b), c(c)
         {}
+
         Plot2(T a, T b, T c, int S) : a(a), b(b), c(c), sign(S)
         {}
 
+        Plot2(const Plot2& ot) = default;
 //        palka::Vec2f getValueAt(float x, float y)
 //        {
 //            palka::Vec2f out;
@@ -217,6 +220,16 @@ namespace Billet
 //        }
 
         auto operator<=>(const Plot2<T>&) const = default;
+
+        bool containsValue()
+        {
+
+        }
+
+        T getValue(int x, int y)
+        {
+            return a * x + y * b;
+        }
 
         float getValueAtY(float x) const
         {

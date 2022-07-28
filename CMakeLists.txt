@@ -26,13 +26,19 @@ IF (UNIX)
     set(THREADS_PREFER_PTHREAD_FLAG ON)
 ENDIF ()
 
-file(GLOB Billet_SRC RELATIVE "${CMAKE_SOURCE_DIR}/" "*.cpp")
-add_executable(Magpie main.cpp ${Billet_SRC})
+file(GLOB Magpie_SRC RELATIVE "${CMAKE_SOURCE_DIR}/" "*.cpp")
+add_executable(Magpie main.cpp ${Magpie_SRC})
 
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 add_subdirectory(lib)
+add_subdirectory(tests)
 target_include_directories(Magpie PUBLIC lib/palka_core)
 target_link_libraries(Magpie palka)
+
+add_library(MagpieLib SHARED ${Magpie_SRC})
+target_include_directories(MagpieLib PUBLIC lib/palka_core)
+target_link_libraries(MagpieLib palka)
+target_include_directories(MagpieLib PUBLIC .)
 
 add_custom_command(TARGET Magpie POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:palka> $<TARGET_FILE_DIR:Magpie>
@@ -41,3 +47,5 @@ add_custom_command(TARGET Magpie POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:assimp::assimp> $<TARGET_FILE_DIR:Magpie>
         COMMAND ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:tinygltf> $<TARGET_FILE_DIR:Magpie>
         COMMAND ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:fmt::fmt> $<TARGET_FILE_DIR:Magpie>)
+
+
