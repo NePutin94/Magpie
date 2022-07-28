@@ -2,12 +2,6 @@ cmake_minimum_required(VERSION 3.20)
 project(Tests)
 set(CMAKE_CXX_STANDARD 20)
 
-if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
-    set(CMAKE_CXX_FLAGS "-O0 -g")
-else ()
-    set(CMAKE_CXX_FLAGS "-O3 -mwindows -DNDEBUG -s")
-endif ()
-
 file(GLOB_RECURSE HEADERS RELATIVE "${CMAKE_SOURCE_DIR}/tests" "../include/*.h")
 file(GLOB_RECURSE SOURCES RELATIVE "${CMAKE_SOURCE_DIR}/tests" "../src/*.cpp")
 
