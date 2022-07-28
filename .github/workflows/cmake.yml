@@ -24,9 +24,7 @@ jobs:
       uses: egor-tensin/setup-gcc@v1
       with:
         version: 11
-    - name: Setup Ninja
-      uses: ashutoshvarma/setup-ninja@master
-      
+    
     - name: Install dependencies
       run: |
             sudo apt update && sudo apt upgrade -y
@@ -46,12 +44,6 @@ jobs:
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
       
-    - name: Build with CMake
-      uses: ashutoshvarma/action-cmake-build@master
-      with:
-          build-dir: ${{github.workspace}}/build
-          cc: ${{ matrix.config.cc }}
-          cxx: ${{ matrix.config.cxx }}
-          configure-options: -G Ninja
-          build-type: ${{env.BUILD_TYPE}}
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} 
       
