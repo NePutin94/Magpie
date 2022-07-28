@@ -120,7 +120,12 @@ find_package(OpenGL REQUIRED)
 
 add_library(palka SHARED ${CORE_SRC} ${HEADER_SOURCE})
 add_dependencies(palka IMGUI)
-target_link_libraries(palka PUBLIC ${OPENGL_LIBRARIES} tinygltf EnTT::EnTT assimp::assimp fmt::fmt glm::glm glfw RTTR::Core STB IMGUI GLAD imm32 ws2_32 dwmapi)
+if (WIN32)
+    target_link_libraries(palka PUBLIC ${OPENGL_LIBRARIES} tinygltf EnTT::EnTT assimp::assimp fmt::fmt glm::glm glfw RTTR::Core STB IMGUI GLAD imm32 ws2_32 dwmapi)
+endif ()
+IF (UNIX)
+    target_link_libraries(palka PUBLIC ${OPENGL_LIBRARIES} tinygltf EnTT::EnTT assimp::assimp fmt::fmt glm::glm glfw RTTR::Core STB IMGUI GLAD)
+endif ()
 target_compile_definitions(palka PUBLIC IMGUI_IMPL_OPENGL_LOADER_GLAD GL_GLEXT_PROTOTYPES=1)
 target_include_directories(palka PUBLIC ${OPENGL_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS})
 
