@@ -15,7 +15,7 @@ FetchContent_MakeAvailable(gtest)
 
 enable_testing()
 include(GoogleTest)
-add_executable(Tests WIN32 tests.cpp)
+add_executable(Tests WIN32 tests.cpp TestPlot.cpp TestGraphicMethod.cpp)
 target_link_libraries(Tests GTest::gtest_main MagpieLib)
 gtest_discover_tests(Tests)
 

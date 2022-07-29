@@ -10,7 +10,7 @@
 #include "imgui_internal.h"
 #include "UiView.h"
 
-namespace Billet
+namespace Magpie
 {
     class DockWrapper
     {

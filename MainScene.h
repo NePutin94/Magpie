@@ -8,7 +8,7 @@
 #include "UiScene.h"
 #include "Test.h"
 
-namespace Billet
+namespace Magpie
 {
     class MainScene : protected UiScene
     {

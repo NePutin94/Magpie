@@ -21,6 +21,8 @@
 #endif
 namespace palka
 {
+    template<class T>
+    using Vec2 = glm::vec<2, T, glm::defaultp>;
     using Vec2f = glm::vec2;
     using Vec3f = glm::vec3;
     using Vec3i = glm::ivec3;

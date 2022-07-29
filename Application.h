@@ -14,7 +14,7 @@
 #include <imgui_internal.h>
 
 using namespace palka;
-namespace Billet
+namespace Magpie
 {
     class Application
     {

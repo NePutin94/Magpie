@@ -10,7 +10,7 @@
 #include <ranges>
 #include <vector>
 
-namespace Billet
+namespace Magpie
 {
     class UiScene
     {

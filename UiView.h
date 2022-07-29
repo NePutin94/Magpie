@@ -12,7 +12,7 @@
 
 #include <Vec2.h>
 
-namespace Billet
+namespace Magpie
 {
     class UiView
     {

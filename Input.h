@@ -7,7 +7,7 @@
 
 #include "UiView.h"
 
-namespace Billet
+namespace Magpie
 {
     class Input
     {

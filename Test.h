@@ -12,7 +12,7 @@
 #include <fmt/core.h>
 #include "Solver.h"
 
-namespace Billet
+namespace Magpie
 {
     class Test : public UiView
     {
@@ -23,7 +23,7 @@ namespace Billet
             GREATEROREQUAL = -1,
             LESSOREQUAL = 1
         } sign;
-        MatrixStorage<int> storage;
+        MatrixStorage<double> storage;
 
         std::string signToStr(_sign s)
         {
@@ -43,7 +43,7 @@ namespace Billet
             return "";
         }
 
-        void layout2(const char* label, int& val, int col)
+        void layout2(const char* label, double& val, int col)
         {
             auto label_sz = ImGui::CalcTextSize("value");
             ImGui::AlignTextToFramePadding();
@@ -68,7 +68,7 @@ namespace Billet
             ImGui::PushItemWidth(w);
             ImVec2 p = ImGui::GetCursorScreenPos();
             ImGui::SetCursorPosX(pos_l.x + (50 - w) / 2.f);
-            ImGui::InputInt("##value", &val, 0, 0);
+            ImGui::InputDouble("##value", &val, 0, 0);
             ImGui::PopItemWidth();
         }
 
@@ -138,31 +138,50 @@ namespace Billet
             //ImGui::PopStyleColor();
         }
 
-        std::vector<Billet::Plot2<float>> testArr;
+        std::vector<Magpie::Plot2<float>> testArr;
         std::vector<double> dataX;
         std::vector<double> dataY;
         std::vector<double> FilteredPX;
         std::vector<double> FilteredPY;
         palka::Vec2f center;
         palka::Vec2f result;
+
+        GraphicMet2D<double> solver;
     public:
         Test(palka::Vec2f pos, palka::Vec2f size, bool open = true, ImGuiWindowFlags w_flag = ImGuiWindowFlags_None)
                 : UiView("MagicInput", pos, size, open, w_flag), storage(4, 4)
         {
-            storage.get(0,0) = -3;
-            storage.get(1,0) = -2;
-            storage.get(0,1) = 1;
-            storage.get(1,1) = 2;
-            storage.get(2,1) = 1;
-            storage.get(3,1) = 7;
-            storage.get(0,2) = 2;
-            storage.get(1,2) = 1;
-            storage.get(2,2) = 1;
-            storage.get(3,2) = 8;
-            storage.get(0,3) = 0;
-            storage.get(1,3) = 1;
-            storage.get(2,3) = 1;
-            storage.get(3,3) = 3;
+//            storage.get(0, 0) = -3;
+//            storage.get(1, 0) = -2;
+//            storage.get(0, 1) = 1;
+//            storage.get(1, 1) = 2;
+//            storage.get(2, 1) = 1;
+//            storage.get(3, 1) = 7;
+//            storage.get(0, 2) = 2;
+//            storage.get(1, 2) = 1;
+//            storage.get(2, 2) = 1;
+//            storage.get(3, 2) = 8;
+//            storage.get(0, 3) = 0;
+//            storage.get(1, 3) = 1;
+//            storage.get(2, 3) = 1;
+//            storage.get(3, 3) = 3;
+
+            storage.get(0, 0) = -3;
+            storage.get(1, 0) = -2;
+
+            storage.get(0, 1) = -2;
+            storage.get(1, 1) = 2;
+            storage.get(2, 1) = 1;
+            storage.get(3, 1) = 10;
+            storage.get(0, 2) = 4;
+            storage.get(1, 2) = 1;
+            storage.get(2, 2) = -1;
+            storage.get(3, 2) = 5;
+            storage.get(0, 3) = 4;
+            storage.get(1, 3) = 5;
+            storage.get(2, 3) = -1;
+            storage.get(3, 3) = 8;
+
         }
 
         using f_pair = std::pair<float, float>;
@@ -223,6 +242,15 @@ namespace Billet
 
         void OnTest()
         {
+
+            solver.init(storage, 2, 3);
+            auto res = solver.solve();
+            auto u = res.getVisualUnion();
+            dataX = u.first;
+            dataY = u.second;
+            result = res.getResPoint();
+
+#if 0
             testArr.clear();
 
             for(int i = 1; i < 4; ++i)
@@ -231,37 +259,37 @@ namespace Billet
                 auto b = (float) storage.get(1, i);
                 auto c = (float) storage.get(3, i);
                 auto s = storage.get(2, i);
-                testArr.emplace_back(Billet::Plot2<float>{a, b, c, s});
+                testArr.emplace_back(Billet::Plot2<float>{a, b, c, static_cast<int>(s)});
             }
             testArr.emplace_back(Billet::Plot2<float>{1, 0, 0, GREATEROREQUAL});
             testArr.emplace_back(Billet::Plot2<float>{0, 1, 0, GREATEROREQUAL});
-            std::sort(testArr.begin(), testArr.end(), [this](Billet::Plot2<float>& l, Billet::Plot2<float>& r)
-            {
-                auto in = intersection({l.a, r.a}, {l.b, r.b}, {r.c, l.c});
-                bool ret = false;
-                if(in.first >= 0 && in.second >= 0)
-                {
-                    for(float i = 0.01; i < 0.2; i += 0.01f)
-                    {
-                        in.first -= i;
-                        auto lv = l.getValueAtY(in.first);
-                        auto rv = r.getValueAtY(in.first);
-                        if(lv < rv)
-                            ret = true;
-                    }
-                } else
-                {
-                    for(float i = 0; i < 0.2; i += 0.01f)
-                    {
-
-                        auto lv = l.getValueAtY(i);
-                        auto rv = r.getValueAtY(i);
-                        if(lv < rv)
-                            ret = true;
-                    }
-                }
-                return ret;
-            });
+//            std::sort(testArr.begin(), testArr.end(), [this](Billet::Plot2<float>& l, Billet::Plot2<float>& r)
+//            {
+//                auto in = intersection({l.a, r.a}, {l.b, r.b}, {r.c, l.c});
+//                bool ret = false;
+//                if(in.first >= 0 && in.second >= 0)
+//                {
+//                    for(float i = 0.01; i < 0.2; i += 0.01f)
+//                    {
+//                        in.first -= i;
+//                        auto lv = l.getValueAtY(in.first);
+//                        auto rv = r.getValueAtY(in.first);
+//                        if(lv < rv)
+//                            ret = true;
+//                    }
+//                } else
+//                {
+//                    for(float i = 0; i < 0.2; i += 0.01f)
+//                    {
+//
+//                        auto lv = l.getValueAtY(i);
+//                        auto rv = r.getValueAtY(i);
+//                        if(lv < rv)
+//                            ret = true;
+//                    }
+//                }
+//                return ret;
+//            });
 
             std::vector<palka::Vec2f> points;
             for(int i = 0; i < testArr.size(); ++i)
@@ -319,7 +347,7 @@ namespace Billet
 
             std::sort(pointsready.begin(), pointsready.end(), [this](palka::Vec2f& l, palka::Vec2f& r)
             {
-                return l.x < r.x;
+                return glm::length(l) < glm::length(r);
             });
             dataX.clear();
             dataY.clear();
@@ -375,6 +403,7 @@ namespace Billet
                 }
 
             }
+#endif
 //            for(int i = 0; i < pointsready.size(); i++)
 //            {
 //                auto vec = pointsready[i];
@@ -570,7 +599,7 @@ namespace Billet
                     }
                     ImGui::TableNextColumn();
                     ImGui::PushID(id++);
-                    layout_sign(signToStr((_sign) storage.get(2, row)).c_str(), storage.get(2, row), 0);
+                    layout_sign(signToStr((_sign) storage.get(2, row)).c_str(), reinterpret_cast<int&>(storage.get(2, row)), 0);
 
                     ImGui::TableNextColumn();
                     layout2("asd", storage.get(3, row), 4);
@@ -593,8 +622,6 @@ namespace Billet
             {
                 ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.25f);
                 ImPlot::PlotLine("My Line Plot", dataX.data(), dataY.data(), dataX.size());
-                ImPlot::PlotScatter("Data", &center.x, &center.y, 1);
-                ImPlot::PlotScatter("Data2", FilteredPX.data(), FilteredPY.data(), FilteredPX.size());
                 ImPlot::PlotScatter("Result", &result.x, &result.y, 1);
                 ImPlot::EndPlot();
                 ImPlot::PopStyleVar();
