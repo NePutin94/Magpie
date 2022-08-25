@@ -4,12 +4,12 @@
 using typelist = testing::Types<int, double, float>;
 template<class>
 struct TestPlot : testing::Test
-{
-};
+{};
+
 TYPED_TEST_SUITE(TestPlot, typelist);
 TYPED_TEST(TestPlot, TestHasPoint_Func1)
 {
-    Magpie::Plot2<TypeParam> test{1, 2, 7, Magpie::Sign::EQUAL};
+    Magpie::Plot<TypeParam> test{1, 2, 7, Magpie::Sign::EQUAL};
 
     for(auto i = -50; i < 50; i += 1)
     {
@@ -25,7 +25,7 @@ TYPED_TEST(TestPlot, TestHasPoint_Func1)
 TYPED_TEST_SUITE(TestPlot, typelist);
 TYPED_TEST(TestPlot, TestHasPoint_Func2)
 {
-    Magpie::Plot2<TypeParam> test{0, 1, 3, Magpie::Sign::EQUAL};
+    Magpie::Plot<TypeParam> test{0, 1, 3, Magpie::Sign::EQUAL};
 
     for(auto i = -50; i < 50; i += 1)
     {
@@ -38,7 +38,7 @@ TYPED_TEST(TestPlot, TestHasPoint_Func2)
 TYPED_TEST_SUITE(TestPlot, typelist);
 TYPED_TEST(TestPlot, TestHasPoint_Func3)
 {
-    Magpie::Plot2<TypeParam> test{2, 1, 8, Magpie::Sign::EQUAL};
+    Magpie::Plot<TypeParam> test{2, 1, 8, Magpie::Sign::EQUAL};
 
     for(auto i = -50; i < 50; i += 1)
     {

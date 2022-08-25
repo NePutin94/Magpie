@@ -1,7 +1,3 @@
-//
-// Created by dimka on 2/3/2022.
-//
-
 #ifndef BILLET_UISCENE_H
 #define BILLET_UISCENE_H
 
@@ -15,18 +11,27 @@ namespace Magpie
     class UiScene
     {
     private:
-        using cont_type =  std::map<std::string, std::unique_ptr<UiView>>;
-        cont_type w_inst;
+        std::unique_ptr<UiView> curr;
     protected:
+        virtual void Next() = 0;
+
         template<class T>
-        void addView(const std::string& name, T&& view)
+        void addView(T&& view)
         {
-            w_inst.emplace(name, std::make_unique<T>(view));
+            curr = std::move(std::make_unique<T>(view));
+            curr->setCallback([this]()
+                              { Next(); });
         }
 
-        cont_type& views()
+        auto views()
         {
-            return w_inst;
+            return curr.get();
+        }
+
+        template<class T>
+        T* getView()
+        {
+            return static_cast<T*>(curr.get());
         }
 
     public:

@@ -1,10 +1,5 @@
-//
-// Created by dimka on 1/29/2022.
-//
-
 #ifndef BILLET_TEST_H
 #define BILLET_TEST_H
-
 
 #include "UiView.h"
 #include <imgui_internal.h>
@@ -17,31 +12,13 @@ namespace Magpie
     class Test : public UiView
     {
     private:
-        enum _sign
-        {
-            EQUAL = 0,
-            GREATEROREQUAL = -1,
-            LESSOREQUAL = 1
-        } sign;
         MatrixStorage<double> storage;
+        std::vector<Magpie::Plot<float>> testArr;
+        palka::Vec2f result;
+        std::vector<double> dataX;
+        std::vector<double> dataY;
 
-        std::string signToStr(_sign s)
-        {
-            std::string arr[] = {"=", ">=", "<="};
-            switch(s)
-            {
-                case EQUAL:
-                    return arr[0];
-                    break;
-                case GREATEROREQUAL:
-                    return arr[1];
-                    break;
-                case LESSOREQUAL:
-                    return arr[2];
-                    break;
-            }
-            return "";
-        }
+        GraphicMet2D<double> solver;
 
         void layout2(const char* label, double& val, int col)
         {
@@ -72,7 +49,7 @@ namespace Magpie
             ImGui::PopItemWidth();
         }
 
-        bool layout_sign(const char* label, int& val, int col)
+        bool layout_sign(const char* label, double& val, int col)
         {
             bool value_changed = false;
             ImGui::AlignTextToFramePadding();
@@ -84,12 +61,12 @@ namespace Magpie
             auto pos_s = ImGui::GetCursorScreenPos();
             ImGui::SetCursorPosX(start_pos.x + center_offset);
             ImGui::SetCursorPosY(start_pos.y + 60 / 2.f - label_sz.y); //12 is magic value for width 30
-            if(ImGui::Button(signToStr((_sign) val).c_str(), {70, 0}))
+            if(ImGui::Button(signToStr((Sign) val).data(), {70, 0}))
                 ImGui::OpenPopup("sign_popup");
             if(ImGui::BeginPopup("sign_popup"))
             {
                 for(int i = -1; i < 2; i++)
-                    if(ImGui::Selectable(signToStr((_sign) i).c_str()))
+                    if(ImGui::Selectable(signToStr((Sign) i).data()))
                     {
                         val = i;
                         value_changed = true;
@@ -138,112 +115,226 @@ namespace Magpie
             //ImGui::PopStyleColor();
         }
 
-        std::vector<Magpie::Plot2<float>> testArr;
-        std::vector<double> dataX;
-        std::vector<double> dataY;
-        std::vector<double> FilteredPX;
-        std::vector<double> FilteredPY;
-        palka::Vec2f center;
-        palka::Vec2f result;
+#if DEBUG
 
-        GraphicMet2D<double> solver;
-    public:
-        Test(palka::Vec2f pos, palka::Vec2f size, bool open = true, ImGuiWindowFlags w_flag = ImGuiWindowFlags_None)
-                : UiView("MagicInput", pos, size, open, w_flag), storage(4, 4)
+        void fill(int var)
         {
-//            storage.get(0, 0) = -3;
-//            storage.get(1, 0) = -2;
-//            storage.get(0, 1) = 1;
-//            storage.get(1, 1) = 2;
-//            storage.get(2, 1) = 1;
-//            storage.get(3, 1) = 7;
-//            storage.get(0, 2) = 2;
-//            storage.get(1, 2) = 1;
-//            storage.get(2, 2) = 1;
-//            storage.get(3, 2) = 8;
-//            storage.get(0, 3) = 0;
-//            storage.get(1, 3) = 1;
-//            storage.get(2, 3) = 1;
-//            storage.get(3, 3) = 3;
-
-            storage.get(0, 0) = -3;
-            storage.get(1, 0) = -2;
-
-            storage.get(0, 1) = -2;
-            storage.get(1, 1) = 2;
-            storage.get(2, 1) = 1;
-            storage.get(3, 1) = 10;
-            storage.get(0, 2) = 4;
-            storage.get(1, 2) = 1;
-            storage.get(2, 2) = -1;
-            storage.get(3, 2) = 5;
-            storage.get(0, 3) = 4;
-            storage.get(1, 3) = 5;
-            storage.get(2, 3) = -1;
-            storage.get(3, 3) = 8;
-
-        }
-
-        using f_pair = std::pair<float, float>;
-
-        auto intersection(f_pair A, f_pair B, f_pair C)
-        {
-            f_pair out;
-            float det = A.first * B.second - A.second * B.first;
-            out.second = -(A.second * C.first - A.first * C.second) / det;
-            out.first = -(B.first * C.second - B.second * C.first) / det;
-            return out;
-        }
-
-        double det(double a, double b, double c, double d)
-        {
-            return a * d - b * c;
-        }
-
-        auto intersect(f_pair A, f_pair B, f_pair C)
-        {
-            float zn = det(A.first, A.second, B.first, B.second);
-            if(abs(zn) < 1e-9)
-                return f_pair{0, 0};
-            f_pair out;
-            out.first = -det(C.first, B.first, C.second, B.second) / zn;
-            out.second = -det(A.first, C.first, A.second, C.second) / zn;
-            return out;
-        }
-
-        palka::Vec2f Centroid(const std::vector<palka::Vec2f>& vertices, int vertexCount)
-        {
-            palka::Vec2f centroid = {0, 0};
-            double signedArea = 0.0;
-            double x0 = 0.0;
-            double y0 = 0.0;
-            double x1 = 0.0;
-            double y1 = 0.0;
-            double a = 0.0;
-
-            for(int i = 0; i < vertexCount; ++i)
+            switch(var)
             {
-                x0 = vertices[i].x;
-                y0 = vertices[i].y;
-                x1 = vertices[(i + 1) % vertexCount].x;
-                y1 = vertices[(i + 1) % vertexCount].y;
-                a = x0 * y1 - x1 * y0;
-                signedArea += a;
-                centroid.x += (x0 + x1) * a;
-                centroid.y += (y0 + y1) * a;
+                case 0:
+                    storage.alloc_matrix(3, 6);
+                    storage.get(0, 0) = -2;
+                    storage.get(1, 0) = -1;
+                    storage.get(2, 0) = -3;
+                    storage.get(3, 0) = -1;
+
+                    storage.get(0, 1) = 1;
+                    storage.get(1, 1) = 2;
+                    storage.get(2, 1) = 5;
+                    storage.get(3, 1) = -1;
+                    storage.get(4, 1) = 0;
+                    storage.get(5, 1) = 4;
+
+                    storage.get(0, 2) = 1;
+                    storage.get(1, 2) = -1;
+                    storage.get(2, 2) = -1;
+                    storage.get(3, 2) = 2;
+                    storage.get(4, 2) = 0;
+                    storage.get(5, 2) = 1;
+                    break;
+                case 1:
+                    storage.alloc_matrix(4, 4);
+                    storage.get(0, 0) = -3;
+                    storage.get(1, 0) = -2;
+
+                    storage.get(0, 1) = 1;
+                    storage.get(1, 1) = 2;
+                    storage.get(2, 1) = 1;
+                    storage.get(3, 1) = 7;
+
+                    storage.get(0, 2) = 2;
+                    storage.get(1, 2) = 1;
+                    storage.get(2, 2) = 1;
+                    storage.get(3, 2) = 8;
+
+                    storage.get(0, 3) = 0;
+                    storage.get(1, 3) = 1;
+                    storage.get(2, 3) = 1;
+                    storage.get(3, 3) = 3;
+                    break;
+                case 2:
+                    storage.alloc_matrix(4, 4);
+                    storage.get(0, 0) = -1;
+                    storage.get(1, 0) = -2;
+
+                    storage.get(0, 1) = 2;
+                    storage.get(1, 1) = -1;
+                    storage.get(2, 1) = -1;
+                    storage.get(3, 1) = -1;
+
+                    storage.get(0, 2) = 1;
+                    storage.get(1, 2) = -2;
+                    storage.get(2, 2) = 1;
+                    storage.get(3, 2) = 0;
+
+                    storage.get(0, 3) = 1;
+                    storage.get(1, 3) = 1;
+                    storage.get(2, 3) = -1;
+                    storage.get(3, 3) = 1;
+                case 3:
+                    storage.alloc_matrix(5, 4);
+                    storage.get(0, 0) = -1;
+                    storage.get(1, 0) = -2;
+
+                    storage.get(0, 1) = 2;
+                    storage.get(1, 1) = 1;
+                    storage.get(2, 1) = 1;
+                    storage.get(3, 1) = 5;
+
+                    storage.get(0, 2) = 1;
+                    storage.get(1, 2) = 2;
+                    storage.get(2, 2) = 1;
+                    storage.get(3, 2) = 8;
+
+                    storage.get(0, 3) = 5;
+                    storage.get(1, 3) = 1;
+                    storage.get(2, 3) = 1;
+                    storage.get(3, 3) = 9;
+
+                    storage.get(0, 4) = 6;
+                    storage.get(1, 4) = -1;
+                    storage.get(2, 4) = 1;
+                    storage.get(3, 4) = 9;
+                    break;
+                case 4:
+                    storage.alloc_matrix(6, 4);
+                    storage.get(0, 0) = -1;
+                    storage.get(1, 0) = -2;
+
+                    storage.get(0, 1) = 2;
+                    storage.get(1, 1) = 1;
+                    storage.get(2, 1) = Sign::LESSOREQUAL;
+                    storage.get(3, 1) = 5;
+
+                    storage.get(0, 2) = 1;
+                    storage.get(1, 2) = 2;
+                    storage.get(2, 2) = Sign::LESSOREQUAL;
+                    storage.get(3, 2) = 8;
+
+                    storage.get(0, 3) = 1;
+                    storage.get(1, 3) = 1;
+                    storage.get(2, 3) = Sign::GREATEROREQUAL;
+                    storage.get(3, 3) = 1;
+
+                    storage.get(0, 4) = -15;
+                    storage.get(1, 4) = 2;
+                    storage.get(2, 4) = Sign::LESSOREQUAL;
+                    storage.get(3, 4) = -8;
+
+                    storage.get(0, 5) = -10;
+                    storage.get(1, 5) = 5;
+                    storage.get(2, 5) = Sign::GREATEROREQUAL;
+                    storage.get(3, 5) = -8;
+                    break;
+                case 5:
+                    storage.alloc_matrix(6, 4);
+                    storage.get(0, 0) = -1;
+                    storage.get(1, 0) = -2;
+
+                    storage.get(0, 1) = 4;
+                    storage.get(1, 1) = -1;
+                    storage.get(2, 1) = Sign::GREATEROREQUAL;
+                    storage.get(3, 1) = -2;
+
+                    storage.get(0, 2) = 1;
+                    storage.get(1, 2) = -2;
+                    storage.get(2, 2) = Sign::LESSOREQUAL;
+                    storage.get(3, 2) = 0;
+
+                    storage.get(0, 3) = 1;
+                    storage.get(1, 3) = 2;
+                    storage.get(2, 3) = Sign::GREATEROREQUAL;
+                    storage.get(3, 3) = 1;
+
+                    storage.get(0, 4) = -3;
+                    storage.get(1, 4) = 4;
+                    storage.get(2, 4) = Sign::GREATEROREQUAL;
+                    storage.get(3, 4) = -1;
+
+                    storage.get(0, 5) = -3;
+                    storage.get(1, 5) = 3;
+                    storage.get(2, 5) = Sign::GREATEROREQUAL;
+                    storage.get(3, 5) = -3;
+                    break;
             }
-
-            signedArea *= 0.5;
-            centroid.x /= (6.0 * signedArea);
-            centroid.y /= (6.0 * signedArea);
-
-            return centroid;
         }
+
+#endif
+    public:
+        Test(palka::Vec2f pos, palka::Vec2f size, int n, int m, bool open = true, ImGuiWindowFlags w_flag = ImGuiWindowFlags_None)
+                : UiView("EnteringRestrictions", pos, size, open, w_flag), storage(n + 1, m + 2)
+        {
+            fill(5);
+        }
+//        using f_pair = std::pair<float, float>;
+//
+//        auto intersection(f_pair A, f_pair B, f_pair C)
+//        {
+//            f_pair out;
+//            float det = A.first * B.second - A.second * B.first;
+//            out.second = -(A.second * C.first - A.first * C.second) / det;
+//            out.first = -(B.first * C.second - B.second * C.first) / det;
+//            return out;
+//        }
+//
+//        double det(double a, double b, double c, double d)
+//        {
+//            return a * d - b * c;
+//        }
+//
+//        auto intersect(f_pair A, f_pair B, f_pair C)
+//        {
+//            float zn = det(A.first, A.second, B.first, B.second);
+//            if(abs(zn) < 1e-9)
+//                return f_pair{0, 0};
+//            f_pair out;
+//            out.first = -det(C.first, B.first, C.second, B.second) / zn;
+//            out.second = -det(A.first, C.first, A.second, C.second) / zn;
+//            return out;
+//        }
+//
+//        palka::Vec2f Centroid(const std::vector<palka::Vec2f>& vertices, int vertexCount)
+//        {
+//            palka::Vec2f centroid = {0, 0};
+//            double signedArea = 0.0;
+//            double x0 = 0.0;
+//            double y0 = 0.0;
+//            double x1 = 0.0;
+//            double y1 = 0.0;
+//            double a = 0.0;
+//
+//            for(int i = 0; i < vertexCount; ++i)
+//            {
+//                x0 = vertices[i].x;
+//                y0 = vertices[i].y;
+//                x1 = vertices[(i + 1) % vertexCount].x;
+//                y1 = vertices[(i + 1) % vertexCount].y;
+//                a = x0 * y1 - x1 * y0;
+//                signedArea += a;
+//                centroid.x += (x0 + x1) * a;
+//                centroid.y += (y0 + y1) * a;
+//            }
+//
+//            signedArea *= 0.5;
+//            centroid.x /= (6.0 * signedArea);
+//            centroid.y /= (6.0 * signedArea);
+//
+//            return centroid;
+//        }
 
         void OnTest()
         {
-
-            solver.init(storage, 2, 3);
+            solver.init(storage, 2, 4);
             auto res = solver.solve();
             auto u = res.getVisualUnion();
             dataX = u.first;
@@ -531,21 +622,19 @@ namespace Magpie
 //            }
         }
 
-
         void render() override
         {
-            ImPlot::ShowDemoWindow();
             ImGui::Begin(name.c_str(), &open, win_flag);
             ImGui::Text("f = c_1*x_1 + x_2*x_2 + ... + c_n*x_n");
-            if(ImGui::BeginTable("##table1", 2, ImGuiTableFlags_SizingStretchProp))
+            if(ImGui::BeginTable("##table1", storage.columns_count() - 2, ImGuiTableFlags_SizingStretchProp))
             {
                 ImGui::TableNextRow();
-                for(int column = 0; column < 2; ++column)
+                for(int column = 0; column < storage.columns_count() - 2; ++column)
                 {
                     ImGui::PushID(column);
                     ImGui::TableNextColumn();
                     std::string label = "X" + std::to_string(column);
-                    ImGui::InputScalar(label.c_str(), ImGuiDataType_S32, &storage.get(column, 0));
+                    ImGui::InputScalar(label.c_str(), ImGuiDataType_Double, &storage.get(column, 0));
                     ImGui::PopID();
                 }
                 ImGui::EndTable();
@@ -564,19 +653,19 @@ namespace Magpie
             ImGui::Text("a_1*x_1 + a_2*x_2 + ... + a_n*x_n [>=,=,<=] B");
             ImVec2 barrier = TextPos + ImVec2{0, 80.f};
 
-            if(auto pos = center_local.y - cell_height * 3 / 2.f; barrier.y < pos) //center, 3 -> row count
-                ImGui::SetCursorPosY(center_local.y - cell_height * 3 / 2.f);
+            if(auto pos = center_local.y - cell_height * storage.rows_count() / 2.f; barrier.y < pos) //center, 3 -> row count
+                ImGui::SetCursorPosY(center_local.y - cell_height * storage.rows_count() / 2.f);
             else
                 ImGui::SetCursorPosY(barrier.y);
 
             int id = 0;
-            if(ImGui::BeginTable("Layout", 4, flags, {}))
+            if(ImGui::BeginTable("Layout", storage.columns_count(), flags, {}))
             {
                 auto t = ImGui::GetCurrentTable();
-                for(int row = 1; row < 4; row++)
+                for(int row = 1; row < storage.rows_count(); row++)
                 {
                     ImGui::TableNextRow(ImGuiTableRowFlags_None, cell_height);
-                    for(int column = 0; column < 2; column++)
+                    for(int column = 0; column < storage.columns_count() - 2; column++)
                     {
                         ImGui::TableNextColumn();
                         //  ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ((60 - t_sz.y) / 2.f));
@@ -599,10 +688,11 @@ namespace Magpie
                     }
                     ImGui::TableNextColumn();
                     ImGui::PushID(id++);
-                    layout_sign(signToStr((_sign) storage.get(2, row)).c_str(), reinterpret_cast<int&>(storage.get(2, row)), 0);
+                    layout_sign(signToStr((Sign) storage.get(storage.columns_count() - 2, row)).data(),
+                                storage.get(storage.columns_count() - 2, row), 0);
 
                     ImGui::TableNextColumn();
-                    layout2("asd", storage.get(3, row), 4);
+                    layout2("asd", storage.get(storage.columns_count() - 1, row), 4);
                     ImGui::PopID();
                 }
 
@@ -610,28 +700,42 @@ namespace Magpie
                 ImGui::GetForegroundDrawList()->AddRect(t->OuterRect.Min, t->OuterRect.Max, IM_COL32(0, 255, 255, 255));
             }
             //      ImGui::PopStyleVar();
-            if(ImGui::Button("Test"))
-                OnTest();
+            if(ImGui::Button("next"))
+                sceneCallback();
             //ImGui::GetForegroundDrawList()->AddRect(contentRect.Min, contentRect.Max, IM_COL32(255, 0, 255, 255));
             //ImGui::GetForegroundDrawList()->AddCircle(center, 4, IM_COL32(255, 255, 0, 255));
 
             ImGui::End();
 
-            ImGui::Begin("My Window");
-            if(ImPlot::BeginPlot("My Plot"))
-            {
-                ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.25f);
-                ImPlot::PlotLine("My Line Plot", dataX.data(), dataY.data(), dataX.size());
-                ImPlot::PlotScatter("Result", &result.x, &result.y, 1);
-                ImPlot::EndPlot();
-                ImPlot::PopStyleVar();
-            }
-            ImGui::End();
+//            ImGui::Begin("My Window");
+//            if(ImPlot::BeginPlot("My Plot"))
+//            {
+//                ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.25f);
+//                ImPlot::PlotLine("My Line Plot", dataX.data(), dataY.data(), dataX.size());
+//                ImPlot::PlotScatter("Result", &result.x, &result.y, 1);
+//                ImPlot::EndPlot();
+//                ImPlot::PopStyleVar();
+//            }
+//            ImGui::End();
         }
+
+#if DEBUG
 
         void update() override
         {
             storage.debug();
+        }
+
+#else
+        void update() override
+        {
+
+        }
+#endif
+
+        auto getResult()
+        {
+            return storage;
         }
 
         void setEvents() override

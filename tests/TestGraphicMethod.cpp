@@ -1,47 +1,255 @@
 #include <Solver.h>
 #include <gtest/gtest.h>
 
-class TestSolver : public ::testing::Test
+using typelist = testing::Types<double, float>;
+template<class T>
+struct TestGraphMetSort : testing::Test
+{};
+
+TYPED_TEST_SUITE(TestGraphMetSort, typelist);
+TYPED_TEST(TestGraphMetSort, TestGraphMetSort_Func1)
 {
-protected:
-    TestSolver()
-    {}
+    std::vector<palka::Vec2<TypeParam>> order{palka::Vec2<TypeParam>{0.588, 0.412}, palka::Vec2<TypeParam>{0.948, 3.106}, palka::Vec2<TypeParam>{1.65, 1.7},
+                                           palka::Vec2<TypeParam>{0.867, 0.133}};
 
-    virtual ~TestSolver()
-    {}
+    Magpie::GraphPrivateWrapper<TypeParam> test;
+    auto res = test.call(
+            {palka::Vec2<TypeParam>{0.588, 0.412}, palka::Vec2<TypeParam>{1.65, 1.7}, palka::Vec2<TypeParam>{0.948, 3.106}, palka::Vec2<TypeParam>{0.867, 0.133}},
 
-    void SetUp(const std::vector<std::vector<double>>& vec)
+            {Magpie::Plot<TypeParam>{2, 1, 5, Magpie::Sign::LESSOREQUAL},
+             Magpie::Plot<TypeParam>{-15, 2, -8, Magpie::Sign::LESSOREQUAL},
+             Magpie::Plot<TypeParam>{-10, 5, -8, Magpie::Sign::GREATEROREQUAL},
+             Magpie::Plot<TypeParam>{1, 1, 1, Magpie::Sign::GREATEROREQUAL}});
+
+    ASSERT_EQ(order.size(), res.size());
+
+    int index = -1;
+    for(int i = 0; i < order.size(); ++i)
     {
-        Magpie::MatrixStorage<double> dataMatrix(vec.size(), vec[1].size());
-        for(int i = 0; i < vec.size(); ++i)
+        if(order[i] == res[0])
         {
-            for(int j = 0; j < vec[0].size(); ++j)
-            {
-                dataMatrix.get(j, i) = vec[i][j];
-            }
+            index = i;
+            break;
         }
-        data = new Magpie::GraphicMet2D<double>(dataMatrix, 2, 3);
     }
+    EXPECT_TRUE(index > -1);
+    std::rotate(order.begin(),
+                order.end() - (order.size() - index),
+                order.end());
 
-    virtual void TearDown()
+    bool allHit = true;
+    for(int i = 0; i < order.size(); ++i)
     {
-        // delete tc;
-        delete data;
+        if(order[i] != res[i])
+        {
+            allHit = false;
+            break;
+        }
     }
 
-    Magpie::GraphicMet2D<double>* data;
-    Magpie::GraphicMet2D<double>* tc;
-};
+    EXPECT_TRUE(allHit);
+}
 
-TEST_F(TestSolver, param1)
+TYPED_TEST_SUITE(TestGraphMetSort, typelist);
+TYPED_TEST(TestGraphMetSort, TestGraphMetSort_Func2)
 {
-    SetUp({{-3, -2, 0, 0},
-           {1,  2,  1, 7},
-           {2,  1,  1, 8},
-           {0,  1,  1, 3}});
-    SetUp({{-3, -2, 0, 0},
-           {2,  3,  -1, 8},
-           {-8,  1,  1, 5},
-           {8,  1,  1, 40}});
-    EXPECT_EQ(0, 0);
+    std::vector<palka::Vec2<double>> order{palka::Vec2<double>{0.867, 0.133},
+                                           palka::Vec2<double>{0.588, 0.412},
+                                           palka::Vec2<double>{0.948, 3.106},
+                                           palka::Vec2<double>{1.65, 1.7}};
+
+    Magpie::GraphPrivateWrapper<double> test;
+    auto res = test.call(
+            {palka::Vec2<double>{0.588, 0.412}, palka::Vec2<double>{0.867, 0.133}, palka::Vec2<double>{0.948, 3.106}, palka::Vec2<double>{1.65, 1.7}},
+
+            {Magpie::Plot<double>{2, 1, 5, Magpie::Sign::LESSOREQUAL},
+             Magpie::Plot<double>{-15, 2, -8, Magpie::Sign::LESSOREQUAL},
+             Magpie::Plot<double>{-10, 5, -8, Magpie::Sign::GREATEROREQUAL},
+             Magpie::Plot<double>{1, 1, 1, Magpie::Sign::GREATEROREQUAL}});
+
+    ASSERT_EQ(order.size(), res.size());
+
+    int index = -1;
+    for(int i = 0; i < order.size(); ++i)
+    {
+        if(order[i] == res[0])
+        {
+            index = i;
+            break;
+        }
+    }
+    EXPECT_TRUE(index > -1);
+    std::rotate(order.begin(),
+                order.end() - (order.size() - index),
+                order.end());
+
+    bool allHit = true;
+    for(int i = 0; i < order.size(); ++i)
+    {
+        if(order[i] != res[i])
+        {
+            allHit = false;
+            break;
+        }
+    }
+
+    EXPECT_TRUE(allHit);
+}
+
+TYPED_TEST_SUITE(TestGraphMetSort, typelist);
+TYPED_TEST(TestGraphMetSort, TestGraphMetSort_Func3)
+{
+    std::vector<palka::Vec2<double>> order{palka::Vec2<double>{0.667, 3.333},
+                                           palka::Vec2<double>{0, 3.5},
+                                           palka::Vec2<double>{0, 0},
+                                           palka::Vec2<double>{1, 0},
+                                           palka::Vec2<double>{1.833, 0.417}};
+
+    Magpie::GraphPrivateWrapper<double> test;
+    auto res = test.call(
+            {palka::Vec2<double>{0, 0}, palka::Vec2<double>{0, 3.5}, palka::Vec2<double>{1, 0}, palka::Vec2<double>{0.667, 3.333},
+             palka::Vec2<double>{1.833, 0.417}},
+
+            {Magpie::Plot<double>{5, 2, 10, Magpie::Sign::LESSOREQUAL},
+             Magpie::Plot<double>{1, 4, 14, Magpie::Sign::LESSOREQUAL},
+             Magpie::Plot<double>{1, -2, 1, Magpie::Sign::LESSOREQUAL},
+             Magpie::Plot<double>{1, 0, 0, Magpie::Sign::GREATEROREQUAL},
+             Magpie::Plot<double>{0, 1, 0, Magpie::Sign::GREATEROREQUAL}});
+
+    ASSERT_EQ(order.size(), res.size());
+
+    int index = -1;
+    for(int i = 0; i < order.size(); ++i)
+    {
+        if(order[i] == res[0])
+        {
+            index = i;
+            break;
+        }
+    }
+    EXPECT_TRUE(index > -1);
+    std::rotate(order.begin(),
+                order.end() - (order.size() - index),
+                order.end());
+
+    bool allHit = true;
+    for(int i = 0; i < order.size(); ++i)
+    {
+        if(order[i] != res[i])
+        {
+            allHit = false;
+            break;
+        }
+    }
+
+    EXPECT_TRUE(allHit);
+}
+
+TYPED_TEST_SUITE(TestGraphMetSort, typelist);
+TYPED_TEST(TestGraphMetSort, TestGraphMetSort_Func4)
+{
+    std::vector<palka::Vec2<double>> order{
+            palka::Vec2<double>{0, 3},
+            palka::Vec2<double>{0, 1},
+            palka::Vec2<double>{1, 0},
+            palka::Vec2<double>{4.5, 1.75},
+            palka::Vec2<double>{2, 3},
+            palka::Vec2<double>{0.667, 3.333},
+    };
+
+    Magpie::GraphPrivateWrapper<double> test;
+    auto res = test.call(
+            {palka::Vec2<double>{1, 0}, palka::Vec2<double>{0, 3}, palka::Vec2<double>{2, 3},
+             palka::Vec2<double>{0.667, 3.333}, palka::Vec2<double>{4.5, 1.75}, palka::Vec2<double>{0, 1}},
+
+            {Magpie::Plot<double>{1, 2, 8, Magpie::Sign::LESSOREQUAL},
+             Magpie::Plot<double>{1, 4, 14, Magpie::Sign::LESSOREQUAL},
+             Magpie::Plot<double>{1, -2, 1, Magpie::Sign::LESSOREQUAL},
+             Magpie::Plot<double>{-2, 4, 12, Magpie::Sign::LESSOREQUAL},
+             Magpie::Plot<double>{1, 1, 1, Magpie::Sign::GREATEROREQUAL},
+             Magpie::Plot<double>{1, 0, 0, Magpie::Sign::GREATEROREQUAL},
+             Magpie::Plot<double>{0, 1, 0, Magpie::Sign::GREATEROREQUAL}});
+
+    ASSERT_EQ(order.size(), res.size());
+
+    int index = -1;
+    for(int i = 0; i < order.size(); ++i)
+    {
+        if(order[i] == res[0])
+        {
+            index = i;
+            break;
+        }
+    }
+    EXPECT_TRUE(index > -1);
+    std::rotate(order.begin(),
+                order.end() - (order.size() - index),
+                order.end());
+
+    bool allHit = true;
+    for(int i = 0; i < order.size(); ++i)
+    {
+        if(order[i] != res[i])
+        {
+            allHit = false;
+            break;
+        }
+    }
+
+    EXPECT_TRUE(allHit);
+}
+
+TYPED_TEST_SUITE(TestGraphMetSort, typelist);
+TYPED_TEST(TestGraphMetSort, TestGraphMetSort_Func5)
+{
+    std::vector<palka::Vec2<double>> order{palka::Vec2<double>{3.588, 1.294},
+                                           palka::Vec2<double>{3.467, 2.267},
+                                           palka::Vec2<double>{2, 3},
+                                           palka::Vec2<double>{0.667, 3.333},
+                                           palka::Vec2<double>{0, 3},
+                                           palka::Vec2<double>{0, 1},
+                                           palka::Vec2<double>{1, 0}};
+
+
+    Magpie::GraphPrivateWrapper<double> test;
+    auto res = test.call(
+            {palka::Vec2<double>{1, 0}, palka::Vec2<double>{0, 3}, palka::Vec2<double>{3.588, 1.294}, palka::Vec2<double>{2, 3},
+             palka::Vec2<double>{0.667, 3.333}, palka::Vec2<double>{3.467, 2.267}, palka::Vec2<double>{0, 1}},
+
+            {Magpie::Plot<double>{1, 2, 8, Magpie::Sign::LESSOREQUAL},
+             Magpie::Plot<double>{1, 4, 14, Magpie::Sign::LESSOREQUAL},
+             Magpie::Plot<double>{1, -2, 1, Magpie::Sign::LESSOREQUAL},
+             Magpie::Plot<double>{-2, 4, 12, Magpie::Sign::LESSOREQUAL},
+             Magpie::Plot<double>{1, 1, 1, Magpie::Sign::GREATEROREQUAL},
+             Magpie::Plot<double>{8, 1, 30, Magpie::Sign::LESSOREQUAL},
+             Magpie::Plot<double>{1, 0, 0, Magpie::Sign::GREATEROREQUAL},
+             Magpie::Plot<double>{0, 1, 0, Magpie::Sign::GREATEROREQUAL}});
+
+    ASSERT_EQ(order.size(), res.size());
+
+    int index = -1;
+    for(int i = 0; i < order.size(); ++i)
+    {
+        if(order[i] == res[0])
+        {
+            index = i;
+            break;
+        }
+    }
+    EXPECT_TRUE(index > -1);
+    std::rotate(order.begin(),
+                order.end() - (order.size() - index),
+                order.end());
+
+    bool allHit = true;
+    for(int i = 0; i < order.size(); ++i)
+    {
+        if(order[i] != res[i])
+        {
+            allHit = false;
+            break;
+        }
+    }
+
+    EXPECT_TRUE(allHit);
 }

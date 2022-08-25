@@ -20,8 +20,7 @@ int main()
 //    Billet::GraphicMet2D<double> t(dataMatrix, 2,3);
 //Y 54 50 2 false
 //X 101 1 50 false
-    Magpie::Plot2<int> test{1, 2, 7, Magpie::Sign::EQUAL};
-    auto a = test.hasPoint({-50,28});
+
     Magpie::Application app({1280, 720});
     app.run();
     return 0;

@@ -1,7 +1,3 @@
-//
-// Created by dimka on 1/29/2022.
-//
-
 #ifndef BILLET_UIVIEW_H
 #define BILLET_UIVIEW_H
 
@@ -22,6 +18,8 @@ namespace Magpie
         palka::Vec2f size;
         palka::Vec2f pos;
         bool open;
+
+        std::function<void()> sceneCallback; //to link UiScene and UIView, it is expected to be called when you need to switch UIView in the UiScene
     public:
         UiView() = default;
 
@@ -43,6 +41,11 @@ namespace Magpie
         palka::Vec2f getSize() const
         {
             return size;
+        }
+
+        void setCallback(std::function<void()> call)
+        {
+            sceneCallback = call;
         }
 
         virtual void render() = 0;

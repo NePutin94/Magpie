@@ -8,15 +8,15 @@ set(CMAKE_COLOR_DIAGNOSTICS ON)
 
 if (WIN32)
     if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -DDEBUG")
     else ()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -mwindows -s")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DDEBUG -mwindows -s")
     endif ()
 ENDIF ()
 
 IF (UNIX)
     if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -DDEBUG")
     else ()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -s")
     endif ()
@@ -43,11 +43,19 @@ target_link_libraries(MagpieLib palka)
 target_include_directories(MagpieLib PUBLIC .)
 
 add_custom_command(TARGET Magpie POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:palka> $<TARGET_FILE_DIR:Magpie>
-        COMMAND ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:RTTR::Core> $<TARGET_FILE_DIR:Magpie>
-        COMMAND ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:glfw> $<TARGET_FILE_DIR:Magpie>
-        COMMAND ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:assimp::assimp> $<TARGET_FILE_DIR:Magpie>
-        COMMAND ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:tinygltf> $<TARGET_FILE_DIR:Magpie>
-        COMMAND ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:fmt::fmt> $<TARGET_FILE_DIR:Magpie>)
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:palka> $<TARGET_FILE_DIR:Magpie>
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:RTTR::Core> $<TARGET_FILE_DIR:Magpie>
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:glfw> $<TARGET_FILE_DIR:Magpie>
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:assimp::assimp> $<TARGET_FILE_DIR:Magpie>
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:tinygltf> $<TARGET_FILE_DIR:Magpie>
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:fmt::fmt> $<TARGET_FILE_DIR:Magpie>
+
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:palka> "${CMAKE_BINARY_DIR}/tests"
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:fmt::fmt> "${CMAKE_BINARY_DIR}/tests"
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:assimp::assimp> "${CMAKE_BINARY_DIR}/tests"
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:MagpieLib> "${CMAKE_BINARY_DIR}/tests"
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:RTTR::Core> "${CMAKE_BINARY_DIR}/tests"
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:glfw> "${CMAKE_BINARY_DIR}/tests"
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:tinygltf> "${CMAKE_BINARY_DIR}/tests")
 
 
