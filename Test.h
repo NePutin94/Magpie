@@ -274,7 +274,9 @@ namespace Magpie
         Test(palka::Vec2f pos, palka::Vec2f size, int n, int m, bool open = true, ImGuiWindowFlags w_flag = ImGuiWindowFlags_None)
                 : UiView("EnteringRestrictions", pos, size, open, w_flag), storage(n + 1, m + 2)
         {
+#if DEBUG
             fill(5);
+#endif
         }
 //        using f_pair = std::pair<float, float>;
 //
