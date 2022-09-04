@@ -14,11 +14,6 @@ namespace Magpie
     private:
         MatrixStorage<double> storage;
         std::vector<Magpie::Plot<float>> testArr;
-        palka::Vec2f result;
-        std::vector<double> dataX;
-        std::vector<double> dataY;
-
-        GraphicMet2D<double> solver;
 
         void layout2(const char* label, double& val, int col)
         {
@@ -266,6 +261,41 @@ namespace Magpie
                     storage.get(2, 5) = Sign::GREATEROREQUAL;
                     storage.get(3, 5) = -3;
                     break;
+                case 6:
+                    storage.alloc_matrix(7, 4);
+                    storage.get(0, 0) = -1;
+                    storage.get(1, 0) = -2;
+
+                    storage.get(0, 1) = 1;
+                    storage.get(1, 1) = 2;
+                    storage.get(2, 1) = Sign::LESSOREQUAL;
+                    storage.get(3, 1) = 8;
+
+                    storage.get(0, 2) = 1;
+                    storage.get(1, 2) = 4;
+                    storage.get(2, 2) = Sign::LESSOREQUAL;
+                    storage.get(3, 2) = 14;
+
+                    storage.get(0, 3) = 1;
+                    storage.get(1, 3) = -2;
+                    storage.get(2, 3) = Sign::LESSOREQUAL;
+                    storage.get(3, 3) = 1;
+
+                    storage.get(0, 4) = -2;
+                    storage.get(1, 4) = 4;
+                    storage.get(2, 4) = Sign::LESSOREQUAL;
+                    storage.get(3, 4) = 12;
+
+                    storage.get(0, 5) = 1;
+                    storage.get(1, 5) = 1;
+                    storage.get(2, 5) = Sign::GREATEROREQUAL;
+                    storage.get(3, 5) = 1;
+
+                    storage.get(0, 6) = 8;
+                    storage.get(1, 6) = 1;
+                    storage.get(2, 6) = Sign::LESSOREQUAL;
+                    storage.get(3, 6) = 30;
+                    break;
             }
         }
 
@@ -275,353 +305,8 @@ namespace Magpie
                 : UiView("EnteringRestrictions", pos, size, open, w_flag), storage(n + 1, m + 2)
         {
 #if DEBUG
-            fill(5);
+            fill(6);
 #endif
-        }
-//        using f_pair = std::pair<float, float>;
-//
-//        auto intersection(f_pair A, f_pair B, f_pair C)
-//        {
-//            f_pair out;
-//            float det = A.first * B.second - A.second * B.first;
-//            out.second = -(A.second * C.first - A.first * C.second) / det;
-//            out.first = -(B.first * C.second - B.second * C.first) / det;
-//            return out;
-//        }
-//
-//        double det(double a, double b, double c, double d)
-//        {
-//            return a * d - b * c;
-//        }
-//
-//        auto intersect(f_pair A, f_pair B, f_pair C)
-//        {
-//            float zn = det(A.first, A.second, B.first, B.second);
-//            if(abs(zn) < 1e-9)
-//                return f_pair{0, 0};
-//            f_pair out;
-//            out.first = -det(C.first, B.first, C.second, B.second) / zn;
-//            out.second = -det(A.first, C.first, A.second, C.second) / zn;
-//            return out;
-//        }
-//
-//        palka::Vec2f Centroid(const std::vector<palka::Vec2f>& vertices, int vertexCount)
-//        {
-//            palka::Vec2f centroid = {0, 0};
-//            double signedArea = 0.0;
-//            double x0 = 0.0;
-//            double y0 = 0.0;
-//            double x1 = 0.0;
-//            double y1 = 0.0;
-//            double a = 0.0;
-//
-//            for(int i = 0; i < vertexCount; ++i)
-//            {
-//                x0 = vertices[i].x;
-//                y0 = vertices[i].y;
-//                x1 = vertices[(i + 1) % vertexCount].x;
-//                y1 = vertices[(i + 1) % vertexCount].y;
-//                a = x0 * y1 - x1 * y0;
-//                signedArea += a;
-//                centroid.x += (x0 + x1) * a;
-//                centroid.y += (y0 + y1) * a;
-//            }
-//
-//            signedArea *= 0.5;
-//            centroid.x /= (6.0 * signedArea);
-//            centroid.y /= (6.0 * signedArea);
-//
-//            return centroid;
-//        }
-
-        void OnTest()
-        {
-            solver.init(storage, 2, 4);
-            auto res = solver.solve();
-            auto u = res.getVisualUnion();
-            dataX = u.first;
-            dataY = u.second;
-            result = res.getResPoint();
-
-#if 0
-            testArr.clear();
-
-            for(int i = 1; i < 4; ++i)
-            {
-                auto a = (float) storage.get(0, i);
-                auto b = (float) storage.get(1, i);
-                auto c = (float) storage.get(3, i);
-                auto s = storage.get(2, i);
-                testArr.emplace_back(Billet::Plot2<float>{a, b, c, static_cast<int>(s)});
-            }
-            testArr.emplace_back(Billet::Plot2<float>{1, 0, 0, GREATEROREQUAL});
-            testArr.emplace_back(Billet::Plot2<float>{0, 1, 0, GREATEROREQUAL});
-//            std::sort(testArr.begin(), testArr.end(), [this](Billet::Plot2<float>& l, Billet::Plot2<float>& r)
-//            {
-//                auto in = intersection({l.a, r.a}, {l.b, r.b}, {r.c, l.c});
-//                bool ret = false;
-//                if(in.first >= 0 && in.second >= 0)
-//                {
-//                    for(float i = 0.01; i < 0.2; i += 0.01f)
-//                    {
-//                        in.first -= i;
-//                        auto lv = l.getValueAtY(in.first);
-//                        auto rv = r.getValueAtY(in.first);
-//                        if(lv < rv)
-//                            ret = true;
-//                    }
-//                } else
-//                {
-//                    for(float i = 0; i < 0.2; i += 0.01f)
-//                    {
-//
-//                        auto lv = l.getValueAtY(i);
-//                        auto rv = r.getValueAtY(i);
-//                        if(lv < rv)
-//                            ret = true;
-//                    }
-//                }
-//                return ret;
-//            });
-
-            std::vector<palka::Vec2f> points;
-            for(int i = 0; i < testArr.size(); ++i)
-            {
-                for(int j = i + 1; j < testArr.size(); ++j)
-                {
-                    auto& v = testArr[i];
-                    auto& v2 = testArr[j];
-                    if(v != v2)
-                    {
-                        auto in = intersection({v.a, v2.a}, {v.b, v2.b}, {v.c, v2.c});
-                        if(in.first >= 0 && in.second >= 0)
-                        {
-                            points.emplace_back(palka::Vec2f{in.first, in.second});
-                        }
-                    }
-                }
-            }
-            std::vector<palka::Vec2f> pointsready;
-            for(auto& p: points)
-            {
-                bool all = true;
-                for(auto& val: testArr)
-                {
-                    switch((_sign) val.sign)
-                    {
-                        case LESSOREQUAL:
-                            if(!(val.a * p.x + val.b * p.y <= val.c))
-                            {
-                                all = false;
-                                break;
-                            }
-                            break;
-                        case GREATEROREQUAL:
-                            if(!(val.a * p.x + val.b * p.y >= val.c))
-                            {
-                                all = false;
-                                break;
-                            }
-                            break;
-                        case EQUAL:
-                            if(!(val.a * p.x + val.b * p.y == val.c))
-                            {
-                                all = false;
-                                break;
-                            }
-                            break;
-                    }
-
-                }
-                if(all)
-                    pointsready.emplace_back(abs(p.x), abs(p.y));
-            }
-
-
-            std::sort(pointsready.begin(), pointsready.end(), [this](palka::Vec2f& l, palka::Vec2f& r)
-            {
-                return glm::length(l) < glm::length(r);
-            });
-            dataX.clear();
-            dataY.clear();
-            for(auto vec: pointsready)
-            {
-                dataX.emplace_back(vec.x);
-                dataY.emplace_back(vec.y);
-            }
-            dataX.emplace_back(pointsready.front().x);
-            dataY.emplace_back(pointsready.front().y);
-
-            {
-                center = Centroid(pointsready, pointsready.size());
-                std::vector<palka::Vec2f> outP;
-                auto a = (float) storage.get(0, 0);
-                auto b = (float) storage.get(1, 0);
-                palka::Vec2f antigrad{-a, -b};
-                antigrad = glm::normalize(antigrad);
-                int pos = 0;
-                if(std::abs(a) * antigrad.x + std::abs(b) * antigrad.y < 0)
-                {
-                    pos = -1;
-                } else
-                {
-                    pos = 1;
-                }
-                FilteredPX.clear();
-                FilteredPY.clear();
-                for(auto vec: pointsready)
-                {
-                    if(pos > 0 && center.x < vec.x && center.y < vec.y)
-                    {
-                        FilteredPX.emplace_back(vec.x);
-                        FilteredPY.emplace_back(vec.y);
-                        outP.emplace_back(vec);
-                    } else if(pos < 0 && center.x > vec.x && center.y > vec.y)
-                    {
-                        FilteredPX.emplace_back(vec.x);
-                        FilteredPY.emplace_back(vec.y);
-                        outP.emplace_back(vec);
-                    }
-                }
-
-                float min = FLT_MAX;
-
-                for(auto vec: pointsready)
-                {
-                    if(auto val = a * vec.x + a * vec.y; val < min)
-                    {
-                        min = a * vec.x + a * vec.y;
-                        result = vec;
-                    }
-                }
-
-            }
-#endif
-//            for(int i = 0; i < pointsready.size(); i++)
-//            {
-//                auto vec = pointsready[i];
-//                if(vec.x > 0 && vec.y > 0)
-//                {
-//                    if(i < pointsready.size() - 1)
-//                    {
-//                        auto next = pointsready[i + 1];
-//                        auto inc = glm::normalize(next - vec);
-//                        for(int i = 0; i < 100; ++i)
-//                        {уж
-//                            vec += inc;
-//                            dataX.emplace_back(vec.x);
-//                            dataY.emplace_back(vec.y);
-//                            if(dataY.back() == 0) break;
-//                            if(vec.x >= next.x || vec.y >= next.y)
-//                            {
-//                                dataX.back() = next.x;
-//                                dataY.back() = next.y;
-//                                break;
-//                            }
-//                        }
-//                    } else
-//                    {
-//                        auto next = pointsready[0];
-//                        auto inc = glm::normalize(next - vec);
-//                        for(int i = 0; i < 100; ++i)
-//                        {
-//                            vec += inc;
-//                            dataX.emplace_back(vec.x);
-//                            dataY.emplace_back(vec.y);
-//                            if(dataY.back() == 0) break;
-//                            if(vec.x >= next.x || vec.y >= next.y)
-//                            {
-//                                dataX.back() = next.x;
-//                                dataY.back() = next.y;
-//                                break;
-//                            }
-//                        }
-//                    }
-//                }else
-//                {
-//
-//                }
-//            }
-
-//            palka::Vec2f intersect;
-//            for(int i = 0; i < testArr.size(); ++i)
-//            {
-//                std::vector<double> dataX;
-//                std::vector<double> dataY;
-//                auto& val = testArr[i];
-//                bool currIntersect = false;
-//                if(i < testArr.size() - 1)
-//                {
-//                    auto next = testArr[i + 1];
-//                    auto in = intersection({val.a, next.a}, {val.b, next.b}, {val.c, next.c});
-//                    if(in.first >= 0 && in.second >= 0)
-//                    {
-//                        currIntersect = true;
-//                        intersect = {in.first, in.second};
-//                    } else
-//                        currIntersect = false;
-//                }
-//
-//                for(int j = (prevIntersect) ? intersect.x : 0; j < 100; ++j)
-//                {
-//
-//                    dataX.emplace_back((double) j);
-//                    dataY.emplace_back((double) val.getValueAtY(j));
-//                    if(dataY.back() == 0) break;
-//                    if(currIntersect && palka::Vec2f{dataX.back(), dataY.back()} == intersect) break;
-//                }
-//
-//                if(!currIntersect)
-//                    prevIntersect = false;
-//                else
-//                    prevIntersect = true;
-//
-//                arrays.emplace_back(std::make_pair(dataX, dataY));
-//            }
-
-//
-//            for(int i = 0; i < 100; ++i)
-//            {
-//                auto a = storage.get(0, 0);
-//                auto b = storage.get(1, 0);
-//                auto c = 0;
-//                mainX[idex] = (double) i;
-//                mainY[idex] = (double) (c - a * i) / (double) b;
-//                idex++;
-//            }
-//            idex = 0;
-//            f_pair inter;
-//            {
-//                auto a = storage.get(0, 1);
-//                auto b = storage.get(1, 1);
-//                auto c = storage.get(3, 1);
-//                auto a1 = storage.get(0, 2);
-//                auto b1 = storage.get(1, 2);
-//                auto c1 = storage.get(3, 2);
-//                inter = intersection({a, a1}, {b, b1}, {c, c1});
-//            }
-//            for(int i = 0; i < 100; ++i)
-//            {
-//                auto a = storage.get(0, 1);
-//                auto b = storage.get(1, 1);
-//                auto c = storage.get(3, 1);
-//                dataX[idex] = (double) i;
-//                dataY[idex] = (double) (c - a * i) / (double) b;
-//                if(f_pair{dataX[idex], dataY[idex]} == inter) break;
-//                if(dataY[idex] == 0) break;
-//                idex++;
-//            }
-//            idex = 0;
-//            for(int i = inter.first; i < 100; ++i)
-//            {
-//                auto a = storage.get(0, 2);
-//                auto b = storage.get(1, 2);
-//                auto c = storage.get(3, 2);
-//                dataX2[idex] = (double) i;
-//                dataY2[idex] = (double) (c - a * i) / (double) b;
-//                if(dataY2[idex] == 0) break;
-//                idex++;
-//            }
         }
 
         void render() override

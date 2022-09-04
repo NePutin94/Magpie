@@ -3,7 +3,7 @@
 //
 
 #include "Transform.h"
-
+#define M_PI 3.14159265358979323846
 palka::Quad<float> palka::Transform::transformRect(palka::RectF rectangle) const
 {
     const std::array<Vec2f, 4> points
@@ -115,13 +115,13 @@ auto palka::Transform::scale(float x, float y)
     return combine(scale);
 }
 
-#ifdef REFLECTION_CORE
-#include <rttr/registration>
-RTTR_REGISTRATION
-{
-    using namespace rttr;
-    registration::class_<palka::Transform>("Transform")
-            .constructor<palka::Transform>()
-            .property("matrix", &palka::Transform::matrix);
-}
-#endif
+//#ifdef REFLECTION_CORE
+//#include <rttr/registration>
+//RTTR_REGISTRATION
+//{
+//    using namespace rttr;
+//    registration::class_<palka::Transform>("Transform")
+//            .constructor<palka::Transform>()
+//            .property("matrix", &palka::Transform::matrix);
+//}
+//#endif

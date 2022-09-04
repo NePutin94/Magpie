@@ -20,6 +20,7 @@
 #include "RenderContext.h"
 #include "VertexData.h"
 #include "Renderer.h"
+#include "stb_image.h"
 
 namespace palka
 {
@@ -67,13 +68,13 @@ namespace palka
             ImGui_ImplOpenGL3_Init("#version 130");
         }
 
-        void create()
+        void create(std::string_view name, std::string_view icon_path = "")
         {
             if(!glfwInit())
                 Console::addLog("Failed to initialize GLFW", Console::fatal);
             glfwSetErrorCallback(error_callback);
             glfwDefaultWindowHints();
-            window = glfwCreateWindow(size.x, size.y, "palka", NULL, NULL);
+            window = glfwCreateWindow(size.x, size.y, name.data(), NULL, NULL);
             if(!window)
                 Console::addLog("Failed to open GLFW window", Console::fatal);
 
@@ -108,6 +109,13 @@ namespace palka
             ImGui_ImplGlfw_InitForOpenGL(window, true);
             ImGui_ImplOpenGL3_Init("#version 130");
 
+            if(!icon_path.empty())
+            {
+                GLFWimage images[1];
+                images[0].pixels = stbi_load(icon_path.data(), &images[0].width, &images[0].height, 0, 4);
+                glfwSetWindowIcon(window, 2, images);
+                stbi_image_free(images[0].pixels);
+            }
 //            initImgui();
             EventManager::addEvent(WINDOWRESIZE, [this](EventData e)
             {
@@ -118,7 +126,7 @@ namespace palka
             //int i = 0;
             //glGetIntegerv(GL_MAX_DRAW_BUFFERS, &i);
             //Console::fmt_log("Draw buffer count: {}", Console::info, i);
-           // glEnable(GL_DEPTH_TEST);
+            // glEnable(GL_DEPTH_TEST);
 //            init();
         }
 

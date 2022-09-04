@@ -1,32 +1,31 @@
-#ifndef BILLET_MAINSCENE_H
-#define BILLET_MAINSCENE_H
+//
+// Created by dimka on 9/4/2022.
+//
+
+#ifndef MAGPIE_GRAPHICSMETHODSCENE_H
+#define MAGPIE_GRAPHICSMETHODSCENE_H
 
 #include "UiScene.h"
-#include "Test.h"
-#include "InputView.h"
 #include "GraphicalMethodView.h"
+#include "MagicInput.h"
 
 namespace Magpie
 {
-    class MainScene : public UiScene
+    class GraphicsMethodScene : public UiScene
     {
     public:
         enum class State
         {
             Input = 0,
-            InputRest,
             Solve
         };
     private:
         State state;
     public:
-        MainScene()
+        GraphicsMethodScene()
         {
         }
-        MainScene(State st)
-        {
-            state = st;
-        }
+
         void Next() override
         {
 #ifdef TracyProfiler
@@ -37,19 +36,12 @@ namespace Magpie
             {
                 case State::Input:
                 {
-                    addView<InputView>({{0,   0},
-                                        {520, 120}});
-                }
-                    break;
-                case State::InputRest:
-                {
-                    auto res = getView<InputView>()->getResul();
-                    addView<Test>({{0, 0}, {520, 120}, res.first, res.second});
+                    addView<MagicInput>({});
                 }
                     break;
                 case State::Solve:
                 {
-                    auto res = getView<Test>()->getResult();
+                    auto res = getView<MagicInput>()->getResult();
                     addView<GraphicalMethodView>({{0, 0}, {520, 120}, res});
                 }
                     break;
@@ -61,8 +53,7 @@ namespace Magpie
         void init() override
         {
             state = State::Input;
-            addView<InputView>({{0,   0},
-                                {520, 120}});
+            addView<MagicInput>({});
         }
 
         void render() override
@@ -77,4 +68,4 @@ namespace Magpie
     };
 }
 
-#endif //BILLET_MAINSCENE_H
+#endif //MAGPIE_GRAPHICSMETHODSCENE_H

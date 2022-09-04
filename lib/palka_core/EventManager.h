@@ -149,13 +149,13 @@ namespace palka
     class EventManager
     {
     private:
-        static std::multimap<KBoardEvent, std::function<void(EventData&)>> KeyboardEvents;
-        static std::multimap<KBoardEvent, std::function<void()>> KeyboardInputs;
-        static std::multimap<MouseEvent, std::function<void(EventData&)>> MouseEvents;
-        static std::multimap<EventType, std::function<void(EventData&)>> TypeEvents;
+        inline static std::multimap<KBoardEvent, std::function<void(EventData&)>> KeyboardEvents{};
+        inline static std::multimap<KBoardEvent, std::function<void()>> KeyboardInputs{};
+        inline static std::multimap<MouseEvent, std::function<void(EventData&)>> MouseEvents{};
+        inline static std::multimap<EventType, std::function<void(EventData&)>> TypeEvents{};
 
-        static std::set<int> keyPressed;
-        static std::set <MouseEvent::Mouse_Button> mousebPress;
+        inline static std::set<int> keyPressed{};
+        inline static std::set<MouseEvent::Mouse_Button> mousebPress{};
     public:
 
         static void addEvent(EventType t, const std::function<void(EventData&)>& callback)
@@ -195,7 +195,7 @@ namespace palka
             data.MouseMotion.x = xpos;
             data.MouseMotion.y = ypos;
             auto range = MouseEvents.equal_range(MouseEvent::Motion());
-            for (auto it = range.first; it != range.second; ++it)
+            for(auto it = range.first; it != range.second; ++it)
                 it->second(data);
         }
 
@@ -205,7 +205,7 @@ namespace palka
             data.MouseScroll.offsetX = xoffset;
             data.MouseScroll.offsetY = yoffset;
             auto range = MouseEvents.equal_range(MouseEvent::WheelScrolled());
-            for (auto it = range.first; it != range.second; ++it)
+            for(auto it = range.first; it != range.second; ++it)
                 it->second(data);
         }
 
@@ -215,16 +215,16 @@ namespace palka
             data.MouseButtonPress.action = action;
             data.MouseButtonPress.button = button;
             data.MouseButtonPress.mods = mods;
-            if (action == GLFW_PRESS)
+            if(action == GLFW_PRESS)
             {
                 mousebPress.emplace((MouseEvent::Mouse_Button) button);
                 auto range = MouseEvents.equal_range(MouseEvent{MOUSEBDOWN, (MouseEvent::Mouse_Button) button});
-                for (auto it = range.first; it != range.second; ++it)
+                for(auto it = range.first; it != range.second; ++it)
                     it->second(data);
-            } else if (action == GLFW_RELEASE)
+            } else if(action == GLFW_RELEASE)
             {
                 auto range = MouseEvents.equal_range(MouseEvent{MOUSEBUP, (MouseEvent::Mouse_Button) button});
-                for (auto it = range.first; it != range.second; ++it)
+                for(auto it = range.first; it != range.second; ++it)
                     it->second(data);
             }
         }
@@ -236,17 +236,17 @@ namespace palka
             data.KeyPress.key = key;
             data.KeyPress.mode = mods;
             data.KeyPress.scancode = scancode;
-            if (action == GLFW_PRESS)
+            if(action == GLFW_PRESS)
             {
                 keyPressed.emplace(key);
                 auto range = KeyboardEvents.equal_range(KBoardEvent{EventType::KEYDOWN, key});
-                for (auto it = range.first; it != range.second; ++it)
+                for(auto it = range.first; it != range.second; ++it)
                     it->second(data);
-            } else if (action == GLFW_RELEASE)
+            } else if(action == GLFW_RELEASE)
             {
                 keyPressed.erase(key);
                 auto range = KeyboardEvents.equal_range(KBoardEvent{EventType::KEYUP, key});
-                for (auto it = range.first; it != range.second; ++it)
+                for(auto it = range.first; it != range.second; ++it)
                     it->second(data);
             }
         }
@@ -257,7 +257,7 @@ namespace palka
             data.WindowResize.newX = width;
             data.WindowResize.newY = height;
             auto range = TypeEvents.equal_range(WINDOWRESIZE);
-            for (auto it = range.first; it != range.second; ++it)
+            for(auto it = range.first; it != range.second; ++it)
                 it->second(data);
         }
 
@@ -265,7 +265,7 @@ namespace palka
         {
             EventData data;
             auto range = TypeEvents.equal_range(WINDOWCLOSE);
-            for (auto it = range.first; it != range.second; ++it)
+            for(auto it = range.first; it != range.second; ++it)
                 it->second(data);
         }
 
@@ -275,7 +275,7 @@ namespace palka
             data.WindowPos.x = xpos;
             data.WindowPos.y = ypos;
             auto range = TypeEvents.equal_range(WINDOWMOTION);
-            for (auto it = range.first; it != range.second; ++it)
+            for(auto it = range.first; it != range.second; ++it)
                 it->second(data);
         }
 
@@ -290,7 +290,7 @@ namespace palka
 
         static void updateInputs()
         {
-            for(auto& i : KeyboardInputs)
+            for(auto& i: KeyboardInputs)
                 if(keyPressed.contains(i.first.key))
                     i.second();
         }

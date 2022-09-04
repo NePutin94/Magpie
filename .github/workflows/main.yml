@@ -56,15 +56,9 @@ jobs:
           cxx: ${{ matrix.config.cxx }}
           configure-options: -G Ninja
           build-type: ${{env.BUILD_TYPE}}
+
       - name: Test
         working-directory: ${{github.workspace}}/build/tests
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
         run: ctest -C ${{env.BUILD_TYPE}}
-      
-      - name: Fail fast?!
-        if: steps.linter.outputs.checks-failed > 0
-        run: |
-          echo "Some files failed the linting checks!"
-        # for actual deployment
-        # run: exit 1

@@ -12,6 +12,9 @@
 #include "DockWrapper.h"
 #include "MainScene.h"
 #include <imgui_internal.h>
+#include "cmake-build-debug/_deps/tracy-src/Tracy.hpp"
+#include "StartScene.h"
+#include "SceneManager.h"
 
 using namespace palka;
 namespace Magpie
@@ -29,19 +32,21 @@ namespace Magpie
         double timeSinceStart;
         float t = 0;
         float delta;
-        MainScene scene;
+        enum States
+        {
+            Menu,
+            Solver
+        };
+        // MainScene scene;
+        SceneManager manager;
 
     public:
         explicit Application(Vec2i size) : w(size), isRuning(false), view(RectF(0, 0, size.x, size.y))
         {
             init();
-            scene.init();
-
+            //scene.init();
         }
 
-        void mainApp()
-        {
-        }
 
         static void glfw_error_callback(int error, const char* description)
         {
@@ -59,25 +64,14 @@ namespace Magpie
             }
         }
 
-        void init()
-        {
-            w.create();
-            isRuning = true;
-            EventManager::addEvent(KBoardEvent::KeyPressed(GLFW_KEY_GRAVE_ACCENT), [this](EventData e)
-            {
-                console_open = !console_open;
-            });
-            EventManager::addEvent(EventType::WINDOWCLOSE, [this](EventData e)
-            {
-                isRuning = false;
-            });
-        }
+        void init();
 
         void render()
         {
             w.clear();
-            mainApp();
-            scene.render();
+            ImPlot::ShowDemoWindow();
+            manager.getScene()->render();
+            //scene.render();
             Console::Draw("Console", &console_open);
             w.ImGuiEndFrame();
             w.EndFrame();
@@ -87,7 +81,8 @@ namespace Magpie
         {
             // debug(w.getCamera(), "camera");
             // debug(w.getViewport(), "view");
-            scene.update();
+            manager.getScene()->update();
+            //scene.update();
             timeSinceStart = glfwGetTime();
             delta = timeSinceStart - oldTimeSinceStart;
             oldTimeSinceStart = timeSinceStart;

@@ -13,6 +13,7 @@ namespace Magpie
     private:
         std::unique_ptr<UiView> curr;
     protected:
+        bool close = false;
         virtual void Next() = 0;
 
         template<class T>
@@ -35,6 +36,15 @@ namespace Magpie
         }
 
     public:
+
+        UiScene() = default;
+        virtual ~UiScene() = default;
+
+        bool IsClose()
+        {
+            return close;
+        }
+
         virtual void init() = 0;
 
         virtual void render() = 0;

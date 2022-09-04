@@ -5,11 +5,14 @@
 #ifndef PALKA_VIEWPORT_H
 #define PALKA_VIEWPORT_H
 
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include "config.h"
 #include "Vec2.h"
 #include "Rect.h"
 #include "Transform.h"
 #include <utility>
+#define M_PI 3.14159265358979323846
 
 #ifdef REFLECTION_CORE
 #include <rttr/type>
@@ -34,7 +37,6 @@ namespace palka
     public:
         Viewport(const RectF& r) : rect(r), size(r.w, r.h), needUpdate(true), rotation(0), center()
         {
-
         }
 
         void reset(const RectF& r)

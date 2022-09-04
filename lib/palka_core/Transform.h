@@ -18,10 +18,10 @@ namespace palka
 {
     class Transform
     {
-#ifdef REFLECTION_CORE
-        RTTR_ENABLE()
-        RTTR_REGISTRATION_FRIEND
-#endif
+//#ifdef REFLECTION_CORE
+//        RTTR_ENABLE()
+//        RTTR_REGISTRATION_FRIEND
+//#endif
     private:
         float matrix[16];
     public:

@@ -9,6 +9,9 @@
 #include "Plot.h"
 #include "MatrixStorage.h"
 #include "ISolver.h"
+#include "ConsoleLog.h"
+#include <chrono>
+#include "cmake-build-debug/_deps/tracy-src/Tracy.hpp"
 
 namespace Magpie
 {
@@ -38,6 +41,7 @@ namespace Magpie
 
         std::pair<std::vector<T>, std::vector<T>> getVisualUnion()
         {
+            ZoneScopedS(6);
             std::vector<T> X;
             std::vector<T> Y;
             for(auto vec: Union)
@@ -104,14 +108,18 @@ namespace Magpie
 //            data = kanonical_data;
         }
 
-        auto solver(std::vector<std::vector<double>> matrix)
+        template<class T>
+        auto solver(std::vector<std::vector<T>> matrix)
         {
+#ifdef TracyProfiler
+            ZoneScoped;
+#endif
             for(int col = 0; col < matrix.size() - 1; ++col)
             {
                 double a = matrix[col][col];
                 if(std::abs(a) != 1)
                 {
-                    for(double& j: matrix[col])
+                    for(T& j: matrix[col])
                         j = j / a;
                 }
 
@@ -149,7 +157,7 @@ namespace Magpie
 
             if(isIdentity)
             {
-                std::vector<std::vector<double>> res;
+                std::vector<std::vector<T>> res;
                 res.resize(matrix.size());
                 for(int i = 0; i < matrix.size(); ++i)
                 {
@@ -245,9 +253,528 @@ namespace Magpie
         std::vector<Magpie::Plot<T>> Plots;
         std::vector<palka::Vec2<T>> Union;
 
-        static void sort(std::vector<palka::Vec2<T>>& points, std::vector<Magpie::Plot<T>> plots)
+        static bool compare(const std::vector<Magpie::Plot<T>>& plots, const Magpie::Plot<T>& plot)
         {
+            for(const auto& v: plots)
+            {
+                if(v == plot)
+                    return true;
+            }
+            return false;
+        }
+
+        //it is worse
+        static void sort3(std::vector<std::pair<palka::Vec2<T>, std::vector<Magpie::Plot<T>>>>& test)
+        {
+            struct Pair
+            {
+                palka::Vec2<T> first;
+                palka::Vec2<T> second;
+                std::vector<Magpie::Plot<T>> plots;
+                std::vector<Magpie::Plot<T>> p1;
+                std::vector<Magpie::Plot<T>> p2;
+            };
+            std::vector<Pair> vec;
+            for(int i = 0; i < test.size(); ++i)
+            {
+                auto& p = test[i];
+                for(int j = i + 1; j < test.size(); ++j)
+                {
+                    auto& p2 = test[j];
+                    bool find = false;
+                    for(auto& v: p.second)
+                    {
+                        if(compare(p2.second, v))
+                        {
+                            std::vector<Magpie::Plot<T>> dest1;
+                            std::set_union(p.second.begin(), p.second.end(), p2.second.begin(), p2.second.end(), std::back_inserter(dest1));
+                            vec.emplace_back(Pair{p.first, p2.first, dest1, p.second, p2.second});
+                            std::swap(test[i + 1], test[j]);
+                            find = true;
+                            break;
+                        }
+                    }
+                    if(find)
+                    {
+                        i++;
+                        break;
+                    }
+                }
+            }
+
+            if(test.size() > 5)
+            {
+                for(int i = 0; i < vec.size() - 1; i++)
+                {
+                    auto& p1 = vec[i];
+                    int j = i + 1;
+                    auto& p2 = vec[j];
+
+                    bool once = false;
+                    for(auto& pl: p1.plots)
+                    {
+                        if(pl.hasPoint(p1.first) && pl.hasPoint(p2.first))
+                        {
+                            std::swap(p1.first, p1.second);
+                            once = true;
+                            break;
+                        }
+                        if(pl.hasPoint(p1.second) && pl.hasPoint(p2.second))
+                        {
+                            std::swap(p2.first, p2.second);
+                            once = true;
+                            break;
+                        }
+                        if(pl.hasPoint(p1.first) && pl.hasPoint(p2.second) || pl.hasPoint(p1.second) && pl.hasPoint(p2.first))
+                        {
+                            break;
+                        }
+                    }
+                    if(!once)
+                    {
+                        for(int b = j + 1; b < vec.size(); ++b)
+                        {
+                            auto& p3 = vec[b];
+                            bool once = false;
+
+                            for(auto& pl: p1.plots)
+                            {
+                                if(pl.hasPoint(p1.first) && pl.hasPoint(p3.first))
+                                {
+                                    once = true;
+                                    std::swap(p1.first, p1.second);
+                                    break;
+                                }
+                                if(pl.hasPoint(p1.second) && pl.hasPoint(p3.second))
+                                {
+                                    once = true;
+                                    std::swap(p3.first, p3.second);
+                                    break;
+                                }
+                                if(pl.hasPoint(p1.first) && pl.hasPoint(p3.second) || pl.hasPoint(p1.second) && pl.hasPoint(p3.first))
+                                {
+                                    once = true;
+                                    break;
+                                }
+                            }
+                            if(once)
+                            {
+                                std::swap(p2, p3);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                bool once = false;
+                for(int i = 0; i < vec.size() - 1; ++i)
+                {
+                    auto& p1 = vec.back();
+                    auto& p2 = vec[i];
+
+                    for(auto& pl: p1.plots)
+                    {
+                        if(pl.hasPoint(p1.first) && pl.hasPoint(p2.first))
+                        {
+                            std::swap(p1.first, p1.second);
+                            once = true;
+                            break;
+                        }
+                        if(pl.hasPoint(p1.second) && pl.hasPoint(p2.second))
+                        {
+                            std::swap(p1.first, p1.second);
+                            once = true;
+                            break;
+                        }
+                        if(pl.hasPoint(p1.first) && pl.hasPoint(p2.second) || pl.hasPoint(p1.second) && pl.hasPoint(p2.first))
+                        {
+                            break;
+                        }
+                    }
+                    if(once)
+                        break;
+                }
+            } else
+            {
+                auto& p1 = vec[0];
+                auto& p2 = vec[1];
+                for(auto& pl: p1.plots)
+                {
+                    if(pl.hasPoint(p1.first) && pl.hasPoint(p2.first))
+                    {
+                        std::swap(p1.first, p1.second);
+                        break;
+                    }
+                    if(pl.hasPoint(p1.second) && pl.hasPoint(p2.second))
+                    {
+                        std::swap(p2.first, p2.second);
+                        break;
+                    }
+                }
+            }
+
+            std::pair<int, int> para{-1, -1};
+            if(test.size() % 2 != 0) //finding a hole to insert the last element
+            {
+                for(int i = 0; i < vec.size(); ++i)
+                {
+                    auto& p1 = vec[i];
+                    bool once1 = false;
+                    bool once2 = false;
+                    for(int j = 0; j < vec.size(); ++j)
+                    {
+                        if(j == i) continue;
+                        auto& p2 = vec[j];
+                        for(auto& pl: p1.plots)
+                        {
+                            once1 = once1 || pl.hasPoint(p1.first) && pl.hasPoint(p2.first) || pl.hasPoint(p1.first) && pl.hasPoint(p2.second);
+                            once2 = once2 || pl.hasPoint(p1.second) && pl.hasPoint(p2.first) || pl.hasPoint(p1.second) && pl.hasPoint(p2.second);
+                        }
+                        if(once1 && once2)
+                            break;
+                    }
+                    if(!once1)
+                    {
+                        bool hasPlot = false;
+                        for(auto& plot: p1.plots)
+                        {
+                            if(plot.hasPoint(p1.first) && plot.hasPoint(test.back().first))
+                            {
+                                hasPlot = true;
+                                break;
+                            }
+                        }
+                        if(hasPlot)
+                        {
+                            para.first = i;
+                            para.second = 1;
+                            break;
+                        }
+                    } else if(!once2)
+                    {
+                        bool hasPlot = false;
+                        for(auto& plot: p1.plots)
+                        {
+                            if(plot.hasPoint(p1.second) && plot.hasPoint(test.back().first))
+                            {
+                                hasPlot = true;
+                                break;
+                            }
+                        }
+                        if(hasPlot)
+                        {
+                            para.first = i;
+                            para.second = 2;
+                            break;
+                        }
+                    }
+                }
+            }
+            {
+                int index = 0;
+                for(int i = 0; i < vec.size(); ++i)
+                {
+                    auto& p = vec[i];
+                    if(i == para.first)
+                    {
+                        if(para.second == 1)
+                            test[index++] = test.back();
+                        test[index++] = {p.first, p.p1};
+                        test[index++] = {p.second, p.p2};
+                        if(para.second == 2)
+                            test[index++] = test.back();
+                    } else
+                    {
+                        test[index++] = {p.first, p.p1};
+                        test[index++] = {p.second, p.p2};
+                    }
+                }
+            }
+        }
+
+        //in theory faster than sort
+        static void sort2(std::vector<std::pair<palka::Vec2<T>, std::vector<Magpie::Plot<T>>>>& test)
+        {
+#ifdef TracyProfiler
+            ZoneScoped;
+#endif
+            for(size_t i = 0; i < test.size(); ++i)
+            {
+                auto& p = test[i];
+                for(size_t j = i + 1; j < test.size(); ++j)
+                {
+                    auto& p2 = test[j];
+                    bool find = false;
+                    for(const auto& plot: p.second)
+                    {
+                        if(plot.hasPoint(p2.first))
+                        {
+                            std::swap(test[i + 1], test[j]);
+                            find = true;
+                            break;
+                        }
+                    }
+                    if(find)
+                    {
+                        i++;
+                        break;
+                    }
+                }
+            }
+
+            if(test.size() > 5)
+            {
+                bool once = false;
+                for(size_t i = 0; i < test.size() - (((test.size() % 2 == 0) ? 2 : 3) * 2); i += 2)
+                {
+                    auto& p_1 = test[i];
+                    auto& p_2 = test[i + 1];
+                    int j = i + 2;
+                    auto& z_1 = test[j];
+                    auto& z_2 = test[j + 1];
+
+                    bool once = false;
+                    for(const auto& plot: p_1.second)
+                    {
+                        if(plot.hasPoint(z_1.first))
+                        {
+                            once = true;
+                            std::swap(p_1, p_2);
+                            break;
+                        }
+                        if(plot.hasPoint(z_2.first))
+                        {
+                            once = true;
+                            break;
+                        }
+                    }
+                    for(const auto& plot: p_2.second)
+                    {
+                        if(plot.hasPoint(z_2.first))
+                        {
+                            once = true;
+                            std::swap(z_1, z_2);
+                            break;
+                        }
+                        if(plot.hasPoint(z_1.first))
+                        {
+                            once = true;
+                            break;
+                        }
+                    }
+                    if(!once)
+                    {
+                        for(size_t b = j + 2; b < test.size() - ((test.size() % 2 == 0) ? 0 : 1); b += 2)
+                        {
+                            if(b == i) continue;
+                            auto& d_1 = test[b];
+                            auto& d_2 = test[b + 1];
+                            bool once = false;
+                            for(const auto& plot: p_1.second)
+                            {
+                                if(plot.hasPoint(d_1.first))
+                                {
+                                    once = true;
+                                    std::swap(p_1, p_2);
+                                    break;
+                                }
+                                if(plot.hasPoint(d_2.first))
+                                {
+                                    once = true;
+                                    break;
+                                }
+                            }
+                            if(!once)
+                                for(const auto& plot: p_2.second)
+                                {
+                                    if(plot.hasPoint(d_2.first))
+                                    {
+                                        once = true;
+                                        std::swap(d_1, d_2);
+                                        break;
+                                    }
+                                    if(plot.hasPoint(d_1.first))
+                                    {
+                                        once = true;
+                                        break;
+                                    }
+                                }
+
+                            if(once)
+                            {
+                                std::swap(z_1, d_1);
+                                std::swap(z_2, d_2);
+                                break;
+                            }
+                        }
+                    }
+                }
+                //magic swap
+                for(size_t i = 0; i < test.size() - ((test.size() % 2 == 0) ? 2 : 3); i += 2)
+                {
+                    size_t offset = ((test.size() % 2 == 0) ? 0 : 1);
+                    auto& p_1 = test[test.size() - (2 + offset)];
+                    auto& p_2 = test[test.size() - (1 + offset)];
+                    auto& z_1 = test[i];
+                    auto& z_2 = test[i + 1];
+                    bool once = false;
+                    for(const auto& plot: p_1.second)
+                    {
+                        if(plot.hasPoint(z_1.first))
+                        {
+                            once = true;
+                            std::swap(p_1, p_2);
+                            break;
+                        }
+                        if(plot.hasPoint(z_2.first))
+                        {
+                            once = true;
+                            break;
+                        }
+                    }
+                    if(!once)
+                        for(const auto& plot: p_2.second)
+                        {
+                            if(plot.hasPoint(z_2.first))
+                            {
+                                once = true;
+                                std::swap(p_1, p_2);
+                                break;
+                            }
+                            if(plot.hasPoint(z_1.first))
+                            {
+                                once = true;
+                                break;
+                            }
+                        }
+                    if(once)
+                        break;
+                }
+
+            } else
+            {
+                auto& p_1 = test[0];
+                auto& p_2 = test[1];
+                auto& z_1 = test[2];
+                auto& z_2 = test[3];
+
+                bool once = false;
+                for(const auto& plot: p_1.second)
+                {
+                    if(plot.hasPoint(z_1.first))
+                    {
+                        once = true;
+                        std::swap(p_1, p_2);
+                        break;
+                    }
+                    if(plot.hasPoint(z_2.first))
+                    {
+                        once = true;
+                        break;
+                    }
+                }
+                if(!once)
+                    for(const auto& plot: p_2.second)
+                    {
+                        if(plot.hasPoint(z_2.first))
+                        {
+                            once = true;
+                            std::swap(z_1, z_2);
+                            break;
+                        }
+                        if(plot.hasPoint(z_1.first))
+                        {
+                            once = true;
+                            break;
+                        }
+                    }
+            }
+            std::pair<int, int> para{-1, -1};
+            if(test.size() % 2 != 0) //finding a hole to insert the last element
+            {
+                for(size_t i = 0; i < test.size() - 2; i += 2)
+                {
+                    auto& p1 = test[i];
+                    auto& p2 = test[i + 1];
+                    bool once1 = false;
+                    bool once2 = false;
+                    for(size_t j = 0; j < test.size() - 2; j += 2)
+                    {
+                        auto& p3 = test[j];
+                        auto& p4 = test[j + 1];
+                        if(j == i) continue;
+                        for(const auto& plot: p1.second)
+                        {
+                            if(plot.hasPoint(p3.first))
+                            {
+                                once1 = true;
+                            }
+                            if(plot.hasPoint(p4.first))
+                            {
+                                once1 = true;
+                            }
+                        }
+                        for(const auto& plot: p2.second)
+                        {
+                            if(plot.hasPoint(p3.first))
+                            {
+                                once2 = true;
+                            }
+                            if(plot.hasPoint(p4.first))
+                            {
+                                once2 = true;
+                            }
+                        }
+                    }
+                    if(!once1)
+                    {
+                        bool hasPlot = false;
+                        for(const auto& plot: p1.second)
+                        {
+                            if(plot.hasPoint(test.back().first))
+                            {
+                                hasPlot = true;
+                                break;
+                            }
+                        }
+                        if(hasPlot)
+                        {
+                            para.first = i;
+                            para.second = -1;
+                            break;
+                        }
+                    } else if(!once2)
+                    {
+                        bool hasPlot = false;
+                        for(const auto& plot: p2.second)
+                        {
+                            if(plot.hasPoint(test.back().first))
+                            {
+                                hasPlot = true;
+                                break;
+                            }
+                        }
+                        if(hasPlot)
+                        {
+                            para.first = i;
+                            para.second = 1;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            for(size_t i = test.size() - 1; i > para.first + para.second + 1; --i)
+                std::swap(test[i], test[i - 1]);
+        }
+
+        static void sort(std::vector<palka::Vec2<T>>& points, const std::vector<Magpie::Plot<T>>& plots)
+        {
+#ifdef TracyProfiler
+            ZoneScoped;
+#endif
             std::vector<std::pair<palka::Vec2<T>, palka::Vec2<T>>> pairs;
+
             for(int i = 0; i < points.size(); ++i)
             {
                 auto p = points[i];
@@ -259,7 +786,7 @@ namespace Magpie
                     {
                         if(val.hasPoint(p) && val.hasPoint(p2))
                         {
-                            pairs.template emplace_back(p, p2);
+                            pairs.emplace_back(p, p2);
                             std::swap(points[i + 1], points[j]);
                             find = true;
                             break;
@@ -275,7 +802,6 @@ namespace Magpie
             if(pairs.size() > 2)
             {
                 //don't compare pairs.size and 0 because of possible holes (with points.size %2 != 0) will break the algorithm
-                //btw this comparison is not required
                 for(int i = 0; i < pairs.size() - 1; ++i)
                 {
                     auto& p1 = pairs[i];
@@ -336,27 +862,36 @@ namespace Magpie
                         }
                     }
                 }
-//                std::sort(pairs.begin(), pairs.end(), [&](auto& p1, auto& p2)
-//                {
-//                    for(auto& val: plots)
-//                    {
-//                        if(val.hasPoint(p1.first) && val.hasPoint(p2.first))
-//                        {
-//                            std::swap(p1.first, p1.second);
-//                            return true;
-//                        }
-//                        if(val.hasPoint(p1.second) && val.hasPoint(p2.second))
-//                        {
-//                            std::swap(p2.first, p2.second);
-//                            return true;
-//                        }
-//                        if(val.hasPoint(p1.first) && val.hasPoint(p2.second) || val.hasPoint(p1.second) && val.hasPoint(p2.first))
-//                        {
-//                            return true;
-//                        }
-//                    }
-//                    return false;
-//                });
+                //in some cases, a swap may be required for the last pair:
+                //it is important that this is a local swap for a pair
+                //and it does not need to be swapped with another pair because if this is possible then all pairs are already in the right order
+                bool once = false;
+                for(int i = 0; i < pairs.size() - 1; ++i)
+                {
+                    auto& p1 = pairs.back();
+                    auto& p2 = pairs[i];
+                    for(auto& val: plots)
+                    {
+                        if(val.hasPoint(p1.first) && val.hasPoint(p2.first))
+                        {
+                            std::swap(p1.first, p1.second);
+                            once = true;
+                            break;
+                        }
+                        if(val.hasPoint(p1.second) && val.hasPoint(p2.second))
+                        {
+                            std::swap(p1.first, p1.second);
+                            once = true;
+                            break;
+                        }
+                        if(val.hasPoint(p1.first) && val.hasPoint(p2.second) || val.hasPoint(p1.second) && val.hasPoint(p2.first))
+                        {
+                            break;
+                        }
+                    }
+                    if(once)
+                        break;
+                }
             } else
             {
                 auto& p1 = pairs[0];
@@ -437,41 +972,29 @@ namespace Magpie
             }
 
             {
-                int i = 0;
-                for(auto& p: pairs)
+                int index = 0;
+                for(int i = 0; i < pairs.size(); ++i)
                 {
+                    auto& p = pairs[i];
                     if(i == para.first)
                     {
                         if(para.second == 1)
-                            points[i++] = points.back();
-                        points[i++] = p.first;
-                        points[i++] = p.second;
+                            points[index++] = points.back();
+                        points[index++] = p.first;
+                        points[index++] = p.second;
                         if(para.second == 2)
-                            points[i++] = points.back();
+                            points[index++] = points.back();
                     } else
                     {
-                        points[i++] = p.first;
-                        points[i++] = p.second;
+                        points[index++] = p.first;
+                        points[index++] = p.second;
                     }
                 }
             }
-//            T min = std::numeric_limits<T>::max();
-//            int index = -1;
-//            for(int i = 0; i < points.size(); ++i)
-//            {
-//                if(points[i].x < min)
-//                {
-//                    index = i;
-//                    min = points[i].x;
-//                }
-//            }
-//            if(index > -1)
-//                std::rotate(points.begin(),
-//                            points.end() - (points.size() - index),
-//                            points.end());
         }
 
     public:
+
         GraphicMet2D() = default;
 
         GraphicMet2D(const MatrixStorage<T>& data, int var_count, int limitations_count)
@@ -528,6 +1051,9 @@ namespace Magpie
         //find all the intersection points
         auto getIntersectionPoints(const std::vector<Magpie::Plot<T>>& plots)
         {
+#ifdef TracyProfiler
+            ZoneScoped;
+#endif
             std::vector<palka::Vec2<T>> points;
             for(int i = 0; i < plots.size(); ++i)
             {
@@ -553,6 +1079,9 @@ namespace Magpie
         //BUG:it may happen that generateAAB returns an intersection point that forms a set
         auto deleteBadPlots(const std::vector<Magpie::Plot<T>>& plots, const std::vector<palka::Vec2<T>>& points)
         {
+#ifdef TracyProfiler
+            ZoneScoped;
+#endif
             std::set<Plot<T>> filteredLines;
             auto deleteCheck = [&](const Magpie::Plot<T>& v, palka::Vec2<T> in)
             {
@@ -569,7 +1098,7 @@ namespace Magpie
                     }
                     if(all)
                     {
-                        filteredLines.template emplace(v);
+                        filteredLines.emplace(v);
                         break;
                     }
                     all = true;
@@ -636,89 +1165,22 @@ namespace Magpie
 
         GraphicsResult<T> solve() override
         {
+#ifdef TracyProfiler
+            ZoneScoped;
+#endif
             std::vector<palka::Vec2<T>> points = getIntersectionPoints(Plots);
-//            for(int i = 0; i < Plots.size(); ++i) //find all the intersection points
-//            {
-//                for(int j = i + 1; j < Plots.size(); ++j)
-//                {
-//                    auto& v = Plots[i];
-//                    auto& v2 = Plots[j];
-//                    if(v != v2)
-//                    {
-//                        auto in = v.intersection(v2);//intersection({v.a, v2.a}, {v.b, v2.b}, {v.c, v2.c});
-//                        if(in.x >= 0 && in.y >= 0 && in.x != std::numeric_limits<T>::min() && in.y != std::numeric_limits<T>::min())
-//                        {
-//                            points.emplace_back(in);
-//                        }
-//                    }
-//                }
-//            }
-
             std::set<Plot<T>> filteredLines = deleteBadPlots(Plots, points);
-            //we delete lines that do not set critical points, but only pass through them
-            //// (they have one point in common with the set that they do not set)
-            //BUG:it may happen that generateAAB returns an intersection point that forms a set
-//            for(int i = 0; i < Plots.size(); ++i)
-//            {
-//                for(int j = i + 1; j < Plots.size(); ++j)
-//                {
-//                    auto& v = Plots[i];
-//                    auto& v2 = Plots[j];
-//                    if(v != v2)
-//                    {
-//                        auto in = v.intersection(v2);//intersection({v.a, v2.a}, {v.b, v2.b}, {v.c, v2.c});
-//                        if(in.x >= 0 && in.y >= 0 && in.x != std::numeric_limits<T>::min() && in.y != std::numeric_limits<T>::min())
-//                        {
-//                            bool all = true;
-//                            for(auto& p: v.generateAAB(in, 0.2))
-//                            {
-//                                for(auto& l: Plots)
-//                                {
-//                                    if(!l.containsPoint(p))
-//                                    {
-//                                        all = false;
-//                                        break;
-//                                    }
-//                                }
-//                                if(all)
-//                                {
-//                                    filteredLines.template emplace(v);
-//                                    break;
-//                                }
-//                                all = true;
-//                            }
-//                            bool all2 = true;
-//                            for(auto& p: v2.generateAAB(in, 0.2))
-//                            {
-//                                if(std::find_if(points.begin(), points.end(), [&](const auto& point)
-//                                { return p == point; }) != points.end())
-//                                    continue;
-//
-//                                for(auto& l: Plots)
-//                                {
-//                                    if(!l.containsPoint(p))
-//                                    {
-//                                        all2 = false;
-//                                        break;
-//                                    }
-//                                }
-//                                if(all2)
-//                                {
-//                                    filteredLines.template emplace(v2);
-//                                    break;
-//                                }
-//                                all2 = true;
-//                            }
-//                        }
-//                    }
-//                }
-//            }
             Plots.clear();
+
             std::move(filteredLines.begin(), filteredLines.end(), std::back_inserter(Plots));
 
+            std::vector<std::pair<palka::Vec2<T>, std::vector<Magpie::Plot<T>>>> maps;
+            std::vector<Magpie::Plot<T>> plots_storage;
             for(auto& p: points) //discard those that do not lie in the domain of each function
             {
                 bool all = true;
+                plots_storage.clear();
+
                 for(auto& val: Plots)
                 {
                     if(!val.containsPoint(p))
@@ -726,18 +1188,23 @@ namespace Magpie
                         all = false;
                         break;
                     }
+                    if(val.hasPoint(p))
+                        plots_storage.emplace_back(val);
                 }
                 if(all)
                 {
                     if(std::find_if(Union.begin(), Union.end(), [&](const palka::Vec2<T> r)
-                    { return r == palka::Vec2<T>{abs(p.x), abs(p.y)}; })
-                       == Union.end())
+                    {
+                        return r == palka::Vec2<T>{abs(p.x), abs(p.y)};
+                    }) == Union.end())
                     {
                         Union.emplace_back(abs(p.x), abs(p.y));
+                        maps.emplace_back(p, plots_storage);
                     }
                 }
             }
 
+            GraphicMet2D<T>::sort2(maps);
 
             GraphicMet2D<T>::sort(Union, Plots);
 
@@ -766,10 +1233,43 @@ namespace Magpie
                     if(lp2)
                         plots2.emplace_back(l);
                 }
-                holes.emplace_back(holes_store{Union[0], plots1});
-                holes.emplace_back(holes_store{Union[1], plots2});
+                if(!once)
+                {
+                    holes.emplace_back(holes_store{Union[0], plots1});
+                    holes.emplace_back(holes_store{Union[1], plots2});
+                }
             } else
             {
+
+/////////////////////////////////////////////////////NEW ALGO !!!!!!!!!!//////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                for(int i = 0; i < maps.size(); ++i)
+//                {
+//                    auto& p = maps[i];
+//                    int j = (i + 1 < maps.size()) ? i + 1 : 0;
+//                    auto p2 = maps[j];
+//
+//                    std::vector<Plot<T>> plots1;
+//                    std::vector<Plot<T>> plots2;
+//                    bool once = false;
+//
+//                    for(auto& v1: p2.second)
+//                    {
+//                        if(std::find_if(p.second.begin(), p.second.end(), [&](auto& val)
+//                        { return val == v1; }) != p.second.end())
+//                        {
+//                            once = true;
+//                            break;
+//                        }
+//                    }
+//                    if(!once)
+//                    {
+//                        holes.emplace_back(holes_store{p.first, p.second});
+//                        holes.emplace_back(holes_store{p2.first, p2.second});
+//                    }
+//                }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 for(int i = 0; i < Union.size(); ++i)
                 {
                     auto p1 = Union[i];
@@ -856,9 +1356,9 @@ namespace Magpie
 
             float min = FLT_MAX;
             palka::Vec2<T> resVec;
-            for(auto vec: Union) //find min point and value
+            for(auto& vec: Union) //find min point and value
             {
-                if(auto val = F.a * vec.x + F.a * vec.y; val < min)
+                if(auto val = F.a * vec.x + F.a * vec.y;val < min)
                 {
                     min = F.a * vec.x + F.a * vec.y;
                     resVec = vec;
@@ -867,6 +1367,7 @@ namespace Magpie
             double resValue = min;
 
             return {GraphicsResult<T>::closed, Union, resVec, resValue};
+
         }
     };
 
@@ -880,6 +1381,12 @@ namespace Magpie
         {
             Magpie::GraphicMet2D<T>::sort(Union, plots);
             return Union;
+        }
+
+        auto call2(std::vector<std::pair<palka::Vec2<T>, std::vector<Magpie::Plot<T>>>> test)
+        {
+            Magpie::GraphicMet2D<T>::sort2(test);
+            return test;
         }
     };
 

@@ -4,7 +4,7 @@
 #include "UiView.h"
 #include <imgui_internal.h>
 #include <implot.h>
-
+#include "cmake-build-debug/_deps/tracy-src/Tracy.hpp"
 namespace Magpie
 {
     class InputView : public UiView

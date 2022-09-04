@@ -40,6 +40,8 @@ namespace Magpie
             if(ImPlot::BeginPlot("My Plot"))
             {
                 ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.25f);
+                ImPlot::SetupAxes("x","y");
+                ImPlot::SetupAxesLimits(0, 10, 0, 10);
                 ImPlot::PlotLine("My Line Plot", dataX.data(), dataY.data(), dataX.size());
                 ImPlot::PlotScatter("Result", &result.x, &result.y, 1);
                 ImPlot::EndPlot();

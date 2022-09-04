@@ -130,7 +130,7 @@ namespace palka
 
         void setData(size_t id, buffer_data data)
         {
-            datas_storage.template emplace(std::make_pair(id, data));
+            datas_storage.emplace(std::make_pair(id, data));
         }
 
         template<class T>

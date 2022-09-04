@@ -8,7 +8,7 @@ namespace Magpie
 #if TESTING
 #define EPSILON 0.01
 #else
-#define EPSILON 0.000001
+#define EPSILON 0.0000001
 #endif
 
     template<class T>

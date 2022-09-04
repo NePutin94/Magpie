@@ -125,7 +125,7 @@ void Console::Draw(const char* title, bool* p_open)
         ImGui::Checkbox("Find By Type", &find);
         static std::string item_current = logType_s[0].data();
         ImGui::PushItemWidth(45);
-        if(ImGui::BeginCombo("", item_current.c_str(), ImGuiComboFlags_NoArrowButton))
+        if(ImGui::BeginCombo("__", item_current.c_str(), ImGuiComboFlags_NoArrowButton))
         {
             for(auto& item: logType_s)
             {
