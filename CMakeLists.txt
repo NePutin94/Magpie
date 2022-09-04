@@ -42,9 +42,9 @@ ENDIF ()
 file(GLOB Magpie_SRC RELATIVE "${CMAKE_SOURCE_DIR}/" "*.cpp")
 file(GLOB IMGUI_SRC RELATIVE "${CMAKE_SOURCE_DIR}/" "lib/imgui/*.cpp")
 if (NOT MSVC)
-    add_executable(Magpie main.cpp ${Magpie_SRC})
+    add_executable(Magpie main.cpp ${Magpie_SRC} config.h)
 else ()
-    add_executable(Magpie main.cpp ${Magpie_SRC} ${IMGUI_SRC})
+    add_executable(Magpie main.cpp ${Magpie_SRC} ${IMGUI_SRC} config.h)
 endif ()
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 add_subdirectory(lib)
@@ -80,9 +80,13 @@ add_custom_command(TARGET Magpie POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:palka> "${CMAKE_BINARY_DIR}/tests"
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:fmt::fmt> "${CMAKE_BINARY_DIR}/tests"
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:assimp::assimp> "${CMAKE_BINARY_DIR}/tests"
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:MagpieLib> "${CMAKE_BINARY_DIR}/tests"
+
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:RTTR::Core> "${CMAKE_BINARY_DIR}/tests"
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:glfw> "${CMAKE_BINARY_DIR}/tests"
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:tinygltf> "${CMAKE_BINARY_DIR}/tests")
 
+if (NOT MSVC)
+    add_custom_command(TARGET Magpie POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:MagpieLib> "${CMAKE_BINARY_DIR}/tests")
+endif ()
 

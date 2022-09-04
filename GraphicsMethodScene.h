@@ -8,6 +8,7 @@
 #include "UiScene.h"
 #include "GraphicalMethodView.h"
 #include "MagicInput.h"
+#include "config.h"
 
 namespace Magpie
 {
@@ -36,7 +37,7 @@ namespace Magpie
             {
                 case State::Input:
                 {
-                    addView<MagicInput>({});
+                    addView<MagicInput>(MagicInput("MagicInput", Magpie::Config::WindowSize * palka::Vec2f {0.8, 0.8}));
                 }
                     break;
                 case State::Solve:
@@ -53,7 +54,8 @@ namespace Magpie
         void init() override
         {
             state = State::Input;
-            addView<MagicInput>({});
+            addView<MagicInput>(MagicInput("MagicInput", Magpie::Config::WindowSize * palka::Vec2f {0.8, 0.8}));
+            getView<MagicInput>()->setEvents();
         }
 
         void render() override

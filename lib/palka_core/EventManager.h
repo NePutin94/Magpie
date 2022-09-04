@@ -239,9 +239,16 @@ namespace palka
             if(action == GLFW_PRESS)
             {
                 keyPressed.emplace(key);
-                auto range = KeyboardEvents.equal_range(KBoardEvent{EventType::KEYDOWN, key});
-                for(auto it = range.first; it != range.second; ++it)
-                    it->second(data);
+                {
+                    auto range = KeyboardEvents.equal_range(KBoardEvent{EventType::KEYDOWN, key});
+                    for(auto it = range.first; it != range.second; ++it)
+                        it->second(data);
+                }
+                {
+                    auto range = TypeEvents.equal_range(KEYDOWN);
+                    for(auto it = range.first; it != range.second; ++it)
+                        it->second(data);
+                }
             } else if(action == GLFW_RELEASE)
             {
                 keyPressed.erase(key);

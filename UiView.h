@@ -29,6 +29,10 @@ namespace Magpie
                 : name(name), win_flag(w_flag), open(open)
         {}
 
+        UiView(std::string_view name, palka::Vec2f size, bool open = true, ImGuiWindowFlags w_flag = ImGuiWindowFlags_None)
+                : name(name), win_flag(w_flag), open(open), size(size)
+        {}
+
         UiView(std::string_view name, palka::Vec2f pos, palka::Vec2f size, bool open = true, ImGuiWindowFlags w_flag = ImGuiWindowFlags_None)
                 : name(name), win_flag(w_flag), open(open), pos(pos), size(size)
         {}

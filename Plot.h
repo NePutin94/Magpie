@@ -66,18 +66,88 @@ namespace Magpie
             return out;
         }
 
+        std::vector<palka::Vec2<T>> generateAAB2(const palka::Vec2<T>& pointOnPlot, T offset = 1, int count = 1) const
+        {
+            std::vector<palka::Vec2<T>> p1;
+            if(a == 0)
+            {
+                for(int i = 1; i < count + 1; ++i)
+                {
+                    auto max = pointOnPlot + palka::Vec2<T>{offset * i, offset * i};
+                    auto min = pointOnPlot + palka::Vec2<T>{-offset * i, -offset * i};
+
+                    p1.emplace_back(max.x, getValueAtY(max.x));
+                    p1.emplace_back(min.x, getValueAtY(min.x));
+                }
+            } else if(b == 0)
+            {
+                for(int i = 1; i < count + 1; ++i)
+                {
+                    auto max = pointOnPlot + palka::Vec2<T>{offset * i, offset * i};
+                    auto min = pointOnPlot + palka::Vec2<T>{-offset * i, -offset * i};
+
+                    if(containsPoint({0, 0}))
+                    {
+                        p1.emplace_back(pointOnPlot.x - offset, max.y);
+                        p1.emplace_back(pointOnPlot.x - offset, min.y);
+                    } else
+                    {
+                        p1.emplace_back(pointOnPlot.x + offset, max.y);
+                        p1.emplace_back(pointOnPlot.x + offset, min.y);
+                    }
+                }
+            } else
+            {
+                for(int i = 1; i < count + 1; ++i)
+                {
+                    auto max = pointOnPlot + palka::Vec2<T>{offset * i, offset * i};
+                    auto min = pointOnPlot + palka::Vec2<T>{-offset * i, -offset * i};
+
+                    p1.emplace_back(max.x, getValueAtY(max.x));
+                    p1.emplace_back(getValueAtX(max.y), max.y);
+                    p1.emplace_back(min.x, getValueAtY(min.x));
+                    p1.emplace_back(getValueAtX(min.y), min.y);
+                }
+            }
+            return p1;
+        }
+
         std::vector<palka::Vec2<T>> generateAAB(const palka::Vec2<T>& pointOnPlot, T offset = 1, int count = 1) const
         {
             std::vector<palka::Vec2<T>> p1;
-            for(int i = 1; i < count + 1; ++i)
-            {
-                auto max = pointOnPlot + palka::Vec2<T>{offset * i, offset * i};
-                auto min = pointOnPlot + palka::Vec2<T>{-offset * i, -offset * i};
 
-                p1.emplace_back(max.x, getValueAtY(max.x));
-                p1.emplace_back(getValueAtX(max.y), max.y);
-                p1.emplace_back(min.x, getValueAtY(min.x));
-                p1.emplace_back(getValueAtX(min.y), min.y);
+            if(a == 0)
+            {
+                for(int i = 1; i < count + 1; ++i)
+                {
+                    auto max = pointOnPlot + palka::Vec2<T>{offset * i, offset * i};
+                    auto min = pointOnPlot + palka::Vec2<T>{-offset * i, -offset * i};
+
+                    p1.emplace_back(max.x, getValueAtY(max.x));
+                    p1.emplace_back(min.x, getValueAtY(min.x));
+                }
+            } else if(b == 0)
+            {
+                for(int i = 1; i < count + 1; ++i)
+                {
+                    auto max = pointOnPlot + palka::Vec2<T>{offset * i, offset * i};
+                    auto min = pointOnPlot + palka::Vec2<T>{-offset * i, -offset * i};
+
+                    p1.emplace_back(getValueAtX(max.y), max.y);
+                    p1.emplace_back(getValueAtX(min.y), min.y);
+                }
+            } else
+            {
+                for(int i = 1; i < count + 1; ++i)
+                {
+                    auto max = pointOnPlot + palka::Vec2<T>{offset * i, offset * i};
+                    auto min = pointOnPlot + palka::Vec2<T>{-offset * i, -offset * i};
+
+                    p1.emplace_back(max.x, getValueAtY(max.x));
+                    p1.emplace_back(getValueAtX(max.y), max.y);
+                    p1.emplace_back(min.x, getValueAtY(min.x));
+                    p1.emplace_back(getValueAtX(min.y), min.y);
+                }
             }
             return p1;
         }

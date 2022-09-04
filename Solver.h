@@ -12,6 +12,7 @@
 #include "ConsoleLog.h"
 #include <chrono>
 #include <Tracy.hpp>
+
 namespace Magpie
 {
     template<class T>
@@ -40,7 +41,9 @@ namespace Magpie
 
         std::pair<std::vector<T>, std::vector<T>> getVisualUnion()
         {
+#ifdef TracyProfiler
             ZoneScopedS(6);
+#endif
             std::vector<T> X;
             std::vector<T> Y;
             for(auto vec: Union)

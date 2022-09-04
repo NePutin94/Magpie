@@ -16,6 +16,7 @@
 #include "StartScene.h"
 #include "SceneManager.h"
 
+
 using namespace palka;
 namespace Magpie
 {
@@ -32,21 +33,12 @@ namespace Magpie
         double timeSinceStart;
         float t = 0;
         float delta;
-        enum States
-        {
-            Menu,
-            Solver
-        };
-        // MainScene scene;
         SceneManager manager;
-
     public:
         explicit Application(Vec2i size) : w(size), isRuning(false), view(RectF(0, 0, size.x, size.y))
         {
             init();
-            //scene.init();
         }
-
 
         static void glfw_error_callback(int error, const char* description)
         {
@@ -66,12 +58,12 @@ namespace Magpie
 
         void init();
 
+
         void render()
         {
             w.clear();
             ImPlot::ShowDemoWindow();
             manager.getScene()->render();
-            //scene.render();
             Console::Draw("Console", &console_open);
             w.ImGuiEndFrame();
             w.EndFrame();
@@ -82,7 +74,6 @@ namespace Magpie
             // debug(w.getCamera(), "camera");
             // debug(w.getViewport(), "view");
             manager.getScene()->update();
-            //scene.update();
             timeSinceStart = glfwGetTime();
             delta = timeSinceStart - oldTimeSinceStart;
             oldTimeSinceStart = timeSinceStart;
