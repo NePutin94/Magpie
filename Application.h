@@ -12,7 +12,7 @@
 #include "DockWrapper.h"
 #include "MainScene.h"
 #include <imgui_internal.h>
-#include "cmake-build-debug/_deps/tracy-src/Tracy.hpp"
+#include <Tracy.hpp>
 #include "StartScene.h"
 #include "SceneManager.h"
 

@@ -11,8 +11,7 @@
 #include "ISolver.h"
 #include "ConsoleLog.h"
 #include <chrono>
-#include "cmake-build-debug/_deps/tracy-src/Tracy.hpp"
-
+#include <Tracy.hpp>
 namespace Magpie
 {
     template<class T>
