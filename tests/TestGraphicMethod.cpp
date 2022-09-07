@@ -55,10 +55,11 @@ TYPED_TEST(TestGraphMetSort, TestGraphMetSort_Func1)
 TYPED_TEST_SUITE(TestGraphMetSort, typelist);
 TYPED_TEST(TestGraphMetSort, TestGraphMetSort_Func2)
 {
-    std::vector<palka::Vec2<double>> order{palka::Vec2<double>{0.867, 0.133},
-                                           palka::Vec2<double>{0.588, 0.412},
-                                           palka::Vec2<double>{0.948, 3.106},
-                                           palka::Vec2<double>{1.65, 1.7}};
+    std::vector<palka::Vec2<double>> order{palka::Vec2<double>{0.588, 0.412},
+                                           palka::Vec2<double>{0.867, 0.133},
+                                           palka::Vec2<double>{1.65, 1.7},
+                                           palka::Vec2<double>{0.948, 3.106}
+    };
 
     Magpie::GraphPrivateWrapper<double> test;
     auto res = test.call(
@@ -101,11 +102,11 @@ TYPED_TEST(TestGraphMetSort, TestGraphMetSort_Func2)
 TYPED_TEST_SUITE(TestGraphMetSort, typelist);
 TYPED_TEST(TestGraphMetSort, TestGraphMetSort_Func3)
 {
-    std::vector<palka::Vec2<double>> order{palka::Vec2<double>{0.667, 3.333},
+    std::vector<palka::Vec2<double>> order{palka::Vec2<double>{0, 0},
                                            palka::Vec2<double>{0, 3.5},
-                                           palka::Vec2<double>{0, 0},
-                                           palka::Vec2<double>{1, 0},
-                                           palka::Vec2<double>{1.833, 0.417}};
+                                           palka::Vec2<double>{0.667, 3.333},
+                                           palka::Vec2<double>{1.833, 0.417},
+                                           palka::Vec2<double>{1, 0}};
 
     Magpie::GraphPrivateWrapper<double> test;
     auto res = test.call(
@@ -314,12 +315,13 @@ TYPED_TEST_SUITE(TestGraphMetSort, typelist); //Check magic swap
 TYPED_TEST(TestGraphMetSort, TestGraphMetSort_Func7)
 {
     std::vector<palka::Vec2<double>> order{palka::Vec2<double>{3.588, 1.294},
-                                           palka::Vec2<double>{3.467, 2.267},
-                                           palka::Vec2<double>{2, 3},
-                                           palka::Vec2<double>{0.667, 3.333},
-                                           palka::Vec2<double>{0, 3},
+                                           palka::Vec2<double>{1, 0},
                                            palka::Vec2<double>{0, 1},
-                                           palka::Vec2<double>{1, 0}};
+                                           palka::Vec2<double>{0, 3},
+                                           palka::Vec2<double>{0.667, 3.333},
+                                           palka::Vec2<double>{2, 3},
+                                           palka::Vec2<double>{3.467, 2.267}
+    };
 
 
     Magpie::GraphPrivateWrapper<double> test;

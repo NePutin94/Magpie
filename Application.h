@@ -58,7 +58,6 @@ namespace Magpie
 
         void init();
 
-
         void render()
         {
             w.clear();

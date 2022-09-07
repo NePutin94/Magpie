@@ -12,15 +12,16 @@
 #include "Solver.h"
 #include "EventManager.h"
 #include "config.h"
+#include <implot_internal.h>
 
 namespace Magpie
 {
     class MagicInput : public UiView
     {
-        float roundoff(double value, unsigned char prec)
-        {
-            float pow_10 = pow(10.0f, (double) prec);
-            return round(value * pow_10) / pow_10;
+        inline int AxisPrecision(const ImPlotAxis& axis)
+        { //check implot.cpp
+            const double range = axis.Ticker.TickCount() > 1 ? (axis.Ticker.Ticks[1].PlotPos - axis.Ticker.Ticks[0].PlotPos) : axis.Range.Size();
+            return ImPlot::Precision(range);
         }
 
         void layout2(const char* label, double& val, int col)
@@ -89,26 +90,49 @@ namespace Magpie
         {
             std::vector<double> x;
             std::vector<double> y;
+
+            std::vector<double> x2; //for the case plot.b==0
+            std::vector<double> y2;
         };
         std::map<int, Union> UnionPoints;
 
         void drawUnion(int plotIndex)
         {
-            ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.15f);
-            switch((Sign) storage.get(2, plotIndex + 1))
+            if(plots[plotIndex].b == 0)
             {
-                case GREATEROREQUAL:
-                    ImPlot::PlotShaded(fmt::format("Plot {0}", plotIndex).c_str(), UnionPoints[plotIndex].x.data(),
-                                       UnionPoints[plotIndex].y.data(), UnionPoints[plotIndex].x.size(), INFINITY);
-                    break;
-                case LESSOREQUAL:
-                    ImPlot::PlotShaded(fmt::format("Plot {0}", plotIndex).c_str(), UnionPoints[plotIndex].x.data(),
-                                       UnionPoints[plotIndex].y.data(), UnionPoints[plotIndex].x.size(), -INFINITY);
-                    break;
-                case EQUAL:
-                    break;
+                ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.15f);
+                switch((Sign) storage.get(2, plotIndex + 1))
+                {
+                    case GREATEROREQUAL:
+                        ImPlot::PlotShaded(fmt::format("Plot {0}", plotIndex).c_str(), UnionPoints[plotIndex].x.data(),
+                                           UnionPoints[plotIndex].y.data(), UnionPoints[plotIndex].x.size(), -INFINITY);
+                        break;
+                    case LESSOREQUAL:
+                        ImPlot::PlotShaded(fmt::format("Plot {0}", plotIndex).c_str(), UnionPoints[plotIndex].x2.data(),
+                                           UnionPoints[plotIndex].y2.data(), UnionPoints[plotIndex].x.size(), -INFINITY);
+                        break;
+                    case EQUAL:
+                        break;
+                }
+                ImPlot::PopStyleVar();
+            } else
+            {
+                ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.15f);
+                switch((Sign) storage.get(2, plotIndex + 1))
+                {
+                    case GREATEROREQUAL:
+                        ImPlot::PlotShaded(fmt::format("Plot {0}", plotIndex).c_str(), UnionPoints[plotIndex].x.data(),
+                                           UnionPoints[plotIndex].y.data(), UnionPoints[plotIndex].x.size(), INFINITY);
+                        break;
+                    case LESSOREQUAL:
+                        ImPlot::PlotShaded(fmt::format("Plot {0}", plotIndex).c_str(), UnionPoints[plotIndex].x.data(),
+                                           UnionPoints[plotIndex].y.data(), UnionPoints[plotIndex].x.size(), -INFINITY);
+                        break;
+                    case EQUAL:
+                        break;
+                }
+                ImPlot::PopStyleVar();
             }
-            ImPlot::PopStyleVar();
         }
 
         void drawLine(const palka::Vec2<double>& p1, const palka::Vec2<double>& p2, int index)
@@ -141,6 +165,29 @@ namespace Magpie
                 Union u{};
                 if(plots[plotIndex].b == 0)
                 {
+                    std::vector<double> x;
+                    std::vector<double> y;
+                    Union u{};
+
+                    u.x.emplace_back(p1.x);
+                    u.y.emplace_back(p1.y - 100);
+                    u.x.emplace_back(p1.x);
+                    u.y.emplace_back(p1.y + 100);
+
+                    u.y.emplace_back(p1.y + 100);
+                    u.x.emplace_back(p1.x + 30);
+                    u.y.emplace_back(p1.y + 100);
+                    u.x.emplace_back(p1.x + 30);
+
+                    u.x2.emplace_back(p1.x);
+                    u.y2.emplace_back(p1.y - 100);
+                    u.x2.emplace_back(p1.x);
+                    u.y2.emplace_back(p1.y + 100);
+                    u.y2.emplace_back(p1.y + 100);
+                    u.x2.emplace_back(p1.x - 30);
+                    u.y2.emplace_back(p1.y + 100);
+                    u.x2.emplace_back(p1.x - 30);
+                    UnionPoints[plotIndex] = u;
                 } else
                 {
                     for(auto& p: plots[plotIndex].generateAAB2(p1, 20))
@@ -173,13 +220,25 @@ namespace Magpie
                                            (Config::WindowSize.y - (size.y)) / 2), ImGuiCond_Always, {0, 0});
             if(ImGui::Begin("Magic Input"))
             {
+                static int prec = 1;
+                ImGui::DragInt("Precision", &prec, 0.4f, 0, 4);
                 ImGui::SetWindowSize({size.x, size.y});
                 if(ImPlot::BeginPlot("Create union"))
                 {
+//                    if(ImPlot::IsPlotHovered())
+//                    {
+//                        auto t2 = ImPlot::GetCurrentContext()->CurrentPlot;
+//                        auto valX = t2->XAxis(0);
+//                        auto valY = t2->XAxis(0);
+//
+//                        prec = AxisPrecision(valX);
+//                        prec = std::min(prec, AxisPrecision(valY));
+//
+//                    }
                     if(ImPlot::IsPlotHovered() && ImGui::IsMouseClicked(0) && ImGui::GetIO().KeyCtrl && !SetIsClosed)
                     {
                         auto pt = ImPlot::GetPlotMousePos();
-                        auto pp = palka::Vec2<double>{roundoff(pt.x, 1), roundoff(pt.y, 1)};
+                        auto pp = palka::Vec2<double>{ImPlot::RoundTo(pt.x, prec), ImPlot::RoundTo(pt.y, prec)};
                         if(points.size() > 2 && PlotCompare(points[0].x, pp.x, 0.01) && PlotCompare(points[0].y, pp.y, 0.01))
                         {
                             SetIsClosed = true;
@@ -194,7 +253,7 @@ namespace Magpie
                             plots.emplace_back(-d1, d2, d2 * p1.y - d1 * p1.x);
                         } else
                         {
-                            points.emplace_back(roundoff(pt.x, 1), roundoff(pt.y, 1));
+                            points.emplace_back(ImPlot::RoundTo(pt.x, prec), ImPlot::RoundTo(pt.y, prec));
                             if(points.size() > 1)
                             {
                                 auto p1 = *(points.end() - 1);
@@ -206,7 +265,7 @@ namespace Magpie
                                 auto d2 = p2.x - p1.x;
 
                                 palka::Console::fmt_log("plot a={:.2f} b={:.2f}, c={:.2f}", palka::Console::info, -d1, d2, d2 * p1.y - d1 * p1.x);
-                                plots.emplace_back(roundoff(-d1, 3), roundoff(d2, 3), roundoff(d2 * p1.y - d1 * p1.x, 3));
+                                plots.emplace_back(-d1, d2, d2 * p1.y - d1 * p1.x);
                             }
                         }
                     }
@@ -222,40 +281,7 @@ namespace Magpie
                             if(StorageOnceInit && (Sign) storage.get(2, plotIndex + 1) != Sign::EQUAL)
                             {
                                 plots[plotIndex].sign = (Sign) storage.get(2, plotIndex + 1);
-                                if(plots[plotIndex].b == 0) //on the X axis, the function cannot be scaled to infinity, so every time (perhaps the sign changes)
-                                    // we calculate a new area
-                                {
-                                    std::vector<double> x;
-                                    std::vector<double> y;
-                                    Union u{};
-
-                                    u.x.emplace_back(p1.x);
-                                    u.y.emplace_back(p1.y - 100);
-                                    u.x.emplace_back(p1.x);
-                                    u.y.emplace_back(p1.y + 100);
-
-                                    if(plots[plotIndex].containsPoint(p1 - palka::Vec2<double>{5.0, 0.0}))
-                                    {
-                                        u.y.emplace_back(p1.y + 100);
-                                        u.x.emplace_back(p1.x - 30);
-                                        u.y.emplace_back(p1.y + 100);
-                                        u.x.emplace_back(p1.x - 30);
-                                    } else
-                                    {
-                                        u.y.emplace_back(p1.y + 100);
-                                        u.x.emplace_back(p1.x + 30);
-                                        u.y.emplace_back(p1.y + 100);
-                                        u.x.emplace_back(p1.x + 30);
-                                    }
-                                    UnionPoints[plotIndex] = u;
-                                    ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.15f);
-                                    ImPlot::PlotShaded(fmt::format("Plot {0}", plotIndex).c_str(), UnionPoints[plotIndex].x.data(),
-                                                       UnionPoints[plotIndex].y.data(), UnionPoints[plotIndex].x.size(), -INFINITY);
-                                    ImPlot::PopStyleVar();
-                                } else
-                                {
-                                    drawUnion(plotIndex);
-                                }
+                                drawUnion(plotIndex);
                             } else
                                 drawLine(p1, p2, plotIndex);
                             plotIndex++;
@@ -264,14 +290,14 @@ namespace Magpie
                     {
                         for(auto& p: plots)
                         {
-                            double y[2] = {-5, 5};
-                            double x[2] = {p.getValueAtX(-5), p.getValueAtX(5)};
+                            double y[2] = {-20, 20};
+                            double x[2] = {p.getValueAtX(-20), p.getValueAtX(20)};
                             if(p.a == 0)
                             {
-                                x[0] = -5;
-                                x[1] = 5;
-                                y[0] = p.getValueAtY(-5);
-                                y[1] = p.getValueAtY(5);
+                                x[0] = -20;
+                                x[1] = 20;
+                                y[0] = p.getValueAtY(-20);
+                                y[1] = p.getValueAtY(20);
                             }
                             ImPlot::PlotLine(fmt::format("plot a={:.2f} b={:.2f}, c={:.2f}", p.a, p.b, p.c).c_str(), x, y, 2);
                         }

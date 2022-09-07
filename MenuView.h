@@ -16,12 +16,21 @@ namespace Magpie
     class MenuView : public UiView
     {
     private:
-    SceneManager::States res;
+        SceneManager::States res;
     public:
+
+        MenuView(std::string_view name, palka::Vec2f size) : UiView(name, size)
+        {
+
+        }
+
         void render() override
         {
+            ImGui::SetNextWindowPos(ImVec2((Config::WindowSize.x - (size.x)) / 2,
+                                           (Config::WindowSize.y - (size.y)) / 2), ImGuiCond_Always, {0, 0});
             if(ImGui::Begin("Menu"))
             {
+                ImGui::SetWindowSize({size.x, size.y});
                 if(ImGui::Button("Input"))
                 {
                     res = SceneManager::States::Solver1;

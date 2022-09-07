@@ -57,10 +57,17 @@ namespace Magpie
 
         auto intersection(const Plot& other) const
         {
-            palka::Vec2<T> out;
             T det = a * other.b - other.a * b;
             if(det == 0)
                 return palka::Vec2<T>{std::numeric_limits<T>::min(), std::numeric_limits<T>::min()};
+            auto xt = -a * other.b;
+            auto xt2 = -other.a * b;
+            auto xtres = xt - xt2;
+            auto bres = b * other.c - other.b * c;
+            auto xp = bres / xtres;
+            auto yp = getValueAtY(xp);
+            return palka::Vec2<T>{xp, yp};
+            palka::Vec2<T> out;
             out.y = -(other.a * c - a * other.c) / det;
             out.x = -(b * other.c - other.b * c) / det;
             return out;
@@ -155,6 +162,11 @@ namespace Magpie
         bool hasPoint(const palka::Vec2<T>& p) const
         {
             return PlotCompare<T>(a * p.x + p.y * b, c);
+        }
+
+        bool passesOrigin()
+        {
+            return (a == 0 || b == 0) ? true : getValueAtY(0) == 0;
         }
 
         T getValue(T x, T y)

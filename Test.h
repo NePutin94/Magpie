@@ -157,10 +157,10 @@ namespace Magpie
                     storage.get(2, 3) = 1;
                     storage.get(3, 3) = 3;
                     break;
-                case 2:
+                case 2://open
                     storage.alloc_matrix(4, 4);
-                    storage.get(0, 0) = -1;
-                    storage.get(1, 0) = -2;
+                    storage.get(0, 0) = 1;
+                    storage.get(1, 0) = 2;
 
                     storage.get(0, 1) = 2;
                     storage.get(1, 1) = -1;
@@ -176,6 +176,7 @@ namespace Magpie
                     storage.get(1, 3) = 1;
                     storage.get(2, 3) = -1;
                     storage.get(3, 3) = 1;
+                    break;
                 case 3:
                     storage.alloc_matrix(5, 4);
                     storage.get(0, 0) = -1;
@@ -296,6 +297,130 @@ namespace Magpie
                     storage.get(2, 6) = Sign::LESSOREQUAL;
                     storage.get(3, 6) = 30;
                     break;
+                case 7://open
+                    storage.alloc_matrix(4, 4);
+                    storage.get(0, 0) = -1;
+                    storage.get(1, 0) = -2;
+
+                    storage.get(0, 1) = -1;
+                    storage.get(1, 1) = 1;
+                    storage.get(2, 1) = Sign::LESSOREQUAL;
+                    storage.get(3, 1) = -2;
+
+                    storage.get(0, 2) = 1;
+                    storage.get(1, 2) = -10;
+                    storage.get(2, 2) = Sign::GREATEROREQUAL;
+                    storage.get(3, 2) = -30;
+
+                    storage.get(0, 3) = 1;
+                    storage.get(1, 3) = 1;
+                    storage.get(2, 3) = Sign::LESSOREQUAL;
+                    storage.get(3, 3) = 12;
+                    break;
+                case 8://open
+                    storage.alloc_matrix(4, 4);
+                    storage.get(0, 0) = -1;
+                    storage.get(1, 0) = -2;
+
+                    storage.get(0, 1) = 1;
+                    storage.get(1, 1) = 1;
+                    storage.get(2, 1) = Sign::GREATEROREQUAL;
+                    storage.get(3, 1) = 1;
+
+                    storage.get(0, 2) = 1;
+                    storage.get(1, 2) = -1;
+                    storage.get(2, 2) = Sign::GREATEROREQUAL;
+                    storage.get(3, 2) = -2;
+
+                    storage.get(0, 3) = 0;
+                    storage.get(1, 3) = 1;
+                    storage.get(2, 3) = Sign::LESSOREQUAL;
+                    storage.get(3, 3) = 3;
+                case 9://open
+                    storage.alloc_matrix(8, 4);
+                    storage.get(0, 0) = -1;
+                    storage.get(1, 0) = -2;
+
+                    storage.get(0, 1) = 6;
+                    storage.get(1, 1) = 1;
+                    storage.get(2, 1) = Sign::GREATEROREQUAL;
+                    storage.get(3, 1) = 2;
+
+                    storage.get(0, 2) = 0;
+                    storage.get(1, 2) = 1;
+                    storage.get(2, 2) = Sign::GREATEROREQUAL;
+                    storage.get(3, 2) = 0;
+
+                    storage.get(0, 3) = 1;
+                    storage.get(1, 3) = -4;
+                    storage.get(2, 3) = Sign::LESSOREQUAL;
+                    storage.get(3, 3) = 5;
+
+                    storage.get(0, 4) = 1;
+                    storage.get(1, 4) = -2;
+                    storage.get(2, 4) = Sign::LESSOREQUAL;
+                    storage.get(3, 4) = 6;
+
+                    storage.get(0, 5) = 1;
+                    storage.get(1, 5) = -1;
+                    storage.get(2, 5) = Sign::LESSOREQUAL;
+                    storage.get(3, 5) = 8;
+
+                    storage.get(0, 6) = -2;
+                    storage.get(1, 6) = 1;
+                    storage.get(2, 6) = Sign::GREATEROREQUAL;
+                    storage.get(3, 6) = -26;
+
+                    storage.get(0, 7) = -10;
+                    storage.get(1, 7) = 1;
+                    storage.get(2, 7) = Sign::LESSOREQUAL;
+                    storage.get(3, 7) = 8;
+                    break;
+                case 10://open
+                    storage.alloc_matrix(9, 4);
+                    storage.get(0, 0) = 1;
+                    storage.get(1, 0) = 2;
+
+                    storage.get(0, 1) = 6;
+                    storage.get(1, 1) = 1;
+                    storage.get(2, 1) = Sign::GREATEROREQUAL;
+                    storage.get(3, 1) = 2;
+
+                    storage.get(0, 2) = 0;
+                    storage.get(1, 2) = 1;
+                    storage.get(2, 2) = Sign::GREATEROREQUAL;
+                    storage.get(3, 2) = 0;
+
+                    storage.get(0, 3) = 1;
+                    storage.get(1, 3) = -4;
+                    storage.get(2, 3) = Sign::LESSOREQUAL;
+                    storage.get(3, 3) = 5;
+
+                    storage.get(0, 4) = 1;
+                    storage.get(1, 4) = -2;
+                    storage.get(2, 4) = Sign::LESSOREQUAL;
+                    storage.get(3, 4) = 6;
+
+                    storage.get(0, 5) = 1;
+                    storage.get(1, 5) = -1;
+                    storage.get(2, 5) = Sign::LESSOREQUAL;
+                    storage.get(3, 5) = 8;
+
+                    storage.get(0, 6) = -2;
+                    storage.get(1, 6) = 1;
+                    storage.get(2, 6) = Sign::GREATEROREQUAL;
+                    storage.get(3, 6) = -26;
+
+                    storage.get(0, 7) = 2;
+                    storage.get(1, 7) = 1;
+                    storage.get(2, 7) = Sign::GREATEROREQUAL;
+                    storage.get(3, 7) = 6;
+
+                    storage.get(0, 8) = -9;
+                    storage.get(1, 8) = 1;
+                    storage.get(2, 8) = Sign::LESSOREQUAL;
+                    storage.get(3, 8) = 18;
+                    break;
             }
         }
 
@@ -305,7 +430,7 @@ namespace Magpie
                 : UiView("EnteringRestrictions", pos, size, open, w_flag), storage(n + 1, m + 2)
         {
 #if DEBUG
-            fill(6);
+            fill(10);
 #endif
         }
 
