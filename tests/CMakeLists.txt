@@ -16,7 +16,7 @@ FetchContent_MakeAvailable(gtest)
 enable_testing()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTESTING")
 include(GoogleTest)
-add_executable(Tests WIN32 tests.cpp TestPlotHasPoint.cpp TestGraphicMethod.cpp TestPlotIntersection.cpp TestGraphicMethodSort2.cpp TestGraphicMethodSolve.cpp)
+add_executable(Tests WIN32 tests.cpp TestPlotHasPoint.cpp TestGraphicMethod.cpp TestPlotIntersection.cpp TestGraphicMethodSort2.cpp TestGraphicMethodSolve.cpp TestMatrixStorage.cpp)
 target_link_libraries(Tests GTest::gtest_main MagpieLib)
 gtest_discover_tests(Tests)
 

@@ -1,7 +1,3 @@
-//
-// Created by dimka on 9/4/2022.
-//
-
 #ifndef MAGPIE_GRAPHICSMETHODSCENE_H
 #define MAGPIE_GRAPHICSMETHODSCENE_H
 
@@ -43,7 +39,7 @@ namespace Magpie
                 case State::Solve:
                 {
                     auto res = getView<MagicInput>()->getResult();
-                    addView<GraphicalMethodView>({{0, 0}, {520, 120}, res});
+                    addView<GraphicalMethodView>({{0, 0}, Magpie::Config::WindowSize * palka::Vec2f{0.8, 0.8}, res});
                 }
                     break;
                 default:

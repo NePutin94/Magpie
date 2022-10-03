@@ -9,6 +9,7 @@
 #include "StartScene.h"
 #include "MainScene.h"
 #include "GraphicsMethodScene.h"
+#include "SimpleMethodScene.h"
 
 namespace Magpie
 {
@@ -19,7 +20,8 @@ namespace Magpie
         {
             Menu,
             Solver1,
-            Solver2
+            Solver2,
+            SimpleMet
         };
     private:
         std::unique_ptr<UiScene> curr;
@@ -39,6 +41,9 @@ namespace Magpie
                     break;
                 case States::Solver2:
                     AddScene<GraphicsMethodScene>();
+                    break;
+                case States::SimpleMet:
+                    AddScene<SimpleMethodScene>();
                     break;
             }
         }

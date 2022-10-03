@@ -1,7 +1,3 @@
-//
-// Created by dimka on 9/4/2022.
-//
-
 #ifndef MAGPIE_MAGICINPUT_H
 #define MAGPIE_MAGICINPUT_H
 
@@ -81,6 +77,7 @@ namespace Magpie
 
     private:
         MatrixStorage<double> storage;
+        Plot<double> Func;
         std::vector<Plot<double>> plots;
         std::vector<palka::Vec2<double>> points;
         bool SetIsClosed;
@@ -220,21 +217,15 @@ namespace Magpie
                                            (Config::WindowSize.y - (size.y)) / 2), ImGuiCond_Always, {0, 0});
             if(ImGui::Begin("Magic Input"))
             {
-                static int prec = 1;
-                ImGui::DragInt("Precision", &prec, 0.4f, 0, 4);
                 ImGui::SetWindowSize({size.x, size.y});
+                static int prec = 1;
+                if(!SetIsClosed)
+                    ImGui::DragInt("Precision", &prec, 0.4f, 0, 4);
+                else
+                    ImGui::DragScalar("C", ImGuiDataType_::ImGuiDataType_Double, reinterpret_cast<void*>(&Func.c), 1 / std::pow(10, (double) prec));
+
                 if(ImPlot::BeginPlot("Create union"))
                 {
-//                    if(ImPlot::IsPlotHovered())
-//                    {
-//                        auto t2 = ImPlot::GetCurrentContext()->CurrentPlot;
-//                        auto valX = t2->XAxis(0);
-//                        auto valY = t2->XAxis(0);
-//
-//                        prec = AxisPrecision(valX);
-//                        prec = std::min(prec, AxisPrecision(valY));
-//
-//                    }
                     if(ImPlot::IsPlotHovered() && ImGui::IsMouseClicked(0) && ImGui::GetIO().KeyCtrl && !SetIsClosed)
                     {
                         auto pt = ImPlot::GetPlotMousePos();
@@ -286,6 +277,9 @@ namespace Magpie
                                 drawLine(p1, p2, plotIndex);
                             plotIndex++;
                         }
+                        double x[2] = {-10, 10};
+                        double y[2] = {Func.getValueAtY(-10), Func.getValueAtY(10)};
+                        ImPlot::PlotLine("Func", x, y, 2);
                     } else //Draw plots
                     {
                         for(auto& p: plots)
@@ -337,7 +331,11 @@ namespace Magpie
                                 ImGui::PushID(column);
                                 ImGui::TableNextColumn();
                                 std::string label = "X" + std::to_string(column);
-                                ImGui::InputScalar(label.c_str(), ImGuiDataType_Double, &storage.get(column, 0));
+                                if(ImGui::InputScalar(label.c_str(), ImGuiDataType_Double, &storage.get(column, 0)))
+                                {
+                                    Func.a = storage.get(0, 0);
+                                    Func.b = storage.get(1, 0);
+                                }
                                 ImGui::PopID();
                             }
                             ImGui::EndTable();
@@ -376,7 +374,7 @@ namespace Magpie
                                 layout_sign(signToStr((Sign) storage.get(storage.columns_count() - 2, row)).data(),
                                             storage.get(storage.columns_count() - 2, row), 0);
                                 ImGui::TableNextColumn();
-                                layout2(" ", storage.get(storage.columns_count() - 1, row), 4);
+                                layout2("с", storage.get(storage.columns_count() - 1, row), 4);
                                 ImGui::PopID();
                             }
 

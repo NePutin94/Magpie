@@ -59,13 +59,19 @@ FetchContent_Declare(
 set(TRACY_NO_VSYNC_CAPTURE ON)
 FetchContent_MakeAvailable(tracy)
 
+FetchContent_Declare(nlohmannjson
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG "v3.11.2")
+set(JSON_BuildTests OFF)
+FetchContent_MakeAvailable(nlohmannjson)
+
 target_include_directories(Magpie PUBLIC lib/palka_core)
-target_link_libraries(Magpie PUBLIC palka TracyClient)
+target_link_libraries(Magpie PUBLIC palka TracyClient nlohmann_json::nlohmann_json)
 
 if (NOT MSVC)
     add_library(MagpieLib SHARED ${Magpie_SRC})
     target_include_directories(MagpieLib PUBLIC lib/palka_core)
-    target_link_libraries(MagpieLib PUBLIC palka TracyClient)
+    target_link_libraries(MagpieLib PUBLIC palka TracyClient nlohmann_json::nlohmann_json)
     target_include_directories(MagpieLib PUBLIC .)
 endif ()
 add_custom_command(TARGET Magpie POST_BUILD

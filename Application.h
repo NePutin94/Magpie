@@ -1,7 +1,3 @@
-//
-// Created by NePutin on 1/22/2022.
-//
-
 #ifndef BILLET_APPLICATION_H
 #define BILLET_APPLICATION_H
 
@@ -15,17 +11,17 @@
 #include <Tracy.hpp>
 #include "StartScene.h"
 #include "SceneManager.h"
+#include "myImGui.h"
+#include "IcoHolder.h"
 
-
-using namespace palka;
 namespace Magpie
 {
     class Application
     {
     private:
         bool console_open = false;
-        Viewport view;
-        Window w;
+        palka::Viewport view;
+        palka::Window w;
 
         bool isRuning = true;
 
@@ -34,8 +30,9 @@ namespace Magpie
         float t = 0;
         float delta;
         SceneManager manager;
+        IcoHolder icoHolder;
     public:
-        explicit Application(Vec2i size) : w(size), isRuning(false), view(RectF(0, 0, size.x, size.y))
+        explicit Application(palka::Vec2i size) : w(size), isRuning(false), view(palka::RectF(0, 0, size.x, size.y))
         {
             init();
         }
@@ -61,9 +58,16 @@ namespace Magpie
         void render()
         {
             w.clear();
-            ImPlot::ShowDemoWindow();
+
+            static ImGui::FileManager_Context c("./", true);
+            c.setOpen(true);
+            if(auto val = ImGui::FileManager(c); val.first)
+            {
+                int z = 5;
+            }
+
             manager.getScene()->render();
-            Console::Draw("Console", &console_open);
+            palka::Console::Draw("Console", &console_open);
             w.ImGuiEndFrame();
             w.EndFrame();
         }
@@ -76,7 +80,7 @@ namespace Magpie
             timeSinceStart = glfwGetTime();
             delta = timeSinceStart - oldTimeSinceStart;
             oldTimeSinceStart = timeSinceStart;
-            EventManager::updateInputs();
+            palka::EventManager::updateInputs();
         }
 
         void handleEvents()

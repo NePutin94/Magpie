@@ -6,6 +6,7 @@
 #include <implot.h>
 #include <fmt/core.h>
 #include "Solver.h"
+#include "config.h"
 
 namespace Magpie
 {
@@ -436,7 +437,11 @@ namespace Magpie
 
         void render() override
         {
+            ImGui::SetNextWindowPos(ImVec2((Config::WindowSize.x - (size.x)) / 2,
+                                           (Config::WindowSize.y - (size.y)) / 2), ImGuiCond_Always, {0, 0});
             ImGui::Begin(name.c_str(), &open, win_flag);
+            ImGui::SetWindowSize({size.x, size.y});
+
             ImGui::Text("f = c_1*x_1 + x_2*x_2 + ... + c_n*x_n");
             if(ImGui::BeginTable("##table1", storage.columns_count() - 2, ImGuiTableFlags_SizingStretchProp))
             {

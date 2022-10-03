@@ -41,6 +41,11 @@ namespace Magpie
                     res = SceneManager::States::Solver2;
                     sceneCallback();
                 }
+                if(ImGui::Button("Simplexmet"))
+                {
+                    res = SceneManager::States::SimpleMet;
+                    sceneCallback();
+                }
                 ImGui::End();
             }
         }

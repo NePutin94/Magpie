@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <ranges>
+#include <fmt/format.h>
 #include "Fractus.h"
 #include "Vec2.h"
 #include <imgui.h>
@@ -34,12 +35,13 @@ namespace Magpie
         }
         return "";
     }
+
     //Agreement:
     //first row of the matrix is the objective function: x_1 x_2 ... x_n
     //remaining lines are constraints: x_1 x_2 [<=, =, >=] x_3; For the nXm matrix sign of the constraint can be obtained: matrix[n][m-1]
     //number of columns is determined by the longest row
     template<class T>
-    class MatrixStorage // row major matrix
+    class MatrixStorage // row major matrix, matrix for storing task conditions
     {
     private:
         std::vector<T> data;
@@ -47,6 +49,9 @@ namespace Magpie
         size_t columns;
         static constinit const short cap = 4;
     public:
+        MatrixStorage() : rows(0), columns(0)
+        {}
+
         MatrixStorage(size_t row, size_t column)
         { alloc_matrix(row, column); }
 
@@ -61,27 +66,74 @@ namespace Magpie
             }
         }
 
-        MatrixStorage(const std::vector<T>& data, size_t row, size_t column) : rows(row), columns(column)
+        MatrixStorage(std::vector<T>&& vec, size_t rows, size_t columns)
         {
-            data = data;
-//            alloc_matrix(row, column);
-//            int index = 0;
-//            for(int i = 0; i < rows; ++i)
-//                for(int j = 0; j < column; ++j)
-//                    get(j, i) = data[index++];
+            this->rows = rows;
+            this->columns = columns;
+            data = std::move(vec);
         }
 
-        auto get_col(size_t col)
+        MatrixStorage(const std::vector<T>& vec, size_t rows, size_t columns)
         {
-            auto stride = [](int n)
+            this->rows = rows;
+            this->columns = columns;
+            data = vec;
+        }
+
+        MatrixStorage(const std::vector<std::vector<T>>& vec, size_t rows, size_t columns)
+        {
+            rows = vec.size();
+            columns = vec[0].size();
+            alloc_matrix(rows, columns);
+            for(auto& v: vec)
             {
-                return [s = -1, n](auto const&) mutable
+                for(auto v2: v)
+                    data.emplace_back(v2);
+            }
+        }
+
+        auto getRow(size_t pos)
+        {
+            std::vector<T> vec;
+            std::ranges::copy(data | std::ranges::views::drop(columns * pos) | std::ranges::views::take(columns),
+                              std::back_inserter(vec));
+            return vec;
+        }
+
+        auto dropRow(size_t pos) const
+        {
+            auto del = [](int delPos, int c)
+            {
+                return [i = -1, delPos, c](auto const&) mutable
                 {
-                    s = (s + 1) % n;
-                    return !s;
+                    i++;
+                    if(i / c == delPos - 1)
+                        return false;
+                    return true;
                 };
             };
-            return data | std::ranges::views::drop(col) | std::ranges::views::filter(stride(columns));
+            auto rng = data | std::ranges::views::filter(del(pos, columns));
+            std::vector<T> v;
+            std::ranges::copy(rng, std::back_inserter(v));
+            return MatrixStorage{v, this->rows - 1, this->columns};
+        }
+
+        auto dropColumn(size_t pos) const
+        {
+            auto del = [](size_t delPos, size_t c)
+            {
+                return [i = -1, delPos, c](auto const&) mutable
+                {
+                    i++;
+                    if(i % c == delPos - 1)
+                        return false;
+                    return true;
+                };
+            };
+            auto rng = data | std::ranges::views::filter(del(pos, columns));
+            std::vector<T> v;
+            std::ranges::copy(rng, std::back_inserter(v));
+            return MatrixStorage{v, this->rows, this->columns - 1};
         }
 
         void alloc_matrix(size_t row, size_t column)
@@ -90,15 +142,6 @@ namespace Magpie
             columns = column;
             data.clear();
             data.resize(rows * columns);
-        }
-
-        void add_row(std::vector<T> row)
-        {
-//            auto result_data = std::valarray<T>(columns * (rows + 1));
-//            result_data[std::slice(0, rows * columns, 1)] = data;
-//            auto test = std::valarray<T>(row.data(), columns);
-//            result_data[std::slice(rows * columns, columns, 1)] = test;
-//            data = result_data;
         }
 
         std::vector<std::vector<T>> getMatrix() const
@@ -165,14 +208,15 @@ namespace Magpie
 
         void debug() const
         {
+            ImGui::Begin(fmt::format("##debugmatrix{}", fmt::ptr(this)).c_str());
             if constexpr(std::is_integral_v<T>)
             {
-                if(ImGui::BeginTable("debugmatrix1", columns))
+                if(ImGui::BeginTable(fmt::format("##debugmatrix{}", fmt::ptr(this)).c_str(), columns))
                 {
-                    for(int i = 0; i < rows; ++i)
+                    for(size_t i = 0; i < rows; ++i)
                     {
                         ImGui::TableNextRow();
-                        for(int j = 0; j < data.size() / rows; ++j)
+                        for(size_t j = 0; j < data.size() / rows; ++j)
                         {
                             ImGui::TableNextColumn();
                             ImGui::Text("%i", get(j, i));
@@ -182,12 +226,12 @@ namespace Magpie
                 }
             } else
             {
-                if(ImGui::BeginTable("debugmatrix1", columns))
+                if(ImGui::BeginTable(fmt::format("##debugmatrix{}", fmt::ptr(this)).c_str(), columns))
                 {
-                    for(int i = 0; i < rows; ++i)
+                    for(size_t i = 0; i < rows; ++i)
                     {
                         ImGui::TableNextRow();
-                        for(int j = 0; j < columns; ++j)
+                        for(size_t j = 0; j < columns; ++j)
                         {
                             ImGui::TableNextColumn();
                             ImGui::Text("%f", get(j, i));
@@ -198,12 +242,12 @@ namespace Magpie
             }
             if constexpr(std::is_same_v<T, Fractus>)
             {
-                if(ImGui::BeginTable("debugmatrix2", columns))
+                if(ImGui::BeginTable(fmt::format("##debugmatrix{}", fmt::ptr(this)).c_str(), columns))
                 {
-                    for(int i = 0; i < rows; ++i)
+                    for(size_t i = 0; i < rows; ++i)
                     {
                         ImGui::TableNextRow();
-                        for(int j = 0; j < data.size() / rows; ++j)
+                        for(size_t j = 0; j < data.size() / rows; ++j)
                         {
                             ImGui::TableNextColumn();
                             // ImGui::Text("%i %i", get(j, i));
@@ -212,6 +256,7 @@ namespace Magpie
                     ImGui::EndTable();
                 }
             }
+            ImGui::End();
         }
     };
 }

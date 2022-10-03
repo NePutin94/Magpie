@@ -1,19 +1,18 @@
-//
-// Created by dimka on 1/22/2022.
-//
-
 #include "Application.h"
+#include "IcoHolder.h"
 
 void Magpie::Application::init()
 {
     w.create("Magpie", "magpie.png");
 
+    icoHolder.init();
+
     isRuning = true;
-    EventManager::addEvent(KBoardEvent::KeyPressed(GLFW_KEY_GRAVE_ACCENT), [this](EventData e)
+    palka::EventManager::addEvent(palka::KBoardEvent::KeyPressed(GLFW_KEY_GRAVE_ACCENT), [this](palka::EventData e)
     {
         console_open = !console_open;
     });
-    EventManager::addEvent(EventType::WINDOWCLOSE, [this](EventData e)
+    palka::EventManager::addEvent(palka::EventType::WINDOWCLOSE, [this](palka::EventData e)
     {
         isRuning = false;
     });

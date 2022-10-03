@@ -25,15 +25,16 @@ namespace Magpie
 
         virtual ~UiView() = default;
 
-        UiView(std::string_view name, bool open = true, ImGuiWindowFlags w_flag = ImGuiWindowFlags_None)
+        UiView(std::string_view name, bool open = true, ImGuiWindowFlags w_flag = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove)
                 : name(name), win_flag(w_flag), open(open)
         {}
 
-        UiView(std::string_view name, palka::Vec2f size, bool open = true, ImGuiWindowFlags w_flag = ImGuiWindowFlags_None)
+        UiView(std::string_view name, palka::Vec2f size, bool open = true, ImGuiWindowFlags w_flag = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove)
                 : name(name), win_flag(w_flag), open(open), size(size)
         {}
 
-        UiView(std::string_view name, palka::Vec2f pos, palka::Vec2f size, bool open = true, ImGuiWindowFlags w_flag = ImGuiWindowFlags_None)
+        UiView(std::string_view name, palka::Vec2f pos, palka::Vec2f size, bool open = true,
+               ImGuiWindowFlags w_flag = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove)
                 : name(name), win_flag(w_flag), open(open), pos(pos), size(size)
         {}
 

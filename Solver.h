@@ -12,6 +12,7 @@
 #include "ConsoleLog.h"
 #include <chrono>
 #include <Tracy.hpp>
+#include <nlohmann/json.hpp>
 
 namespace Magpie
 {
@@ -26,6 +27,7 @@ namespace Magpie
         };
         enum Result
         {
+            none,
             hasSolution,
             hasNoSolution
         };
@@ -36,6 +38,7 @@ namespace Magpie
         Type type;
 
     public:
+        GraphicsResult() = default;
         GraphicsResult(Type t, std::vector<palka::Vec2<T>> Union, const palka::Vec2<T>& resultPoint, double resultValue) : Union(std::move(Union)),
                                                                                                                            resultPoint(resultPoint),
                                                                                                                            resultValue(resultValue),
@@ -70,6 +73,32 @@ namespace Magpie
         double getResultValue()
         {
             return resultValue;
+        }
+
+        std::string serialize()
+        {
+#ifdef TracyProfiler
+            ZoneScoped;
+#endif
+            nlohmann::json json;
+            for(auto& p: Union)
+            {
+                nlohmann::json vec;
+                vec["x"] = p.x;
+                vec["y"] = p.y;
+                json["Points"].emplace_back(vec);
+            }
+            json["ResPoint"]["x"] = resultPoint.x;
+            json["ResPoint"]["y"] = resultPoint.y;
+            json["ResValue"] = resultValue;
+            return json.dump(4);
+        }
+
+        void deserialize(const std::string& string)
+        {
+#ifdef TracyProfiler
+            ZoneScoped;
+#endif
         }
     };
 
@@ -247,7 +276,7 @@ namespace Magpie
     };
 
     template<class T>
-    class GraphicMet2D : Solver<T, GraphicsResult<T>>
+    class GraphicMet2D : public Solver<T, GraphicsResult<T>>
     {
     private:
         template<class>
@@ -256,7 +285,38 @@ namespace Magpie
 
         Magpie::Plot<T> F;
         std::vector<Magpie::Plot<T>> Plots;
+        GraphicsResult<T> result;
         std::vector<palka::Vec2<T>> Union;
+
+        std::string serialize() override
+        {
+#ifdef TracyProfiler
+            ZoneScoped;
+#endif
+            nlohmann::json json;
+            json["Func"]["a"] = F.a;
+            json["Func"]["b"] = F.b;
+            json["Func"]["c"] = F.c;
+            json["Func"]["sign"] = signToStr(F.sign);
+            for(auto& limit: Plots)
+            {
+                nlohmann::json json_limit;
+                json_limit["Limit"]["a"] = limit.a;
+                json_limit["Limit"]["b"] = limit.b;
+                json_limit["Limit"]["c"] = limit.c;
+                json_limit["Limit"]["sign"] = signToStr(limit.sign);
+                json["Limits"].emplace_back(json_limit);
+            }
+            json["Result"] = result.serialize();
+            return json.dump(4);
+        }
+
+        void deserialize(const std::string& string) override
+        {
+#ifdef TracyProfiler
+            ZoneScoped;
+#endif
+        }
 
         static bool compare(const std::vector<Magpie::Plot<T>>& plots, const Magpie::Plot<T>& plot)
         {
@@ -267,599 +327,6 @@ namespace Magpie
             }
             return false;
         }
-
-        //delusion
-        static void sort3(std::vector<std::pair<palka::Vec2<T>, std::vector<Magpie::Plot<T>>>>& test)
-        {
-            for(size_t i = 0; i < test.size() - 1; ++i)
-            {
-                auto& p = test[i];
-                for(size_t j = i + 1; j < test.size(); ++j)
-                {
-                    auto& p2 = test[j];
-                    bool find = false;
-                    for(const auto& plot: p.second)
-                    {
-                        if(plot.hasPoint(p2.first))
-                        {
-                            std::swap(test[i + 1], test[j]);
-                            find = true;
-                            break;
-                        }
-                    }
-                    if(find)
-                    {
-                        i++;
-                        break;
-                    }
-                }
-            }
-
-            if(test.size() > 5)
-            {
-                for(size_t i = 0; i < test.size() - (((test.size() % 2 == 0) ? 2 : 3) * 2); i += 2)
-                {
-                    auto& p_1 = test[i];
-                    auto& p_2 = test[i + 1];
-                    int j = i + 2;
-                    auto& z_1 = test[j];
-                    auto& z_2 = test[j + 1];
-
-                    bool once = false;
-                    for(const auto& plot: p_1.second)
-                    {
-                        if(plot.hasPoint(z_1.first))
-                        {
-                            once = true;
-                            std::swap(p_1, p_2);
-                            break;
-                        }
-                        if(plot.hasPoint(z_2.first))
-                        {
-                            std::swap(p_1, p_2);
-                            std::swap(z_1, z_2);
-                            once = true;
-                            break;
-                        }
-                    }
-                    for(const auto& plot: p_2.second)
-                    {
-                        if(plot.hasPoint(z_2.first))
-                        {
-                            once = true;
-                            std::swap(z_1, z_2);
-                            break;
-                        }
-                        if(plot.hasPoint(z_1.first))
-                        {
-                            once = true;
-                            break;
-                        }
-                    }
-                    if(!once)
-                    {
-                        for(size_t b = j + 2; b < test.size() - ((test.size() % 2 == 0) ? 0 : 1); b += 2)
-                        {
-                            if(b == i) continue;
-                            auto& d_1 = test[b];
-                            auto& d_2 = test[b + 1];
-                            bool once = false;
-                            for(const auto& plot: p_1.second)
-                            {
-                                if(plot.hasPoint(d_1.first))
-                                {
-                                    once = true;
-                                    std::swap(p_1, p_2);
-                                    break;
-                                }
-                                if(plot.hasPoint(d_2.first))
-                                {
-                                    std::swap(p_1, p_2);
-                                    std::swap(d_1, d_2);
-                                    once = true;
-                                    break;
-                                }
-                            }
-                            if(!once)
-                                for(const auto& plot: p_2.second)
-                                {
-                                    if(plot.hasPoint(d_2.first))
-                                    {
-                                        once = true;
-                                        std::swap(d_1, d_2);
-                                        break;
-                                    }
-                                    if(plot.hasPoint(d_1.first))
-                                    {
-                                        once = true;
-                                        break;
-                                    }
-                                }
-
-                            if(once)
-                            {
-                                std::swap(z_1, d_1);
-                                std::swap(z_2, d_2);
-                                break;
-                            }
-                        }
-                    }
-                }
-                //magic swap
-                //i = first element and penultimate; always 2 iterations
-                size_t offset = ((test.size() % 2 == 0) ? 0 : 1);
-                bool once = false;
-                //for(size_t i = 0; i < test.size() - ((test.size() % 2 == 0) ? 2 : 3); i += test.size() - (4 + offset))
-                {
-                    auto& p_1 = test[test.size() - (2 + offset)];
-                    auto& p_2 = test[test.size() - (1 + offset)];
-                    auto& z_1 = test[0];
-                    auto& z_2 = test[1];
-
-                    for(const auto& plot: p_1.second)
-                    {
-                        if(plot.hasPoint(z_1.first))
-                        {
-                            once = true;
-                            std::swap(p_1, p_2);
-                            break;
-                        }
-                        if(plot.hasPoint(z_2.first))
-                        {
-                            std::swap(p_1, p_2);
-                            std::swap(z_1, z_2);
-                            once = true;
-                            break;
-                        }
-                    }
-                    if(!once)
-                        for(const auto& plot: p_2.second)
-                        {
-                            if(plot.hasPoint(z_2.first))
-                            {
-                                once = true;
-                                std::swap(p_1, p_2);
-                                break;
-                            }
-                            if(plot.hasPoint(z_1.first))
-                            {
-                                once = true;
-                                break;
-                            }
-                        }
-                }
-                if(!once)
-                {
-                    auto& p_1 = test[test.size() - (2 + offset)];
-                    auto& p_2 = test[test.size() - (1 + offset)];
-                    auto& z_1 = test[test.size() - (4 + offset)];
-                    auto& z_2 = test[test.size() - (3 + offset)];
-
-                    for(const auto& plot: p_1.second)
-                    {
-                        if(plot.hasPoint(z_1.first))
-                        {
-                            once = true;
-                            std::swap(p_1, p_2);
-                            break;
-                        }
-                        if(plot.hasPoint(z_2.first))
-                        {
-                            once = true;
-                            break;
-                        }
-                    }
-                    if(!once)
-                        for(const auto& plot: p_2.second)
-                        {
-                            if(plot.hasPoint(z_2.first))
-                            {
-                                once = true;
-                                std::swap(p_1, p_2);
-                                break;
-                            }
-                            if(plot.hasPoint(z_1.first))
-                            {
-                                std::swap(p_1, p_2);
-                                std::swap(z_1, z_2);
-                                once = true;
-                                break;
-                            }
-                        }
-                }
-            } else
-            {
-                auto& p_1 = test[0];
-                auto& p_2 = test[1];
-                auto& z_1 = test[2];
-                auto& z_2 = test[3];
-
-                bool once = false;
-                for(const auto& plot: p_1.second)
-                {
-                    if(plot.hasPoint(z_1.first))
-                    {
-                        once = true;
-                        std::swap(p_1, p_2);
-                        break;
-                    }
-                    if(plot.hasPoint(z_2.first))
-                    {
-                        once = true;
-                        break;
-                    }
-                }
-                if(!once)
-                    for(const auto& plot: p_2.second)
-                    {
-                        if(plot.hasPoint(z_2.first))
-                        {
-                            once = true;
-                            std::swap(z_1, z_2);
-                            break;
-                        }
-                        if(plot.hasPoint(z_1.first))
-                        {
-                            once = true;
-                            break;
-                        }
-                    }
-            }
-            std::pair<int, int> para{-1, -1};
-            if(test.size() % 2 != 0) //finding a hole to insert the last element
-            {
-                for(size_t i = 0; i < test.size() - 2; i += 2)
-                {
-                    auto& p1 = test[i];
-                    auto& p2 = test[i + 1];
-                    bool once1 = false;
-                    bool once2 = false;
-                    for(size_t j = 0; j < test.size() - 2; j += 2)
-                    {
-                        auto& p3 = test[j];
-                        auto& p4 = test[j + 1];
-                        if(j == i) continue;
-                        for(const auto& plot: p1.second)
-                        {
-                            if(plot.hasPoint(p3.first))
-                            {
-                                once1 = true;
-                            }
-                            if(plot.hasPoint(p4.first))
-                            {
-                                once1 = true;
-                            }
-                        }
-                        for(const auto& plot: p2.second)
-                        {
-                            if(plot.hasPoint(p3.first))
-                            {
-                                once2 = true;
-                            }
-                            if(plot.hasPoint(p4.first))
-                            {
-                                once2 = true;
-                            }
-                        }
-                    }
-                    if(!once1)
-                    {
-                        bool hasPlot = false;
-                        for(const auto& plot: p1.second)
-                        {
-                            if(plot.hasPoint(test.back().first))
-                            {
-                                hasPlot = true;
-                                break;
-                            }
-                        }
-                        if(hasPlot)
-                        {
-                            para.first = i;
-                            para.second = -1;
-                            break;
-                        }
-                    } else if(!once2)
-                    {
-                        bool hasPlot = false;
-                        for(const auto& plot: p2.second)
-                        {
-                            if(plot.hasPoint(test.back().first))
-                            {
-                                hasPlot = true;
-                                break;
-                            }
-                        }
-                        if(hasPlot)
-                        {
-                            para.first = i;
-                            para.second = 1;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            for(size_t i = test.size() - 1; i > para.first + para.second + 1; --i)
-                std::swap(test[i], test[i - 1]);
-        }
-        static void sort4(std::vector<palka::Vec2<T>>& points, const std::vector<Magpie::Plot<T>>& plots)
-        {
-            if(points.size() <= 2)
-                return;
-            std::vector<std::pair<palka::Vec2<T>, palka::Vec2<T>>> pairs;
-
-            for(int i = 0; i < points.size() - 1; ++i)
-            {
-                auto p = points[i];
-                for(int j = i + 1; j < points.size(); ++j)
-                {
-                    auto p2 = points[j];
-                    bool find = false;
-                    for(auto& val: plots)
-                    {
-                        if(val.hasPoint(p) && val.hasPoint(p2))
-                        {
-                            pairs.emplace_back(p, p2);
-                            std::swap(points[i + 1], points[j]);
-                            find = true;
-                            break;
-                        }
-                    }
-                    if(find)
-                    {
-                        i++;
-                        break;
-                    }
-                }
-            }
-            if(pairs.size() > 2)
-            {
-                //don't compare pairs.size and 0 because of possible holes (with points.size %2 != 0) will break the algorithm
-                for(int i = 0; i < pairs.size() - 1; ++i)
-                {
-                    auto& p1 = pairs[i];
-                    int j = i + 1;
-                    auto& p2 = pairs[j];
-                    bool once = false;
-                    for(auto& val: plots)
-                    {
-                        if(val.hasPoint(p1.first) && val.hasPoint(p2.first))
-                        {
-                            once = true;
-                            std::swap(p1.first, p1.second);
-                            break;
-                        }
-                        if(val.hasPoint(p1.second) && val.hasPoint(p2.second))
-                        {
-                            once = true;
-                            std::swap(p2.first, p2.second);
-                            break;
-                        }
-                        if(val.hasPoint(p1.first) && val.hasPoint(p2.second))
-                        {
-                            std::swap(p1.first, p1.second);
-                            std::swap(p2.first, p2.second);
-                            once = true;
-                            break;
-                        }
-                        if(val.hasPoint(p1.second) && val.hasPoint(p2.first))
-                        {
-                            once = true;
-                            break;
-                        }
-                    }
-                    if(!once)
-                    {
-                        for(int b = j + 1; b < pairs.size(); ++b)
-                        {
-                            auto& p3 = pairs[b];
-                            bool once = false;
-                            for(auto& val: plots)
-                            {
-                                if(val.hasPoint(p1.first) && val.hasPoint(p3.first))
-                                {
-                                    once = true;
-                                    std::swap(p1.first, p1.second);
-                                    break;
-                                }
-                                if(val.hasPoint(p1.second) && val.hasPoint(p3.second))
-                                {
-                                    once = true;
-                                    std::swap(p3.first, p3.second);
-                                    break;
-                                }
-                                if(val.hasPoint(p1.first) && val.hasPoint(p3.second))
-                                {
-                                    std::swap(p1.first, p1.second);
-                                    std::swap(p3.first, p3.second);
-                                    once = true;
-                                    break;
-                                }
-                                if(val.hasPoint(p1.second) && val.hasPoint(p3.first))
-                                {
-                                    once = true;
-                                    break;
-                                }
-                            }
-                            if(once)
-                            {
-                                std::swap(p2, p3);
-                                break;
-                            }
-                        }
-                    }
-                }
-                //in some cases, a swap may be required for the last pair:
-                //it is important that this is a local swap for a pair
-                //and it does not need to be swapped with another pair because if this is possible then all pairs are already in the right order
-                // for(int i = 0; i < pairs.size() - 1; i += pairs.size()-2)
-                {
-                    bool once = false;
-                    auto& p1 = pairs.back();
-                    auto& p2 = pairs[0];
-                    for(auto& val: plots)
-                    {
-                        if(val.hasPoint(p1.first) && val.hasPoint(p2.first))
-                        {
-                            std::swap(p1.first, p1.second);
-                            once = true;
-                            break;
-                        }
-                        if(val.hasPoint(p1.second) && val.hasPoint(p2.second))
-                        {
-                            std::swap(p1.first, p1.second);
-                            once = true;
-                            break;
-                        }
-                        if(val.hasPoint(p1.first) && val.hasPoint(p2.second))
-                        {
-                            std::swap(p1.first, p1.second);
-                            std::swap(p2.first, p2.second);
-                            once = true;
-                            break;
-                        }
-                        if(val.hasPoint(p1.second) && val.hasPoint(p2.first))
-                        {
-                            once = true;
-                            break;
-                        }
-                    }
-                    if(!once)
-                    {
-                        auto& p1 = pairs.back();
-                        auto& p2 = *(pairs.end() - 2);
-                        for(auto& val: plots)
-                        {
-                            if(val.hasPoint(p1.first) && val.hasPoint(p2.first))
-                            {
-                                std::swap(p1.first, p1.second);
-                                once = true;
-                                break;
-                            }
-                            if(val.hasPoint(p1.second) && val.hasPoint(p2.second))
-                            {
-                                std::swap(p1.first, p1.second);
-                                once = true;
-                                break;
-                            }
-                            if(val.hasPoint(p1.first) && val.hasPoint(p2.second))
-                            {
-                                once = true;
-                                break;
-                            }
-                            if(val.hasPoint(p1.second) && val.hasPoint(p2.first))
-                            {
-
-                                std::swap(p1.first, p1.second);
-                                std::swap(p2.first, p2.second);
-                                once = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-            } else
-            {
-                auto& p1 = pairs[0];
-                auto& p2 = pairs[1];
-
-                for(auto& val: plots)
-                {
-                    if(val.hasPoint(p1.first) && val.hasPoint(p2.first))
-                    {
-                        std::swap(p1.first, p1.second);
-                        break;
-                    }
-                    if(val.hasPoint(p1.second) && val.hasPoint(p2.second))
-                    {
-                        std::swap(p2.first, p2.second);
-                        break;
-                    }
-                }
-            }
-
-            std::pair<int, int> para{-1, -1};
-            if(points.size() % 2 != 0) //finding a hole to insert the last element
-            {
-                for(int i = 0; i < pairs.size(); ++i)
-                {
-                    auto& p = pairs[i];
-                    bool once1 = false;
-                    bool once2 = false;
-                    for(int j = 0; j < pairs.size(); ++j)
-                    {
-                        if(j != i)
-                        {
-                            auto& p2 = pairs[j];
-                            for(auto& val: plots)
-                            {
-                                once1 = once1 || val.hasPoint(p.first) && val.hasPoint(p2.first) || val.hasPoint(p.first) && val.hasPoint(p2.second);
-                                once2 = once2 || val.hasPoint(p.second) && val.hasPoint(p2.first) || val.hasPoint(p.second) && val.hasPoint(p2.second);
-                            }
-                        }
-                    }
-                    if(!once1)
-                    {
-                        bool hasPlot = false;
-                        for(auto& val: plots) //checking for sets with real holes
-                        {
-                            if(val.hasPoint(p.first) && val.hasPoint(points.back()))
-                            {
-                                hasPlot = true;
-                                break;
-                            }
-                        }
-                        if(hasPlot)
-                        {
-                            para.first = i;
-                            para.second = 1;
-
-                            break;
-                        }
-                    } else if(!once2)
-                    {
-                        bool hasPlot = false;
-                        for(auto& val: plots) //checking for sets with real holes
-                        {
-                            if(val.hasPoint(p.second) && val.hasPoint(points.back()))
-                            {
-                                hasPlot = true;
-                                break;
-                            }
-                        }
-                        if(hasPlot)
-                        {
-                            para.first = i;
-                            para.second = 2;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            {
-                int index = 0;
-                for(int i = 0; i < pairs.size(); ++i)
-                {
-                    auto& p = pairs[i];
-                    if(i == para.first)
-                    {
-                        if(para.second == 1)
-                            points[index++] = points.back();
-                        points[index++] = p.first;
-                        points[index++] = p.second;
-                        if(para.second == 2)
-                            points[index++] = points.back();
-                    } else
-                    {
-                        points[index++] = p.first;
-                        points[index++] = p.second;
-                    }
-                }
-            }
-        }
-
 
         //in theory faster than sort
         static void sort2(std::vector<std::pair<palka::Vec2<T>, std::vector<Magpie::Plot<T>>>>& test)
@@ -928,6 +395,7 @@ namespace Magpie
                                 test.end());
             }
         }
+
         static void sort(std::vector<palka::Vec2<T>>& points, const std::vector<Magpie::Plot<T>>& plots)
         {
 #ifdef TracyProfiler
@@ -1357,19 +825,20 @@ namespace Magpie
                 auto check1 = glm::dot(vec, vec1);
                 auto check2 = glm::dot(vec, vec2);
 
+
                 if(check1 > 0 || check2 > 0) //the solution goes on forever
                 {
-                    return {GraphicsResult<T>::open, Union, palka::Vec2<T>{}, 0};
+                    return result = {GraphicsResult<T>::open, Union, palka::Vec2<T>{}, 0};
                 } else//there is 1 solution
                 {
                     auto resValue = findSolution();
-                    return {GraphicsResult<T>::open, Union, resValue.first, resValue.second};
+                    return result ={GraphicsResult<T>::open, Union, resValue.first, resValue.second};
                 }
             }
 
             auto resValue = findSolution();
 
-            return {GraphicsResult<T>::closed, Union, resValue.first, resValue.second};
+            return result ={GraphicsResult<T>::closed, Union, resValue.first, resValue.second};
         }
     };
 

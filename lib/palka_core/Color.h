@@ -6,6 +6,7 @@
 #define PALKA_COLOR_H
 
 #include "config.h"
+#include <imgui.h>
 
 #ifdef REFLECTION_CORE
 #include <rttr/type>
@@ -38,6 +39,11 @@ namespace palka
         static consteval auto Black()
         {
             return Color{0, 0, 0};
+        }
+
+        operator ImVec4() const
+        {
+            return ImVec4(r, g, b, a);
         }
     };
 }

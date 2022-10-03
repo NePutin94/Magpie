@@ -28,7 +28,8 @@ namespace Magpie
         T c;
         Sign sign;
 
-        Plot() = default;
+        Plot() : a(0), b(0), c(0), sign(Sign::EQUAL)
+        {}
 
         Plot(T a, T b, T c) : a(a), b(b), c(c), sign(Sign::EQUAL)
         {}

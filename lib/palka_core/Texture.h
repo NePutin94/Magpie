@@ -55,7 +55,6 @@ namespace palka
             *this = std::move(ot);
         }
 
-
         Texture(const Texture&) = delete;
 
         Texture& operator=(const Texture&) = delete;
