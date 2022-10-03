@@ -114,7 +114,7 @@ std::pair<bool, std::string> ImGui::FileManager(FileManager_Context& context)
         ImGui::BeginChild("##Child1", upPanelSize, false, ImGuiWindowFlags_NoScrollbar);
         {
             char buffer[256];
-            strcpy_s(buffer, context._path.c_str());
+            strcpy(buffer, context._path.c_str());
 
             if(ImGui::InputText("Path", buffer, 256))
             {
