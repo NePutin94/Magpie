@@ -19,6 +19,14 @@ namespace Magpie
         template<class T>
         void addView(T&& view)
         {
+            curr = std::move(std::make_unique<T>(std::move(view)));
+            curr->setCallback([this]()
+                              { Next(); });
+        }
+
+        template<class T>
+        void addView(const T& view)
+        {
             curr = std::move(std::make_unique<T>(view));
             curr->setCallback([this]()
                               { Next(); });

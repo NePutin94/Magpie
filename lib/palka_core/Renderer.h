@@ -68,12 +68,7 @@ namespace palka
             glLoadIdentity();
         }
 
-        void clear(Color color = {0, 0, 0})
-        {
-            glClearColor(color.r, color.g, color.b, 255);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            glViewport(0, 0, size.x, size.y);
-        }
+        void clear(Color color = {0, 0, 0});
 
         void applyBlend(BlendMode mode)
         {

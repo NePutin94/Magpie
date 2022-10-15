@@ -330,6 +330,11 @@ namespace palka
                 {
                     _value = value.extract_wrapped_value();
                     type = _value.get_type();
+                    if(type.is_wrapper())
+                    {
+                        _value = _value.extract_wrapped_value();
+                        type = _value.get_type();
+                    }
                 } else
                     _value = value;
                 if (ImGui::TreeNode((void*) (id + type.get_id()), "%s", (name.empty()) ? type.get_name().to_string().c_str() : name.data()))

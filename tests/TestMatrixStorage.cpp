@@ -16,10 +16,10 @@ TYPED_TEST(TestMatrix, TestMatrix_Func1)
     std::uniform_int_distribution<std::mt19937::result_type> dist6(-5000, 5000);
     std::vector<TypeParam> vec;
 
-    for(int i = 0; i < 5 + rand() % 100; ++i)
+    for(int i = 0; i < 100; ++i)
         vec.emplace_back(dist6(rng));
 
-    for(int i = 1; i <= 1 + rand() % (vec.size() - 1); ++i)
+    for(int i = 1; i <= 20; ++i)
     {
         Magpie::MatrixStorage<TypeParam> test(vec, ceil(vec.size() / i), i);
 
@@ -43,10 +43,10 @@ TYPED_TEST(TestMatrix, TestMatrix_Func2)
     std::uniform_int_distribution<std::mt19937::result_type> dist6(-5000, 5000);
     std::vector<TypeParam> vec;
 
-    for(int i = 0; i < 5 + rand() % 100; ++i)
+    for(int i = 0; i < 20; ++i)
         vec.emplace_back(dist6(rng));
 
-    for(int i = 1; i <= 1 + rand() % (vec.size() - 2); ++i)
+    for(int i = 1; i <= 5; ++i)
     {
         Magpie::MatrixStorage<TypeParam> test(vec, ceil(vec.size() / i), i);
 

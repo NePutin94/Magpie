@@ -166,6 +166,13 @@ void palka::Renderer::draw(unsigned int& vao, palka::RenderContext context,int s
     glDrawArrays(GL_TRIANGLES, static_cast<GLint>(0), size);
 }
 
+void palka::Renderer::clear(palka::Color color)
+{
+    glClearColor(color.r, color.g, color.b, 255);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glViewport(0, 0, size.x, size.y);
+}
+
 
 //
 //void palka::Renderer::VAODraw2(palka::Mesh& m, palka::ShaderProgram& s, UniformBuffer& buff)

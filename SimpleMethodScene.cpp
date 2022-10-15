@@ -1,7 +1,7 @@
-#include "SimpleMethodScene.h"
+#include "SimplexMethodScene.h"
 #include "SimplexMethodView.h"
-
-void Magpie::SimpleMethodScene::init()
+#include "DataSets.h"
+void Magpie::SimplexMethodScene::init()
 {
 //    std::vector<double> inn = {-1, 2, 0, 0,
 //                               1, -1, 1, 3,
@@ -12,21 +12,21 @@ void Magpie::SimpleMethodScene::init()
                                 1, 1, 1,-1, 4,
                                -1, 3,-1,-1, 4};
     MatrixStorage<double> in(inn, 4, 5);
-
-    addView<SimplexMethodView>(SimplexMethodView(in));
+    SimplexMethodView s(set7());
+    addView<SimplexMethodView>(std::move(s));
 }
 
-void Magpie::SimpleMethodScene::render()
+void Magpie::SimplexMethodScene::render()
 {
     views()->render();
 }
 
-void Magpie::SimpleMethodScene::update()
+void Magpie::SimplexMethodScene::update()
 {
     views()->update();
 }
 
-void Magpie::SimpleMethodScene::Next()
+void Magpie::SimplexMethodScene::Next()
 {
 
 }

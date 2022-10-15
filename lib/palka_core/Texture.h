@@ -63,44 +63,11 @@ namespace palka
 
         void LoadFromFile(std::string_view path);
 
-        void empty(Vec2i size)
-        {
-            this->size = size;
-            valid = true;
-            flipped = true;
-            glGenTextures(1, &textureID);
-            glBindTexture(GL_TEXTURE_2D, textureID);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glBindTexture(GL_TEXTURE_2D, 0);
-        }
+        void empty(Vec2i size);
 
-        ~Texture()
-        {
-            if(valid)
-                glDeleteTextures(1, &textureID);
-        }
+        ~Texture();
 
-        void bind()
-        {
-            glBindTexture(GL_TEXTURE_2D, textureID);
-            glMatrixMode(GL_TEXTURE);
-            GLfloat matrix[16] = {1.f, 0.f, 0.f, 0.f,
-                                  0.f, 1.f, 0.f, 0.f,
-                                  0.f, 0.f, 1.f, 0.f,
-                                  0.f, 0.f, 0.f, 1.f};
-            if(flipped)
-            {
-                matrix[5] = -matrix[5];
-                matrix[13] = 1;
-            }
-            glMatrixMode(GL_TEXTURE);
-            glLoadMatrixf(matrix);
-            glMatrixMode(GL_MODELVIEW);
-        }
+        void bind();
 
         Vec2i getSize() const
         {

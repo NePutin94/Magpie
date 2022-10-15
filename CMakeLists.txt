@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_COLOR_DIAGNOSTICS ON)
-
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 if (TracyProfiler AND NOT MSVC)
     message(FATAL_ERROR "Tracy profiler can only be used with the msvc compiler")
 endif ()
@@ -13,7 +13,7 @@ endif ()
 if (MSVC)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
     set(BUILD_SHARED_LIBS TRUE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG -DTracyProfiler /Ox /Ob2 /Oi /Ot /Zi /OPT:REF /GF /MT ")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG -DTracyProfiler /Ox /Ob2 /Oi /Ot /Zi /OPT:REF /GF /MT ")
 else ()
     if (WIN32)
         if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
@@ -42,11 +42,15 @@ ENDIF ()
 file(GLOB Magpie_SRC RELATIVE "${CMAKE_SOURCE_DIR}/" "*.cpp")
 file(GLOB IMGUI_SRC RELATIVE "${CMAKE_SOURCE_DIR}/" "lib/imgui/*.cpp")
 if (NOT MSVC)
-    add_executable(Magpie main.cpp ${Magpie_SRC} config.h)
+    add_executable(Magpie main.cpp ${Magpie_SRC} config.h DataSets.h)
 else ()
-    add_executable(Magpie main.cpp ${Magpie_SRC} ${IMGUI_SRC} config.h)
+    add_executable(Magpie main.cpp ${Magpie_SRC} ${IMGUI_SRC} config.h DataSets.h)
 endif ()
-set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+if (MSVC)
+    set_target_properties(Magpie PROPERTIES
+            LINK_FLAGS /SUBSYSTEM:CONSOLE
+            )
+endif ()
 add_subdirectory(lib)
 if (NOT MSVC)
     add_subdirectory(tests)
@@ -74,6 +78,7 @@ if (NOT MSVC)
     target_link_libraries(MagpieLib PUBLIC palka TracyClient nlohmann_json::nlohmann_json)
     target_include_directories(MagpieLib PUBLIC .)
 endif ()
+
 add_custom_command(TARGET Magpie POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:palka> $<TARGET_FILE_DIR:Magpie>
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:RTTR::Core> $<TARGET_FILE_DIR:Magpie>
@@ -82,6 +87,7 @@ add_custom_command(TARGET Magpie POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:tinygltf> $<TARGET_FILE_DIR:Magpie>
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:fmt::fmt> $<TARGET_FILE_DIR:Magpie>
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:TracyClient> $<TARGET_FILE_DIR:Magpie>
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:imgui::imgui> $<TARGET_FILE_DIR:Magpie>
 
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:palka> "${CMAKE_BINARY_DIR}/tests"
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:fmt::fmt> "${CMAKE_BINARY_DIR}/tests"

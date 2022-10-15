@@ -102,12 +102,12 @@ namespace Magpie
 
         auto dropRow(size_t pos) const
         {
-            auto del = [](int delPos, int c)
+            auto del = [](size_t delPos, size_t c)
             {
                 return [i = -1, delPos, c](auto const&) mutable
                 {
                     i++;
-                    if(i / c == delPos - 1)
+                    if(i / c == delPos)
                         return false;
                     return true;
                 };
@@ -116,6 +116,27 @@ namespace Magpie
             std::vector<T> v;
             std::ranges::copy(rng, std::back_inserter(v));
             return MatrixStorage{v, this->rows - 1, this->columns};
+        }
+
+        auto dropColumns(const std::set<size_t>& pos) const
+        {
+            auto del = [](const std::set<size_t>& delPos, size_t c)
+            {
+                return [i = -1, delPos, c](auto const&) mutable
+                {
+                    i++;
+                    if(std::ranges::any_of(delPos, [i, c](const auto& p)
+                    { return i % c == p; }))
+                        return false;
+                    return true;
+                };
+            };
+
+            auto rng = data | std::ranges::views::filter(del(pos, columns));
+
+            std::vector<T> v;
+            std::ranges::copy(rng, std::back_inserter(v));
+            return MatrixStorage{v, this->rows, this->columns - pos.size()};
         }
 
         auto dropColumn(size_t pos) const
@@ -134,6 +155,26 @@ namespace Magpie
             std::vector<T> v;
             std::ranges::copy(rng, std::back_inserter(v));
             return MatrixStorage{v, this->rows, this->columns - 1};
+        }
+
+        void realloc(MatrixStorage<T> other, size_t new_row, size_t new_column)
+        {
+            MatrixStorage<T> new_data(new_row, new_column);
+            for(int i = 0; i < other.rows; ++i)
+                for(int j = 0; j < other.columns; ++j)
+                    new_data.get(j, i) = other.get(j, i);
+            rows = new_row;
+            columns = new_column;
+            data = std::move(new_data.data);
+        }
+
+        void row_realloc(size_t new_row)
+        {
+            std::vector<T> new_data;
+            new_data.resize(new_row * columns);
+            std::move(data.begin(), data.end(), new_data.begin());
+            rows = new_row;
+            data = std::move(new_data);
         }
 
         void alloc_matrix(size_t row, size_t column)
@@ -206,9 +247,60 @@ namespace Magpie
             return data[row * columns + column];
         }
 
+        void debugChild() const
+        {
+            if constexpr(std::is_integral_v<T>)
+            {
+                if(ImGui::BeginTable(fmt::format("##debugmatrix{}", fmt::ptr(this)).c_str(), columns))
+                {
+                    for(size_t i = 0; i < rows; ++i)
+                    {
+                        ImGui::TableNextRow();
+                        for(size_t j = 0; j < data.size() / rows; ++j)
+                        {
+                            ImGui::TableNextColumn();
+                            ImGui::Text("%i", get(j, i));
+                        }
+                    }
+                    ImGui::EndTable();
+                }
+            } else
+            {
+                if(ImGui::BeginTable(fmt::format("##debugmatrix{}", fmt::ptr(this)).c_str(), columns))
+                {
+                    for(size_t i = 0; i < rows; ++i)
+                    {
+                        ImGui::TableNextRow();
+                        for(size_t j = 0; j < columns; ++j)
+                        {
+                            ImGui::TableNextColumn();
+                            ImGui::Text("%f", get(j, i));
+                        }
+                    }
+                    ImGui::EndTable();
+                }
+            }
+            if constexpr(std::is_same_v<T, Fractus>)
+            {
+                if(ImGui::BeginTable(fmt::format("##debugmatrix{}", fmt::ptr(this)).c_str(), columns))
+                {
+                    for(size_t i = 0; i < rows; ++i)
+                    {
+                        ImGui::TableNextRow();
+                        for(size_t j = 0; j < data.size() / rows; ++j)
+                        {
+                            ImGui::TableNextColumn();
+                            // ImGui::Text("%i %i", get(j, i));
+                        }
+                    }
+                    ImGui::EndTable();
+                }
+            }
+        }
+
         void debug() const
         {
-            ImGui::Begin(fmt::format("##debugmatrix{}", fmt::ptr(this)).c_str());
+            ImGui::Begin(fmt::format("debug_matrix_{}", fmt::ptr(this)).c_str());
             if constexpr(std::is_integral_v<T>)
             {
                 if(ImGui::BeginTable(fmt::format("##debugmatrix{}", fmt::ptr(this)).c_str(), columns))

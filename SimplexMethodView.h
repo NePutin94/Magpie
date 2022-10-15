@@ -3,6 +3,7 @@
 
 #include "UiView.h"
 #include "SimplexMethod.h"
+#include "SolverMemento.h"
 
 namespace Magpie
 {
@@ -10,10 +11,17 @@ namespace Magpie
     {
     private:
         SimplexMethod<double> s;
+        SimplexMethod2<double> s2;
+        MementoHistory<SimplexMethod<double>> h;
     public:
+        SimplexMethodView(SimplexMethodView&&) = default;
+
+        SimplexMethodView& operator=(SimplexMethodView&&) = default;
         SimplexMethodView(MatrixStorage<double> store)
         {
             s.init(store);
+            s2.init(store);
+            s2.simplex_iterative();
         }
 
         ~SimplexMethodView() override = default;
@@ -23,6 +31,7 @@ namespace Magpie
         void update() override;
 
         void setEvents() override;
+
     };
 }
 

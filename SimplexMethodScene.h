@@ -1,14 +1,14 @@
-#ifndef MAGPIE_SIMPLEMETHODSCENE_H
-#define MAGPIE_SIMPLEMETHODSCENE_H
+#ifndef MAGPIE_SIMPLEXMETHODSCENE_H
+#define MAGPIE_SIMPLEXMETHODSCENE_H
 
 #include "UiScene.h"
 
 namespace Magpie
 {
-    class SimpleMethodScene: public UiScene
+    class SimplexMethodScene: public UiScene
     {
     public:
-        ~SimpleMethodScene() override = default;
+        ~SimplexMethodScene() override = default;
 
         void init() override;
 
@@ -20,4 +20,4 @@ namespace Magpie
         void Next() override;
     };
 }
-#endif //MAGPIE_SIMPLEMETHODSCENE_H
+#endif //MAGPIE_SIMPLEXMETHODSCENE_H

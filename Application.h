@@ -47,7 +47,7 @@ namespace Magpie
             while(isRuning)
             {
                 handleEvents();
-                w.ImGUiNewFrame();
+                w.ImGuiNewFrame();
                 update();
                 render();
             }
@@ -59,12 +59,12 @@ namespace Magpie
         {
             w.clear();
 
-            static ImGui::FileManager_Context c("./", true);
-            c.setOpen(true);
-            if(auto val = ImGui::FileManager(c); val.first)
-            {
-                int z = 5;
-            }
+//            static ImGui::FileManager_Context c("./", true);
+//            c.setOpen(true);
+//            if(auto val = ImGui::FileManager(c); val.first)
+//            {
+//                int z = 5;
+//            }
 
             manager.getScene()->render();
             palka::Console::Draw("Console", &console_open);
@@ -74,8 +74,6 @@ namespace Magpie
 
         void update()
         {
-            // debug(w.getCamera(), "camera");
-            // debug(w.getViewport(), "view");
             manager.getScene()->update();
             timeSinceStart = glfwGetTime();
             delta = timeSinceStart - oldTimeSinceStart;

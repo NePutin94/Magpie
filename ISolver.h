@@ -9,9 +9,7 @@ namespace Magpie
     private:
     protected:
         virtual std::string serialize() = 0;
-
         virtual void deserialize(const std::string&) = 0;
-
     public:
         virtual Result solve() = 0;
 

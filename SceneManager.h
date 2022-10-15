@@ -9,7 +9,7 @@
 #include "StartScene.h"
 #include "MainScene.h"
 #include "GraphicsMethodScene.h"
-#include "SimpleMethodScene.h"
+#include "SimplexMethodScene.h"
 
 namespace Magpie
 {
@@ -43,7 +43,7 @@ namespace Magpie
                     AddScene<GraphicsMethodScene>();
                     break;
                 case States::SimpleMet:
-                    AddScene<SimpleMethodScene>();
+                    AddScene<SimplexMethodScene>();
                     break;
             }
         }

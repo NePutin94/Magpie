@@ -4,7 +4,8 @@
 void Magpie::Application::init()
 {
     w.create("Magpie", "magpie.png");
-
+    ImGui::SetCurrentContext(w.imgui_context);
+    ImPlot::SetCurrentContext(w.implot_context);
     icoHolder.init();
 
     isRuning = true;
@@ -15,5 +16,6 @@ void Magpie::Application::init()
     palka::EventManager::addEvent(palka::EventType::WINDOWCLOSE, [this](palka::EventData e)
     {
         isRuning = false;
+        //Console::fmt_log("Window resized new size is w: {} h: {}", Console::info, size.x, size.y);
     });
 }
