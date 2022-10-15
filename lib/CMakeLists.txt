@@ -92,6 +92,7 @@ set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF)
 FetchContent_Declare(
         tinygltf
         GIT_REPOSITORY https://github.com/syoyo/tinygltf.git
+        GIT_TAG "v2.6.3"
 )
 FetchContent_MakeAvailable(tinygltf)
 
