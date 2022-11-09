@@ -160,6 +160,19 @@ namespace Magpie
             return p1;
         }
 
+        Plot getPerpendicular(palka::Vec2<T> p = {0, 0})
+        {
+            auto yx = -a / b;
+            auto newB = 1.f / yx;
+            auto newC = p.y + newB * p.x;
+            return Plot(newB, 1, newC);
+        }
+
+        palka::Vec2<T> getGrad()
+        {
+            return glm::normalize(palka::Vec2<T>{a, b});
+        }
+
         bool hasPoint(const palka::Vec2<T>& p) const
         {
             return PlotCompare<T>(a * p.x + p.y * b, c);

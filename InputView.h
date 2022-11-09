@@ -5,7 +5,7 @@
 #include "config.h"
 #include <imgui_internal.h>
 #include <implot.h>
-#include <Tracy.hpp>
+#include <tracy/Tracy.hpp>
 namespace Magpie
 {
     class InputView : public UiView
@@ -49,7 +49,7 @@ namespace Magpie
             }
         }
 
-        std::pair<int, int> getResul()
+        std::pair<int, int> getResult()
         {
             return {rows, cols};
         }

@@ -4,7 +4,7 @@
 #include "ISolver.h"
 #include "MatrixStorage.h"
 #include "SolverMemento.h"
-#include <Tracy.hpp>
+#include <tracy/Tracy.hpp>
 
 namespace Magpie
 {
@@ -22,10 +22,20 @@ namespace Magpie
     enum class SimxpleMetState2
     {
         WAIT_DATA = 0,
+        CANONICAL_FORM,
         SIXPLEX_MET,
+        SELECT_SUPPORT_ELEM,
         DONE_HAS_RESULT,
         DONE_CANT_SOLVE,
         BAZIS_FIND
+    };
+
+    enum class SiMetResultType
+    {
+        SIMPLEX_TABLE,
+        TABLE,
+        INPUT_DATA,
+        SELECT_SUPPORT_ELEM
     };
 
     constexpr std::string SimxpleMetState2String(SimxpleMetState state)
@@ -37,6 +47,49 @@ namespace Magpie
     template<class T>
     class SimplexResult
     {
+    };
+
+    template<class T>
+    class SimplexResultIterative2 : IMementoData<SimplexResultIterative2<T>>
+    {
+    public:
+        MatrixStorage<T> before;
+        MatrixStorage<T> after;
+        std::map<size_t, size_t> possibleSupportElems;
+        std::pair<size_t, size_t> bestSupportElem;
+        std::vector<size_t> basis;
+    public:
+        SimplexResultIterative2<T> createMemento() const override
+        {
+            return *this;
+        }
+
+        bool reinstateMemento(const SimplexResultIterative2<T>& mem) override
+        {
+            *this = mem;
+            return true;
+        }
+
+        SiMetResultType state;
+        size_t resolving_row;
+        size_t resolving_col;
+
+        SimplexResultIterative2() = default;
+
+        SimplexResultIterative2(MatrixStorage<T> before, MatrixStorage<T> after, SiMetResultType state, std::vector<size_t> basis) : after(after),
+                                                                                                                                     before(before),
+                                                                                                                                     state(state), basis(basis)
+        {}
+
+        SimplexResultIterative2(MatrixStorage<T> before, MatrixStorage<T> after, SiMetResultType state, size_t resolving_row, size_t resolving_col,
+                                std::vector<size_t> basis) : after(after), before(before), state(state),
+                                                             resolving_col(resolving_col), resolving_row(resolving_row), basis(basis)
+        {}
+
+        SimplexResultIterative2(MatrixStorage<T> before, MatrixStorage<T> after, SiMetResultType state, std::map<size_t, size_t> possibleSupportElems,
+                                std::pair<size_t, size_t> bestSupportElem, std::vector<size_t> basis)
+                : after(after), before(before), state(state), possibleSupportElems(possibleSupportElems), bestSupportElem(bestSupportElem), basis(basis)
+        {}
     };
 
     template<class T>
@@ -52,6 +105,7 @@ namespace Magpie
 
         MatrixStorage<T> before;
         MatrixStorage<T> after;
+
     public:
         SimxpleMetState state;
 
@@ -73,11 +127,20 @@ namespace Magpie
     class SimplexMethod2 : public Solver<T, SimplexResult<T>>, IMementoData<SimplexMethod2<T>>
     {
     public:
+        size_t vars_count;
+        size_t limit_count;
         SimxpleMetState2 alg_state;
         MatrixStorage<T> input;
         MatrixStorage<T> data; //all solve function
         std::vector<T> target_function;
-        std::map<int, int> orderCoefficients;
+        std::vector<size_t> basis;
+        std::vector<size_t> init_basis;
+        std::pair<size_t, size_t> curr_support_elem;
+
+        SimplexMethod2() : alg_state(SimxpleMetState2::WAIT_DATA)
+        {
+
+        }
 
         SimplexResult<T> solve() override
         {
@@ -95,6 +158,47 @@ namespace Magpie
             return true;
         }
 
+        void setSupportElem(size_t row, size_t col)
+        {
+            curr_support_elem = {row, col};
+            alg_state = SimxpleMetState2::SIXPLEX_MET;
+        }
+
+        SimplexResultIterative2<T> solve_iterative()
+        {
+            auto before = data;
+            switch(alg_state)
+            {
+                case SimxpleMetState2::BAZIS_FIND:
+                {
+                    basisFormation(init_basis);
+                    return SimplexResultIterative2<T>(before, data, SiMetResultType::TABLE, basis);
+                }
+                case SimxpleMetState2::DONE_CANT_SOLVE:
+                {
+                    return SimplexResultIterative2<T>(before, data, SiMetResultType::TABLE, basis);
+                }
+                case SimxpleMetState2::CANONICAL_FORM:
+                {
+                    makeCanonicalForm();
+                    return SimplexResultIterative2<T>(before, data, SiMetResultType::TABLE, basis);
+                }
+                case SimxpleMetState2::SIXPLEX_MET:
+                {
+                    simplex_iterative();
+                    return SimplexResultIterative2<T>(before, data, SiMetResultType::SIMPLEX_TABLE, curr_support_elem.first, curr_support_elem.second, basis);
+                }
+                case SimxpleMetState2::SELECT_SUPPORT_ELEM:
+                {
+                    auto elems = possibleSupportElements();
+                    return SimplexResultIterative2<T>(before, data, SiMetResultType::SELECT_SUPPORT_ELEM, elems.second, elems.first, basis);
+                }
+                case SimxpleMetState2::WAIT_DATA:
+                    break;
+            }
+            return SimplexResultIterative2<T>();
+        }
+
         void makeCanonicalForm()
         {
 #ifdef TracyProfiler
@@ -106,7 +210,7 @@ namespace Magpie
                 if(auto sig = (Sign) data.get(data.columns_count() - 2, i); sig != Sign::EQUAL)
                     idsNewVar.emplace(i, (sig == Sign::LESSOREQUAL) ? 1 : -1);
 
-            data = data.dropColumn(data.columns_count() - 1); //inequality signs are no longer needed
+            data = data.dropColumn(data.columns_count() - 2); //inequality signs are no longer needed
 
             if(!idsNewVar.empty())
             {
@@ -142,11 +246,10 @@ namespace Magpie
             {
                 data.get(j, data.rows_count() - 1) = target_function[j];
             }
-            basisFormation({2, 3});
             alg_state = SimxpleMetState2::BAZIS_FIND;
         }
 
-        void basisFormation(const std::vector<int>& cols)
+        void basisFormation(const std::vector<size_t>& cols)
         {
 #ifdef TracyProfiler
             ZoneScoped;
@@ -158,17 +261,17 @@ namespace Magpie
                 if(auto bc = checkBazisAt(col); bc.second)
                 {
                     toDrop.emplace(col);
-                    orderCoefficients.insert_or_assign(row, col);
+                    basis.emplace_back(col + 1);
                 } else
                 {
                     toDrop.emplace(col);
                     findBazisAt(col, row);
-                    orderCoefficients.insert_or_assign(row, col);
+                    basis.emplace_back(col + 1);
                 }
                 ++row;
             }
             data = data.dropColumns(toDrop);
-            alg_state = SimxpleMetState2::SIXPLEX_MET;
+            alg_state = SimxpleMetState2::SELECT_SUPPORT_ELEM;
         }
 
         void findBazisAt(size_t col, size_t row)
@@ -220,6 +323,65 @@ namespace Magpie
             return std::make_pair(index, zeroCount == data.rows_count() - 1);
         }
 
+        auto possibleSupportElements()
+        {
+#ifdef TracyProfiler
+            ZoneScoped;
+#endif
+            bool allNegative = true;
+            std::map<size_t, size_t> ret;
+
+            auto maxDelta = std::numeric_limits<T>::max() * -1;
+            auto maxDeltaCol = -1;
+
+            auto minBDiv = std::numeric_limits<T>::max();
+            auto minBRow = -1;
+
+            for(int i = 0; i < data.columns_count() - 1; ++i)
+            {
+                bool new_maxDelta = false;
+                if(data.get(i, data.rows_count() - 1) < 0)
+                {
+                    if(auto new_val = data.get(i, data.rows_count() - 1); maxDelta < new_val)
+                    {
+                        maxDelta = new_val;
+                        maxDeltaCol = i;
+                        new_maxDelta = true;
+                    }
+                    auto min = std::numeric_limits<T>::max();
+                    minBDiv = min;
+                    auto row = -1;
+                    for(int j = 0; j < data.rows_count() - 1; ++j)
+                    {
+                        auto a = data.get(data.columns_count() - 1, j);
+                        auto b = data.get(i, j);
+                        if(b < 0)
+                            continue;
+
+                        allNegative = false;
+                        auto res = (!compare_float(b, 0.0) && !compare_float(a, 0.0)) ? (a / b) : std::numeric_limits<int>::max();
+                        if(res < min)
+                        {
+                            min = res;
+                            row = j;
+                            if(new_maxDelta)
+                            {
+                                minBDiv = res;
+                                minBRow = j;
+                            }
+                        }
+                    }
+                    new_maxDelta = false;
+                    ret[i] = row;
+                }
+            }
+            if(allNegative) //can't be solve -inf
+            {
+                alg_state = SimxpleMetState2::DONE_CANT_SOLVE;
+            }
+            return std::make_pair(std::make_pair(minBRow, maxDeltaCol), ret);
+        }
+
         void simplex_iterative()
         {
 #ifdef TracyProfiler
@@ -227,42 +389,43 @@ namespace Magpie
 #endif
             if(!positiveDeltaCheck())
             {
-                auto maxDelta = std::numeric_limits<T>::max() * -1;
-                auto maxDeltaCol = -1;
-                for(int i = 0; i < data.columns_count() - 1; ++i)
-                {
-                    if(auto new_val = data.get(i, data.rows_count() - 1);
-                            data.get(i, data.rows_count() - 1) < 0 && maxDelta < new_val)
-                    {
-                        maxDelta = new_val;
-                        maxDeltaCol = i;
-                    }
-                }
-
-                bool allNegative = true;
-                auto minBDiv = std::numeric_limits<T>::max();
-                auto minBRow = -1;
-                for(int i = 0; i < data.rows_count() - 1; ++i)
-                {
-                    auto a = data.get(data.columns_count() - 1, i);
-                    auto b = data.get(maxDeltaCol, i);
-                    if(b < 0)
-                        continue;
-
-                    allNegative = false;
-                    T res = (!compare_float(b, 0.0) && !compare_float(a, 0.0)) ? (a / b) : std::numeric_limits<int>::max();
-                    if(res < minBDiv)
-                    {
-                        minBDiv = res;
-                        minBRow = i;
-                    }
-                }
-
-                if(allNegative) //can't be solve -inf
-                {
-                    alg_state = SimxpleMetState2::DONE_CANT_SOLVE;
-                    return;
-                }
+//                auto maxDelta = std::numeric_limits<T>::max() * -1;
+//                auto maxDeltaCol = -1;
+//                for(int i = 0; i < data.columns_count() - 1; ++i)
+//                {
+//                    if(auto new_val = data.get(i, data.rows_count() - 1);
+//                            data.get(i, data.rows_count() - 1) < 0 && maxDelta < new_val)
+//                    {
+//                        maxDelta = new_val;
+//                        maxDeltaCol = i;
+//                    }
+//                }
+//
+//                bool allNegative = true;
+//                auto minBDiv = std::numeric_limits<T>::max();
+//                auto minBRow = -1;
+//                for(int i = 0; i < data.rows_count() - 1; ++i)
+//                {
+//                    auto a = data.get(data.columns_count() - 1, i);
+//                    auto b = data.get(maxDeltaCol, i);
+//                    if(b < 0)
+//                        continue;
+//
+//                    allNegative = false;
+//                    T res = (!compare_float(b, 0.0) && !compare_float(a, 0.0)) ? (a / b) : std::numeric_limits<int>::max();
+//                    if(res < minBDiv)
+//                    {
+//                        minBDiv = res;
+//                        minBRow = i;
+//                    }
+//                }
+                auto maxDeltaCol = curr_support_elem.second;
+                auto minBRow = curr_support_elem.first;
+//                if(allNegative) //can't be solve -inf
+//                {
+//                    alg_state = SimxpleMetState2::DONE_CANT_SOLVE;
+//                    return;
+//                }
 
                 if(maxDeltaCol == -1 || minBRow == -1) //something's wrong.
                 {
@@ -272,7 +435,7 @@ namespace Magpie
 
                 const auto old_data = data;
                 const auto resolvingElement = data.get(maxDeltaCol, minBRow);
-
+                basis[minBRow] = maxDeltaCol + 1;
                 //dividing the row by the resolving element
                 for(int i = 0; i < data.columns_count(); ++i)
                 {
@@ -304,11 +467,9 @@ namespace Magpie
                         data.get(j, i) -= data.get(j, minBRow) * b;
                     }
                 }
-            }
-            else
-            {
+                alg_state = SimxpleMetState2::SELECT_SUPPORT_ELEM;
+            } else
                 alg_state = SimxpleMetState2::DONE_HAS_RESULT;
-            }
         }
 
         bool positiveDeltaCheck()
@@ -328,7 +489,7 @@ namespace Magpie
             return allPositive;
         }
 
-        void init(const MatrixStorage<T>& data)
+        SimplexResultIterative2<T> init(const MatrixStorage<T>& data, std::vector<size_t> basis = {})
         {
 #ifdef TracyProfiler
             ZoneScoped;
@@ -337,7 +498,11 @@ namespace Magpie
             this->data = data.dropRow(0);
             for(int i = 0; i < input.columns_count() - 1; ++i)
                 target_function.emplace_back(input.get(i, 0));
-            makeCanonicalForm();
+            vars_count = input.columns_count() - 2;
+            limit_count = input.rows_count() - 2;
+            init_basis = basis;
+            alg_state = SimxpleMetState2::CANONICAL_FORM;
+            return SimplexResultIterative2<T>(input, input, SiMetResultType::INPUT_DATA, basis);
         }
 
     protected:
@@ -388,7 +553,7 @@ namespace Magpie
                 if(auto sig = (Sign) data.get(data.columns_count() - 2, i); sig != Sign::EQUAL)
                     idsNewVar.emplace(i, (sig == Sign::LESSOREQUAL) ? 1 : -1);
 
-            data = data.dropColumn(data.columns_count() - 1); //inequality signs are no longer needed
+            data = data.dropColumn(data.columns_count() - 2); //inequality signs are no longer needed
 
             if(!idsNewVar.empty())
             {

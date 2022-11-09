@@ -146,7 +146,7 @@ namespace Magpie
                 return [i = -1, delPos, c](auto const&) mutable
                 {
                     i++;
-                    if(i % c == delPos - 1)
+                    if(i % c == delPos)
                         return false;
                     return true;
                 };

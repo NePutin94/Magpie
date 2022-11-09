@@ -21,7 +21,6 @@ namespace Magpie
     class MementoHistory
     {
         static constexpr short size = 16;
-        bool makeSnapshot;
 
         int incIter()
         {
@@ -67,8 +66,8 @@ namespace Magpie
     public:
         int current = -1; //index of the free-to-write cell
         int iter = -1; //index of the cell where the current state is stored
-        int redo_cap;
-        int undo_cap;
+        int redo_cap = -1;
+        int undo_cap = -1;
         std::array<std::unique_ptr<T>, size> curr;
 
         MementoHistory() = default;
@@ -83,7 +82,7 @@ namespace Magpie
         {
             if(auto i = undOffset(); i >= 0)
             {
-                if(!mem.reinstateMemento(curr[i])) redOffset();
+                if(!mem.reinstateMemento(*curr[i].get())) redOffset();
                 else
                     palka::Console::fmt_log("Undo success, iter %i, redo_cap %i, undo_cap %i", palka::Console::system, iter, redo_cap, undo_cap);
             }
@@ -93,14 +92,11 @@ namespace Magpie
         {
             if(auto i = redOffset(); i >= 0)
             {
-                if(!mem.reinstateMemento(curr[i])) undOffset();
+                if(!mem.reinstateMemento(*curr[i].get())) undOffset();
                 else
                     palka::Console::fmt_log("Redo success, iter %i, redo_cap %i, undo_cap %i", palka::Console::system, iter, redo_cap, undo_cap);
             }
         }
-
-        void NeedSnapshot() //called when the asset state changes
-        { makeSnapshot = true; }
 
         void update(const T& mem)
         {

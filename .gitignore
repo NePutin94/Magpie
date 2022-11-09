@@ -3,3 +3,4 @@ cmake-build-release/
 cmake-build-tracyprofile/
 .idea/
 build/
+cmake-build-debugmsvc/

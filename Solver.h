@@ -11,7 +11,7 @@
 #include "ISolver.h"
 #include "ConsoleLog.h"
 #include <chrono>
-#include <Tracy.hpp>
+#include <tracy/Tracy.hpp>
 #include <nlohmann/json.hpp>
 
 namespace Magpie
@@ -36,13 +36,18 @@ namespace Magpie
         palka::Vec2<T> resultPoint;
         double resultValue;
         Type type;
+        std::vector<palka::Vec2<T>> target_plot;
 
     public:
+        Plot<T> plot_perpendicular;
         GraphicsResult() = default;
-        GraphicsResult(Type t, std::vector<palka::Vec2<T>> Union, const palka::Vec2<T>& resultPoint, double resultValue) : Union(std::move(Union)),
-                                                                                                                           resultPoint(resultPoint),
-                                                                                                                           resultValue(resultValue),
-                                                                                                                           type(t)
+
+        GraphicsResult(Type t, std::vector<palka::Vec2<T>> Union, const palka::Vec2<T>& resultPoint, double resultValue,
+                       std::vector<palka::Vec2<T>> target_plot, Plot<T> plot_perpendicular) : Union(std::move(Union)),
+                                                                                              resultPoint(resultPoint),
+                                                                                              resultValue(resultValue),
+                                                                                              type(t), target_plot(target_plot),
+                                                                                              plot_perpendicular(plot_perpendicular)
         {}
 
         std::pair<std::vector<T>, std::vector<T>> getVisualUnion()
@@ -61,6 +66,18 @@ namespace Magpie
             {
                 X.emplace_back(Union.front().x);
                 Y.emplace_back(Union.front().y);
+            }
+            return {X, Y};
+        }
+
+        std::pair<std::vector<T>, std::vector<T>> getVisualTargetPlot()
+        {
+            std::vector<T> X;
+            std::vector<T> Y;
+            for(auto vec: target_plot)
+            {
+                X.emplace_back(vec.x);
+                Y.emplace_back(vec.y);
             }
             return {X, Y};
         }
@@ -826,19 +843,22 @@ namespace Magpie
                 auto check2 = glm::dot(vec, vec2);
 
 
-                if(check1 > 0 || check2 > 0) //the solution goes on forever
+                if(check1 > 0 || check2 > 0) //the solution goes on infinity
                 {
-                    return result = {GraphicsResult<T>::open, Union, palka::Vec2<T>{}, 0};
+                    return result = {GraphicsResult<T>::open, Union, palka::Vec2<T>{}, 0, {{F.getValueAtX(-20), -20}, {F.getValueAtX(20), 20}},
+                                     F};
                 } else//there is 1 solution
                 {
                     auto resValue = findSolution();
-                    return result ={GraphicsResult<T>::open, Union, resValue.first, resValue.second};
+                    return result = {GraphicsResult<T>::open, Union, resValue.first, resValue.second, {{F.getValueAtX(-20), -20}, {F.getValueAtX(20), 20}},
+                                     F};
                 }
             }
 
             auto resValue = findSolution();
 
-            return result ={GraphicsResult<T>::closed, Union, resValue.first, resValue.second};
+            return result = {GraphicsResult<T>::closed, Union, resValue.first, resValue.second, {{F.getValueAtX(-20), -20}, {F.getValueAtX(20), 20}},
+                             F};
         }
     };
 

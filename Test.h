@@ -7,41 +7,84 @@
 #include <fmt/core.h>
 #include "Solver.h"
 #include "config.h"
+#include <imgui_stdlib.h>
 
 namespace Magpie
 {
+    class UniversalInput
+    {
+        std::string val;
+    public:
+        UniversalInput() = default;
+
+        template<class T>
+        UniversalInput(const T& value)
+        {
+            val = std::to_string(value);
+        }
+
+        std::string getValueNotNull()
+        {
+            if(val.empty())
+                return "0";
+            return val;
+        }
+
+        std::string& getValue()
+        {
+            return val;
+        }
+    };
+
     class Test : public UiView
     {
     private:
-        MatrixStorage<double> storage;
+        MatrixStorage<UniversalInput> storage;
         std::vector<Magpie::Plot<float>> testArr;
 
         void layout2(const char* label, double& val, int col)
         {
             auto label_sz = ImGui::CalcTextSize("value");
+            auto input_sz = ImGui::CalcTextSize("-00.0000").x;
+
             ImGui::AlignTextToFramePadding();
-            constexpr float input_w = 50;
             constexpr float padding = 2;
-            const float full_w = input_w + label_sz.x + padding;
+            const float full_w = input_sz + label_sz.x + padding;
             float ww = ImGui::GetColumnWidth(col);
             const float center_offset = (ww - full_w) / 2.f;
             auto start_pos = ImGui::GetCursorPos();
-            auto start_pos_l = ImGui::GetCursorScreenPos();
             ImGui::SetCursorPosX(start_pos.x + center_offset);
-            ImGui::SetCursorPosY(start_pos.y + 60 / 2.f - label_sz.y);
-            ImGui::TextUnformatted("value");
+            ImGui::SetCursorPosY(start_pos.y + (58 - label_sz.y) / 2.f);
+            ImGui::TextUnformatted(label);
             ImGui::SameLine();
 
-            ImGui::SetCursorPos(start_pos + ImVec2(center_offset + label_sz.x + padding, 60 / 2.f - label_sz.y));
-            auto pos_s = ImGui::GetCursorScreenPos();
             auto pos_l = ImGui::GetCursorPos();
-            //ImGui::RenderFrame(pos_s + ImVec2{0, 0}, pos_s + ImVec2{50, 46}, ImColor(29, 46, 72), false, 0.f);
-            //ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(0, 0, 0, 0));
-            auto w = ImGui::CalcTextSize("00000").x;
-            ImGui::PushItemWidth(w);
-            ImVec2 p = ImGui::GetCursorScreenPos();
-            ImGui::SetCursorPosX(pos_l.x + (50 - w) / 2.f);
-            ImGui::InputDouble("##value", &val, 0, 0);
+            ImGui::PushItemWidth(input_sz);
+            ImGui::SetCursorPosX(pos_l.x + padding);
+            ImGui::InputDouble(fmt::format("##{0}", label).c_str(), &val, 0, 0, "%.3f");
+            ImGui::PopItemWidth();
+        }
+
+        void layout_universal(const char* label, UniversalInput& val, int col)
+        {
+            auto label_sz = ImGui::CalcTextSize("value");
+            auto input_sz = ImGui::CalcTextSize("-00.0000").x;
+
+            ImGui::AlignTextToFramePadding();
+            constexpr float padding = 2;
+            const float full_w = input_sz + label_sz.x + padding;
+            float ww = ImGui::GetColumnWidth(col);
+            const float center_offset = (ww - full_w) / 2.f;
+            auto start_pos = ImGui::GetCursorPos();
+            ImGui::SetCursorPosX(start_pos.x + center_offset);
+            ImGui::SetCursorPosY(start_pos.y + (58 - label_sz.y) / 2.f);
+            ImGui::TextUnformatted(label);
+            ImGui::SameLine();
+
+            auto pos_l = ImGui::GetCursorPos();
+            ImGui::PushItemWidth(input_sz);
+            ImGui::SetCursorPosX(pos_l.x + padding);
+            ImGui::InputText(fmt::format("##{0}", label).c_str(), &val.getValue());
             ImGui::PopItemWidth();
         }
 
@@ -56,7 +99,7 @@ namespace Magpie
             auto start_pos = ImGui::GetCursorPos();
             auto pos_s = ImGui::GetCursorScreenPos();
             ImGui::SetCursorPosX(start_pos.x + center_offset);
-            ImGui::SetCursorPosY(start_pos.y + 60 / 2.f - label_sz.y); //12 is magic value for width 30
+            ImGui::SetCursorPosY(start_pos.y + (58 - label_sz.y) / 2.f); //12 is magic value for width 30
             if(ImGui::Button(signToStr((Sign) val).data(), {70, 0}))
                 ImGui::OpenPopup("sign_popup");
             if(ImGui::BeginPopup("sign_popup"))
@@ -65,6 +108,33 @@ namespace Magpie
                     if(ImGui::Selectable(signToStr((Sign) i).data()))
                     {
                         val = i;
+                        value_changed = true;
+                    }
+                ImGui::EndPopup();
+            }
+            return value_changed;
+        }
+
+        bool layout_sign_universal(const char* label, UniversalInput& val, int col)
+        {
+            bool value_changed = false;
+            ImGui::AlignTextToFramePadding();
+            constexpr float input_w = 70;
+            auto label_sz = ImGui::CalcTextSize("test");
+            float ww = ImGui::GetColumnWidth(col);
+            const float center_offset = (ww - input_w) / 2.f;
+            auto start_pos = ImGui::GetCursorPos();
+            auto pos_s = ImGui::GetCursorScreenPos();
+            ImGui::SetCursorPosX(start_pos.x + center_offset);
+            ImGui::SetCursorPosY(start_pos.y + (58 - label_sz.y) / 2.f); //12 is magic value for width 30
+            if(ImGui::Button(signToStr((Sign) std::stoi(val.getValue())).data(), {70, 0}))
+                ImGui::OpenPopup("sign_popup");
+            if(ImGui::BeginPopup("sign_popup"))
+            {
+                for(int i = -1; i < 2; i++)
+                    if(ImGui::Selectable(signToStr((Sign) i).data()))
+                    {
+                        val.getValue() = std::to_string(i);
                         value_changed = true;
                     }
                 ImGui::EndPopup();
@@ -138,7 +208,7 @@ namespace Magpie
                     storage.get(4, 2) = 0;
                     storage.get(5, 2) = 1;
                     break;
-                case 1:
+                case 1: //open
                     storage.alloc_matrix(4, 4);
                     storage.get(0, 0) = -3;
                     storage.get(1, 0) = -2;
@@ -210,27 +280,27 @@ namespace Magpie
 
                     storage.get(0, 1) = 2;
                     storage.get(1, 1) = 1;
-                    storage.get(2, 1) = Sign::LESSOREQUAL;
+                    storage.get(2, 1) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 1) = 5;
 
                     storage.get(0, 2) = 1;
                     storage.get(1, 2) = 2;
-                    storage.get(2, 2) = Sign::LESSOREQUAL;
+                    storage.get(2, 2) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 2) = 8;
 
                     storage.get(0, 3) = 1;
                     storage.get(1, 3) = 1;
-                    storage.get(2, 3) = Sign::GREATEROREQUAL;
+                    storage.get(2, 3) = (int) Sign::GREATEROREQUAL;
                     storage.get(3, 3) = 1;
 
                     storage.get(0, 4) = -15;
                     storage.get(1, 4) = 2;
-                    storage.get(2, 4) = Sign::LESSOREQUAL;
+                    storage.get(2, 4) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 4) = -8;
 
                     storage.get(0, 5) = -10;
                     storage.get(1, 5) = 5;
-                    storage.get(2, 5) = Sign::GREATEROREQUAL;
+                    storage.get(2, 5) = (int) Sign::GREATEROREQUAL;
                     storage.get(3, 5) = -8;
                     break;
                 case 5:
@@ -240,27 +310,27 @@ namespace Magpie
 
                     storage.get(0, 1) = 4;
                     storage.get(1, 1) = -1;
-                    storage.get(2, 1) = Sign::GREATEROREQUAL;
+                    storage.get(2, 1) = (int) Sign::GREATEROREQUAL;
                     storage.get(3, 1) = -2;
 
                     storage.get(0, 2) = 1;
                     storage.get(1, 2) = -2;
-                    storage.get(2, 2) = Sign::LESSOREQUAL;
+                    storage.get(2, 2) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 2) = 0;
 
                     storage.get(0, 3) = 1;
                     storage.get(1, 3) = 2;
-                    storage.get(2, 3) = Sign::GREATEROREQUAL;
+                    storage.get(2, 3) = (int) Sign::GREATEROREQUAL;
                     storage.get(3, 3) = 1;
 
                     storage.get(0, 4) = -3;
                     storage.get(1, 4) = 4;
-                    storage.get(2, 4) = Sign::GREATEROREQUAL;
+                    storage.get(2, 4) = (int) Sign::GREATEROREQUAL;
                     storage.get(3, 4) = -1;
 
                     storage.get(0, 5) = -3;
                     storage.get(1, 5) = 3;
-                    storage.get(2, 5) = Sign::GREATEROREQUAL;
+                    storage.get(2, 5) = (int) Sign::GREATEROREQUAL;
                     storage.get(3, 5) = -3;
                     break;
                 case 6:
@@ -270,32 +340,32 @@ namespace Magpie
 
                     storage.get(0, 1) = 1;
                     storage.get(1, 1) = 2;
-                    storage.get(2, 1) = Sign::LESSOREQUAL;
+                    storage.get(2, 1) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 1) = 8;
 
                     storage.get(0, 2) = 1;
                     storage.get(1, 2) = 4;
-                    storage.get(2, 2) = Sign::LESSOREQUAL;
+                    storage.get(2, 2) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 2) = 14;
 
                     storage.get(0, 3) = 1;
                     storage.get(1, 3) = -2;
-                    storage.get(2, 3) = Sign::LESSOREQUAL;
+                    storage.get(2, 3) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 3) = 1;
 
                     storage.get(0, 4) = -2;
                     storage.get(1, 4) = 4;
-                    storage.get(2, 4) = Sign::LESSOREQUAL;
+                    storage.get(2, 4) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 4) = 12;
 
                     storage.get(0, 5) = 1;
                     storage.get(1, 5) = 1;
-                    storage.get(2, 5) = Sign::GREATEROREQUAL;
+                    storage.get(2, 5) = (int) Sign::GREATEROREQUAL;
                     storage.get(3, 5) = 1;
 
                     storage.get(0, 6) = 8;
                     storage.get(1, 6) = 1;
-                    storage.get(2, 6) = Sign::LESSOREQUAL;
+                    storage.get(2, 6) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 6) = 30;
                     break;
                 case 7://open
@@ -305,17 +375,17 @@ namespace Magpie
 
                     storage.get(0, 1) = -1;
                     storage.get(1, 1) = 1;
-                    storage.get(2, 1) = Sign::LESSOREQUAL;
+                    storage.get(2, 1) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 1) = -2;
 
                     storage.get(0, 2) = 1;
                     storage.get(1, 2) = -10;
-                    storage.get(2, 2) = Sign::GREATEROREQUAL;
+                    storage.get(2, 2) = (int) Sign::GREATEROREQUAL;
                     storage.get(3, 2) = -30;
 
                     storage.get(0, 3) = 1;
                     storage.get(1, 3) = 1;
-                    storage.get(2, 3) = Sign::LESSOREQUAL;
+                    storage.get(2, 3) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 3) = 12;
                     break;
                 case 8://open
@@ -325,17 +395,17 @@ namespace Magpie
 
                     storage.get(0, 1) = 1;
                     storage.get(1, 1) = 1;
-                    storage.get(2, 1) = Sign::GREATEROREQUAL;
+                    storage.get(2, 1) = (int) Sign::GREATEROREQUAL;
                     storage.get(3, 1) = 1;
 
                     storage.get(0, 2) = 1;
                     storage.get(1, 2) = -1;
-                    storage.get(2, 2) = Sign::GREATEROREQUAL;
+                    storage.get(2, 2) = (int) Sign::GREATEROREQUAL;
                     storage.get(3, 2) = -2;
 
                     storage.get(0, 3) = 0;
                     storage.get(1, 3) = 1;
-                    storage.get(2, 3) = Sign::LESSOREQUAL;
+                    storage.get(2, 3) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 3) = 3;
                 case 9://open
                     storage.alloc_matrix(8, 4);
@@ -344,37 +414,37 @@ namespace Magpie
 
                     storage.get(0, 1) = 6;
                     storage.get(1, 1) = 1;
-                    storage.get(2, 1) = Sign::GREATEROREQUAL;
+                    storage.get(2, 1) = (int) Sign::GREATEROREQUAL;
                     storage.get(3, 1) = 2;
 
                     storage.get(0, 2) = 0;
                     storage.get(1, 2) = 1;
-                    storage.get(2, 2) = Sign::GREATEROREQUAL;
+                    storage.get(2, 2) = (int) Sign::GREATEROREQUAL;
                     storage.get(3, 2) = 0;
 
                     storage.get(0, 3) = 1;
                     storage.get(1, 3) = -4;
-                    storage.get(2, 3) = Sign::LESSOREQUAL;
+                    storage.get(2, 3) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 3) = 5;
 
                     storage.get(0, 4) = 1;
                     storage.get(1, 4) = -2;
-                    storage.get(2, 4) = Sign::LESSOREQUAL;
+                    storage.get(2, 4) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 4) = 6;
 
                     storage.get(0, 5) = 1;
                     storage.get(1, 5) = -1;
-                    storage.get(2, 5) = Sign::LESSOREQUAL;
+                    storage.get(2, 5) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 5) = 8;
 
                     storage.get(0, 6) = -2;
                     storage.get(1, 6) = 1;
-                    storage.get(2, 6) = Sign::GREATEROREQUAL;
+                    storage.get(2, 6) = (int) Sign::GREATEROREQUAL;
                     storage.get(3, 6) = -26;
 
                     storage.get(0, 7) = -10;
                     storage.get(1, 7) = 1;
-                    storage.get(2, 7) = Sign::LESSOREQUAL;
+                    storage.get(2, 7) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 7) = 8;
                     break;
                 case 10://open
@@ -384,42 +454,42 @@ namespace Magpie
 
                     storage.get(0, 1) = 6;
                     storage.get(1, 1) = 1;
-                    storage.get(2, 1) = Sign::GREATEROREQUAL;
+                    storage.get(2, 1) = (int) Sign::GREATEROREQUAL;
                     storage.get(3, 1) = 2;
 
                     storage.get(0, 2) = 0;
                     storage.get(1, 2) = 1;
-                    storage.get(2, 2) = Sign::GREATEROREQUAL;
+                    storage.get(2, 2) = (int) Sign::GREATEROREQUAL;
                     storage.get(3, 2) = 0;
 
                     storage.get(0, 3) = 1;
                     storage.get(1, 3) = -4;
-                    storage.get(2, 3) = Sign::LESSOREQUAL;
+                    storage.get(2, 3) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 3) = 5;
 
                     storage.get(0, 4) = 1;
                     storage.get(1, 4) = -2;
-                    storage.get(2, 4) = Sign::LESSOREQUAL;
+                    storage.get(2, 4) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 4) = 6;
 
                     storage.get(0, 5) = 1;
                     storage.get(1, 5) = -1;
-                    storage.get(2, 5) = Sign::LESSOREQUAL;
+                    storage.get(2, 5) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 5) = 8;
 
                     storage.get(0, 6) = -2;
                     storage.get(1, 6) = 1;
-                    storage.get(2, 6) = Sign::GREATEROREQUAL;
+                    storage.get(2, 6) = (int) Sign::GREATEROREQUAL;
                     storage.get(3, 6) = -26;
 
                     storage.get(0, 7) = 2;
                     storage.get(1, 7) = 1;
-                    storage.get(2, 7) = Sign::GREATEROREQUAL;
+                    storage.get(2, 7) = (int) Sign::GREATEROREQUAL;
                     storage.get(3, 7) = 6;
 
                     storage.get(0, 8) = -9;
                     storage.get(1, 8) = 1;
-                    storage.get(2, 8) = Sign::LESSOREQUAL;
+                    storage.get(2, 8) = (int) Sign::LESSOREQUAL;
                     storage.get(3, 8) = 18;
                     break;
             }
@@ -431,7 +501,7 @@ namespace Magpie
                 : UiView("EnteringRestrictions", pos, size, open, w_flag), storage(n + 1, m + 2)
         {
 #if DEBUG
-            fill(10);
+            fill(2);
 #endif
         }
 
@@ -450,25 +520,26 @@ namespace Magpie
                 {
                     ImGui::PushID(column);
                     ImGui::TableNextColumn();
-                    std::string label = "X" + std::to_string(column);
-                    ImGui::InputScalar(label.c_str(), ImGuiDataType_Double, &storage.get(column, 0));
+                    std::string label = "x" + std::to_string(column);
+                    layout_universal(label.c_str(), storage.get(column, 0), column);
                     ImGui::PopID();
                 }
                 ImGui::EndTable();
             }
             constexpr int cell_height = 60; //stores the height of the table element,
             // this is a constant value, but it is different for different table elements
-            const float textPaddingY = 65.f;
+            const float textPaddingY = 10.f;
             auto curr_wnd = ImGui::GetCurrentWindow();
             auto contentRect = curr_wnd->ContentRegionRect;
             palka::Vec2f sz = {contentRect.GetWidth(), contentRect.GetHeight()};
             //  ImVec2 center = contentRect.GetCenter();
             ImVec2 center_local = contentRect.GetCenter() - curr_wnd->Pos;
             ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
-            ImVec2 TextPos{center_local.x - ImGui::CalcTextSize("a_1*x_1 + a_2*x_2 + ... + a_n*x_n [>=,=,<=] B").x / 2.f, textPaddingY};
+            ImVec2 TextPos{center_local.x - ImGui::CalcTextSize("a_1*x_1 + a_2*x_2 + ... + a_n*x_n [>=,=,<=] B").x / 2.f,
+                           ImGui::GetCursorPosY() + textPaddingY};
             ImGui::SetCursorPos(TextPos);
             ImGui::Text("a_1*x_1 + a_2*x_2 + ... + a_n*x_n [>=,=,<=] B");
-            ImVec2 barrier = TextPos + ImVec2{0, 80.f};
+            ImVec2 barrier = TextPos + ImVec2{0, 60.f};
 
             if(auto pos = center_local.y - cell_height * storage.rows_count() / 2.f; barrier.y < pos) //center, 3 -> row count
                 ImGui::SetCursorPosY(center_local.y - cell_height * storage.rows_count() / 2.f);
@@ -485,31 +556,17 @@ namespace Magpie
                     for(int column = 0; column < storage.columns_count() - 2; column++)
                     {
                         ImGui::TableNextColumn();
-                        //  ImGui::SetCursorPosY(ImGui::GetCursorPosY() + ((60 - t_sz.y) / 2.f));
-                        //ImGui::TextUnformatted("value");
-                        //ImGui::SameLine();
-                        //float a;
-                        //  ImGui::PushItemWidth(60);
-                        //  auto prev = ImGui::GetCursorPos();
-                        // ImVec2 p = ImGui::GetCursorScreenPos();
-                        // ImGui::InputFloat("##text", &a);
                         static int c = 0;
                         ImGui::PushID(id++);
-                        layout2("asd", storage.get(column, row), column);
+                        layout_universal("value", storage.get(column, row), column);
                         ImGui::PopID();
-//                        p.y = ImGui::GetCursorScreenPos().y;
-//                        prev.y = ImGui::GetCursorPosY() + ImGui::GetCurrentContext()->Style.FramePadding.y + 2;
-//                        ImGui::GetWindowDrawList()->AddLine(p, p + ImVec2(60, 0), IM_COL32(255, 255, 255, 255));
-//                        ImGui::SetCursorPosX(prev.x);
-//                        ImGui::InputFloat("##text", &a);
                     }
                     ImGui::TableNextColumn();
                     ImGui::PushID(id++);
-                    layout_sign(signToStr((Sign) storage.get(storage.columns_count() - 2, row)).data(),
-                                storage.get(storage.columns_count() - 2, row), 0);
+                    layout_sign_universal("##sign", storage.get(storage.columns_count() - 2, row), 0);
 
                     ImGui::TableNextColumn();
-                    layout2("asd", storage.get(storage.columns_count() - 1, row), 4);
+                    layout_universal("asd", storage.get(storage.columns_count() - 1, row), 4);
                     ImGui::PopID();
                 }
 
@@ -523,24 +580,13 @@ namespace Magpie
             //ImGui::GetForegroundDrawList()->AddCircle(center, 4, IM_COL32(255, 255, 0, 255));
 
             ImGui::End();
-
-//            ImGui::Begin("My Window");
-//            if(ImPlot::BeginPlot("My Plot"))
-//            {
-//                ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.25f);
-//                ImPlot::PlotLine("My Line Plot", dataX.data(), dataY.data(), dataX.size());
-//                ImPlot::PlotScatter("Result", &result.x, &result.y, 1);
-//                ImPlot::EndPlot();
-//                ImPlot::PopStyleVar();
-//            }
-//            ImGui::End();
         }
 
 #if DEBUG
 
         void update() override
         {
-            storage.debug();
+            //storage.debug();
         }
 
 #else
@@ -552,7 +598,16 @@ namespace Magpie
 
         auto getResult()
         {
-            return storage;
+            MatrixStorage<double> fractus;
+            fractus.alloc_matrix(storage.rows_count(), storage.columns_count());
+            for(int i = 0; i < fractus.rows_count(); ++i)
+            {
+                for(int j = 0; j < fractus.columns_count(); ++j)
+                {
+                    fractus.get(j, i) = std::stod(storage.get(j, i).getValueNotNull());
+                }
+            }
+            return fractus;
         }
 
         void setEvents() override

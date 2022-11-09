@@ -13,6 +13,8 @@ endif ()
 if (MSVC)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
     set(BUILD_SHARED_LIBS TRUE)
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -DDEBUG -DTracyProfiler")
     #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG -DTracyProfiler /Ox /Ob2 /Oi /Ot /Zi /OPT:REF /GF /MT ")
 else ()
     if (WIN32)
@@ -58,7 +60,7 @@ endif ()
 FetchContent_Declare(
         tracy
         GIT_REPOSITORY https://github.com/wolfpld/tracy.git
-        GIT_TAG "v0.8.2"
+        GIT_TAG "v0.9"
 )
 set(TRACY_NO_VSYNC_CAPTURE ON)
 FetchContent_MakeAvailable(tracy)

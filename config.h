@@ -1,7 +1,3 @@
-//
-// Created by dimka on 9/4/2022.
-//
-
 #ifndef MAGPIE_CONFIG_H
 #define MAGPIE_CONFIG_H
 

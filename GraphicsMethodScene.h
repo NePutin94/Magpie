@@ -33,13 +33,13 @@ namespace Magpie
             {
                 case State::Input:
                 {
-                    addView<MagicInput>(MagicInput("MagicInput", Magpie::Config::WindowSize * palka::Vec2f {0.8, 0.8}));
+                    addView<MagicInput>(MagicInput("MagicInput", Magpie::Config::WindowSize * palka::Vec2f {0.9, 0.9}));
                 }
                     break;
                 case State::Solve:
                 {
                     auto res = getView<MagicInput>()->getResult();
-                    addView<GraphicalMethodView>({{0, 0}, Magpie::Config::WindowSize * palka::Vec2f{0.8, 0.8}, res});
+                    addView<GraphicalMethodView>({{0, 0}, Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}, res});
                 }
                     break;
                 default:
@@ -50,7 +50,7 @@ namespace Magpie
         void init() override
         {
             state = State::Input;
-            addView<MagicInput>(MagicInput("MagicInput", Magpie::Config::WindowSize * palka::Vec2f {0.8, 0.8}));
+            addView<MagicInput>(MagicInput("MagicInput", Magpie::Config::WindowSize * palka::Vec2f {0.9, 0.9}));
             getView<MagicInput>()->setEvents();
         }
 

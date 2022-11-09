@@ -8,7 +8,7 @@
 #include "DockWrapper.h"
 #include "MainScene.h"
 #include <imgui_internal.h>
-#include <Tracy.hpp>
+#include <tracy/Tracy.hpp>
 #include "StartScene.h"
 #include "SceneManager.h"
 #include "myImGui.h"
@@ -36,6 +36,7 @@ namespace Magpie
         {
             init();
         }
+        void setTheme();
 
         static void glfw_error_callback(int error, const char* description)
         {
@@ -58,14 +59,6 @@ namespace Magpie
         void render()
         {
             w.clear();
-
-//            static ImGui::FileManager_Context c("./", true);
-//            c.setOpen(true);
-//            if(auto val = ImGui::FileManager(c); val.first)
-//            {
-//                int z = 5;
-//            }
-
             manager.getScene()->render();
             palka::Console::Draw("Console", &console_open);
             w.ImGuiEndFrame();

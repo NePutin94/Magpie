@@ -1,18 +1,11 @@
 #include "SimplexMethodScene.h"
 #include "SimplexMethodView.h"
 #include "DataSets.h"
+#include "config.h"
+
 void Magpie::SimplexMethodScene::init()
 {
-//    std::vector<double> inn = {-1, 2, 0, 0,
-//                               1, -1, 1, 3,
-//                               3, -4, -1, -12,
-//                               1, 0, 1, 5};
-    std::vector<double> inn = {-1, 8, 3, 0, 0,
-                                3, 1, 2,-1, 6,
-                                1, 1, 1,-1, 4,
-                               -1, 3,-1,-1, 4};
-    MatrixStorage<double> in(inn, 4, 5);
-    SimplexMethodView s(set7());
+    SimplexMethodView s(Config::WindowSize * palka::Vec2f{0.9, 0.9}, set7(), {2,3});
     addView<SimplexMethodView>(std::move(s));
 }
 
