@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <Solver.h>
+#include "include/Solver.h"
 
 using typelist = testing::Types<int, double, float>;
 template<class>

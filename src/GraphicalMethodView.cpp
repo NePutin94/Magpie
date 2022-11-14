@@ -1,0 +1,2 @@
+
+#include "../include/GraphicalMethodView.h"

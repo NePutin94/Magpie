@@ -1,4 +1,4 @@
-#include <Solver.h>
+#include "include/Solver.h"
 #include <gtest/gtest.h>
 
 using typelist = testing::Types<double, float>;

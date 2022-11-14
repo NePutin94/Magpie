@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "MatrixStorage.h"
+#include "include/MatrixStorage.h"
 #include <random>
 
 using typelist = testing::Types<int, double, float>;

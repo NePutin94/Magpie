@@ -95,7 +95,7 @@ namespace palka
 
         auto convert() const
         {
-            return glm::vec<2, T, glm::defaultp>{x, y};
+            return glm::vec<2, T, glm::defaultp>(x, y);
         }
 
         static auto convertFrom(glm::vec<2, T, glm::defaultp> vec)

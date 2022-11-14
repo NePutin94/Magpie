@@ -1,6 +1,6 @@
-#include <Solver.h>
+#include "include/Solver.h"
 #include <gtest/gtest.h>
-#include <MatrixStorage.h>
+#include "include/MatrixStorage.h"
 
 using typelist = testing::Types<double, float>;
 template<class T>
