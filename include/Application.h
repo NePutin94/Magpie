@@ -11,6 +11,8 @@
 #include "SceneManager.h"
 #include "myImGui.h"
 #include "IcoHolder.h"
+#include "RenderTexture.h"
+#include "Sprite.h"
 
 namespace Magpie
 {
@@ -42,8 +44,12 @@ namespace Magpie
         float delta;
         SceneManager manager;
         IcoHolder icoHolder;
+
+        palka::RenderTexture renderTex;
+        palka::Sprite renderSp;
     public:
         explicit Application(palka::Vec2i size) : w(size), isRuning(false), view(palka::RectF(0, 0, size.x, size.y))
+        , renderTex({500, 500})
         {
             init();
             m.init();
@@ -86,10 +92,17 @@ namespace Magpie
 
             ubo.bindToPoint(0);
             //assimp_model = test.load("Data\\model\\sphere.obj");
-            mm = loader.load("Data\\model\\glTF\\SciFiHelmet.gltf");
-            gltf_model = loader.bindModel(mm);
-            gltf_model.init();
+           // mm = loader.load("Data\\model\\glTF\\SciFiHelmet.gltf");
+           // gltf_model = loader.bindModel(mm);
+           // gltf_model.init();
+            //  unsigned int rbo;
+
+            renderTex.create();
+            renderTex.getViewport().setCenter({500 / 2.f, 500 / 2.f});
+            renderSp.setTexture(renderTex.getTexture());
+            renderSp.setPosition({500, 0});
         }
+
         void setTheme();
 
         static void glfw_error_callback(int error, const char* description)
@@ -113,16 +126,19 @@ namespace Magpie
         void render()
         {
             w.clear();
+
             static palka::Vec3f lp = {-5.f, 0.f, -5.f};
             palka::Mat4f model3 = palka::Mat4f{1.f};
-            model3 = glm::translate(model3, {-8, 0, 0});
-            static  palka::Vec3f ambient =  palka::Vec3f{1.0f, 0.5f, 0.31f};
-            static  palka::Vec3f diffuse =  palka::Vec3f{1.0f, 0.5f, 0.31f};
-            static  palka::Vec3f specular =  palka::Vec3f{0.5f, 0.5f, 0.5f};
-            static  palka::Vec3f l_ambient =  palka::Vec3f{0.2f, 0.2f, 0.2f};
-            static  palka::Vec3f l_diffuse =  palka::Vec3f{0.5f, 0.5f, 0.5f};
-            static  palka::Vec3f l_specular =  palka::Vec3f{1.0f, 1.0f, 1.0f};
+            model3 = glm::translate(model3, {0, 0, -5});
+            static palka::Vec3f ambient = palka::Vec3f{1.0f, 0.5f, 0.31f};
+            static palka::Vec3f diffuse = palka::Vec3f{1.0f, 0.5f, 0.31f};
+            static palka::Vec3f specular = palka::Vec3f{0.5f, 0.5f, 0.5f};
+            static palka::Vec3f l_ambient = palka::Vec3f{0.2f, 0.2f, 0.2f};
+            static palka::Vec3f l_diffuse = palka::Vec3f{0.5f, 0.5f, 0.5f};
+            static palka::Vec3f l_specular = palka::Vec3f{1.0f, 1.0f, 1.0f};
             static float shininess = 32.f;
+
+
             palka::RenderContext context2(&material_light, &ubo, model3, [](palka::ShaderProgram& shader)
             {
                 shader.setUniform("material.ambient", ambient);
@@ -135,8 +151,24 @@ namespace Magpie
                 shader.setUniform("light.specular", l_specular);
                 shader.setUniform("light.position", lp);
             });
-            w.draw(m, context2, lp);
-          //  manager.getScene()->render();
+
+            renderTex.bind();
+            renderTex.clear(palka::Color(0, 0, 0, 0));
+            renderTex.draw(m, context2, lp);
+            renderTex.unbind();
+
+            ImGui::Begin("Game Window");
+            ImVec2 pos = ImGui::GetCursorScreenPos();
+            ImDrawList* drawList = ImGui::GetWindowDrawList();
+            unsigned int f_tex = renderTex.getTexture().textureID;
+            drawList->AddImage((void*)f_tex,
+                               pos,
+                               ImVec2(pos.x + 512, pos.y + 512),
+                               ImVec2(0, 1),
+                               ImVec2(1, 0));
+            ImGui::End();
+
+            //  manager.getScene()->render();
             palka::Console::Draw("Console", &console_open);
             w.ImGuiEndFrame();
             w.EndFrame();

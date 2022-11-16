@@ -34,6 +34,11 @@ namespace palka
 
         }
 
+        Vec2i getSize() const
+        {
+            return size;
+        }
+
         void setSize(Vec2i sz)
         {
             size = sz;
@@ -97,9 +102,9 @@ namespace palka
 
         //void draw(gltf_loader& m, RenderContext context, tinygltf::Model&, VertexArrayObject& vao);
 
-       // void draw(assimp_loader& m, RenderContext context);
+        // void draw(assimp_loader& m, RenderContext context);
 
-        void draw(VertexArrayObject& array,  RenderContext context, Vec3f lightPos);
+        void draw(VertexArrayObject& array, RenderContext context, Vec3f lightPos);
 
         void draw(unsigned int& vao, RenderContext context, int size);
 

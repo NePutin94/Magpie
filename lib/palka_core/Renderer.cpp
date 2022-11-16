@@ -168,6 +168,7 @@ void palka::Renderer::draw(unsigned int& vao, palka::RenderContext context,int s
 
 void palka::Renderer::clear(palka::Color color)
 {
+    glEnable(GL_DEPTH_TEST);
     glClearColor(color.r, color.g, color.b, 255);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, size.x, size.y);
