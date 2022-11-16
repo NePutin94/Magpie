@@ -23,12 +23,7 @@ namespace palka
 
         UniformBuffer(const UniformBuffer&) = delete;
 
-        void bindToPoint(int p)
-        {
-            bind();
-            glBindBufferBase(GL_UNIFORM_BUFFER, p, bufferID);
-            unbind();
-        }
+        void bindToPoint(int p);
 
         /*void use()
         {

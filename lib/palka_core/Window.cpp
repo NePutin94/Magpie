@@ -64,8 +64,8 @@ void palka::Window::create(std::string_view name, std::string_view icon_path)
     //int i = 0;
     //glGetIntegerv(GL_MAX_DRAW_BUFFERS, &i);
     //Console::fmt_log("Draw buffer count: {}", Console::info, i);
-    // glEnable(GL_DEPTH_TEST);
-//            init();
+     glEnable(GL_DEPTH_TEST);
+     //init();
 }
 
 void palka::Window::ImGuiNewFrame()

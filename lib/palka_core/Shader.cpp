@@ -174,4 +174,66 @@ void palka::Shader::loadVF(std::string_view file_name_fragment, std::string_view
     glDeleteShader(shader_v);
 }
 
+void palka::Shader::setValue(std::string_view name, palka::Transform t)
+{
+    GLint loc = glGetUniformLocation((GLuint) shaderID, name.data());
+    if(loc != -1)
+    {
+        glUniformMatrix4fv(loc, 1, GL_FALSE, t.getMatrix());
+    }
+}
 
+void palka::Shader::setValue(std::string_view name, glm::mat4 t)
+{
+    GLint loc = glGetUniformLocation((GLuint) shaderID, name.data());
+    if(loc != -1)
+    {
+        glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(t));
+    }
+}
+
+void palka::_Shader::compile()
+{
+    shaderID = glCreateShader(ENUM_TO_GL(type));
+    const auto* src = (const GLchar*) source.c_str();
+    glShaderSource(shaderID, 1, &src, nullptr);
+    glCompileShader(shaderID);
+    GLint isCompiled_i = 0;
+    glGetShaderiv(shaderID, GL_COMPILE_STATUS, &isCompiled_i);
+    if(isCompiled_i == GL_FALSE)
+    {
+        GLint logLen;
+        glGetShaderiv(shaderID, GL_INFO_LOG_LENGTH, &logLen);
+        if(logLen > 0)
+        {
+            std::string log(logLen, ' ');
+            GLsizei written;
+            glGetShaderInfoLog(shaderID, logLen, &written, &log[0]);
+            log.insert(0, "\n");
+            Console::addLog(log, Console::error);
+        }
+    } else
+        isCompiled = true;
+}
+
+void palka::_Shader::load(std::string_view file_path, bool _compile)
+{
+    std::ifstream file(file_path.data());
+    if(file.is_open())
+    {
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        source = buffer.str();
+    }
+    file.close();
+    if(_compile)
+        compile();
+}
+
+void palka::_Shader::delShader()
+{
+    if(!isCompiled)
+        return;
+    isCompiled = false;
+    glDeleteShader(shaderID);
+}
