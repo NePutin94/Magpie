@@ -18,6 +18,7 @@
 #include "StaticMesh.h"
 #include "ShaderProgram.h"
 #include "Mesh.h"
+#include "PlaneMesh.h"
 
 namespace palka
 {
@@ -34,7 +35,7 @@ namespace palka
 
         }
 
-        Vec2i getSize() const
+        auto getSize()
         {
             return size;
         }
@@ -93,6 +94,81 @@ namespace palka
             glLoadMatrixf(view.getView().getMatrix());
             glMatrixMode(GL_MODELVIEW);
         }
+        class Line
+        {
+
+
+            glm::vec3 startPoint;
+            glm::vec3 endPoint;
+        public:
+            palka::VertexArrayObject vao;
+            palka::VertexBufferObject vbo;
+            VertArray vertices;
+
+            Line(glm::vec3 start, glm::vec3 end, Color color = Color(255,255,255)) : vertices(VertArray::Lines)
+            {
+
+                startPoint = start;
+                endPoint = end;
+
+                vertices.add({{start.x, start.y, start.z}, color, glm::vec2 {99.f, 0.f},  glm::vec3{88.0, 0.0, 0.0}});
+                vertices.add({{end.x, end.y, end.z}, color,  glm::vec2{99.f, 0.f},  glm::vec3{0.0, 0.0, 88.0}});
+            }
+
+            void init()
+            {
+                vao.create(2);
+                vbo.create(sizeof(Vertex) * 2);
+                vbo.setData(sizeof(Vertex) * 2, &vertices[0].pos.x);
+                vao.setPointers(vbo, sizeof(Vertex));
+                vao.unbind();
+            }
+        };
+
+        void drawLine(Line& lx, palka::RenderContext context)
+        {
+
+            auto& buffer = *context.getUBO();
+            glm::mat4 projection = glm::mat4(1.0f);
+            projection = camera.getProjectionMatrix();
+            auto _view = camera.getViewMatrix();
+
+
+            auto& shader = *context.getShader();
+            shader.bind();
+            shader.setUniform("viewPos", camera.cameraPos);
+            context();
+            lx.vao.bind();
+
+            buffer.setData(glm::value_ptr(projection), sizeof(float[16]), 0);
+            buffer.setData(glm::value_ptr(_view), sizeof(float[16]), sizeof(float[16]));
+            buffer.setData(glm::value_ptr(context.getTransform()), sizeof(float[16]), sizeof(float[16]) * 2);
+
+            glDrawArrays(GL_LINES, static_cast<GLint>(0), lx.vao.getSize());
+        }
+
+        void draw(palka::PlaneMesh& m, palka::RenderContext context, Vec3f lightPos)
+        {
+            applyBlend(context.getBlend());
+            auto& shader = *context.getShader();
+            auto& buffer = *context.getUBO();
+            glm::mat4 projection = glm::mat4(1.0f);
+            projection = camera.getProjectionMatrix();
+            auto _view = camera.getViewMatrix();
+
+            shader.bind();
+            shader.setUniform("objectColor", Vec3f{0.2f, 0.1f, 0.9f});
+            shader.setUniform("lightColor", Vec3f{1.f, 0.1f, 0.1f});
+            shader.setUniform("lightPos", lightPos);
+            shader.setUniform("viewPos", camera.cameraPos);
+            context();
+
+            buffer.setData(glm::value_ptr(projection), sizeof(float[16]), 0);
+            buffer.setData(glm::value_ptr(_view), sizeof(float[16]), sizeof(float[16]));
+            buffer.setData(glm::value_ptr(context.getTransform()), sizeof(float[16]), sizeof(float[16]) * 2);
+
+            m.render();
+        }
 
         void draw(VertArray array, RenderContext context);
 
@@ -102,9 +178,9 @@ namespace palka
 
         //void draw(gltf_loader& m, RenderContext context, tinygltf::Model&, VertexArrayObject& vao);
 
-        // void draw(assimp_loader& m, RenderContext context);
+       // void draw(assimp_loader& m, RenderContext context);
 
-        void draw(VertexArrayObject& array, RenderContext context, Vec3f lightPos);
+        void draw(VertexArrayObject& array,  RenderContext context, Vec3f lightPos);
 
         void draw(unsigned int& vao, RenderContext context, int size);
 

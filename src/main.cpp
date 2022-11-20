@@ -1,5 +1,4 @@
 #include "../include/Application.h"
-#include "../include/config.h"
 using namespace Magpie;
 
 int main()

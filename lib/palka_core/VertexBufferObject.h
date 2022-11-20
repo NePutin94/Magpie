@@ -28,7 +28,23 @@ namespace palka
             bufferType = t;
         }
 
-        void setData(unsigned int data_size, const void* start, unsigned int offset = 0);
+        void setData(unsigned int data_size, const void* start, unsigned int offset = 0)
+        {
+//            if(this->data_size < data_size)
+//            {
+//                this->data_size = data_size;
+//                glNamedBufferData(bufferID, this->data_size, start, BufferRenderTypeToGl());
+//            }
+//            glNamedBufferSubData(bufferID, offset, data_size, start);
+            bind();
+            if(this->data_size < data_size)
+            {
+                this->data_size = data_size;
+                glBufferData(BufferTypeToGl(), this->data_size, start, BufferRenderTypeToGl());
+            }
+            glBufferSubData(BufferTypeToGl(), offset, data_size, start);
+            // glBindBuffer(BufferTypeToGl(), 0);
+        }
     };
 }
 

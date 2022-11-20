@@ -4,8 +4,8 @@
 void Magpie::Application::init()
 {
     w.create("Magpie", "magpie.png");
-    ImGui::SetCurrentContext(w.imgui_context);
-    ImPlot::SetCurrentContext(w.implot_context);
+    //ImGui::SetCurrentContext(w.imgui_context);
+    //ImPlot::SetCurrentContext(w.implot_context);
     icoHolder.init();
     setTheme();
     w.getViewport().setCenter({1280.f / 2, 720.f / 2});

@@ -4,3 +4,4 @@ cmake-build-tracyprofile/
 .idea/
 build/
 cmake-build-debugmsvc/
+lib/palka_core_2
