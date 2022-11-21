@@ -211,7 +211,7 @@ namespace Magpie
                 : UiView(name, size), storage(0, 0), SetIsClosed(false), StorageOnceInit(false)
         {}
 
-        void render() override
+        void render(palka::Window& w) override
         {
             ImGui::SetNextWindowPos(ImVec2((Config::WindowSize.x - (size.x)) / 2,
                                            (Config::WindowSize.y - (size.y)) / 2), ImGuiCond_Always, {0, 0});
@@ -395,7 +395,7 @@ namespace Magpie
 
         void setEvents() override
         {
-            palka::EventManager::addEvent(palka::EventType::KEYDOWN, [this](palka::EventData e)
+            palka::EventManager::addEvent(palka::_EventType::KEYDOWN, [this](palka::EventData e)
             {
                 if(palka::EventManager::isKeyPressed(GLFW_KEY_LEFT_CONTROL) && palka::EventManager::isKeyPressed(GLFW_KEY_Z))
                 {

@@ -14,7 +14,7 @@ void Magpie::Application::init()
     {
         console_open = !console_open;
     });
-    palka::EventManager::addEvent(palka::EventType::WINDOWCLOSE, [this](palka::EventData e)
+    palka::EventManager::addEvent(palka::_EventType::WINDOWCLOSE, [this](palka::EventData e)
     {
         isRuning = false;
         //Console::fmt_log("Window resized new size is w: {} h: {}", Console::info, size.x, size.y);

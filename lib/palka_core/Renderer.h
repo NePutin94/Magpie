@@ -29,12 +29,18 @@ namespace palka
         Vec2i size;
         Camera camera;
     public:
+        Renderer() : view({0, 0, 0, 0})
+        {}
 
         Renderer(Vec2i sz) : size(sz), view({0, 0, (float) sz.x, (float) sz.y}), camera(sz)
+        {}
+
+        Renderer(Renderer&& ot) : view({0,0,0,0})
         {
-
+            view = ot.view;
+            size = ot.size;
+            camera = ot.camera;
         }
-
         auto getSize()
         {
             return size;
@@ -94,10 +100,9 @@ namespace palka
             glLoadMatrixf(view.getView().getMatrix());
             glMatrixMode(GL_MODELVIEW);
         }
+
         class Line
         {
-
-
             glm::vec3 startPoint;
             glm::vec3 endPoint;
         public:
@@ -105,14 +110,14 @@ namespace palka
             palka::VertexBufferObject vbo;
             VertArray vertices;
 
-            Line(glm::vec3 start, glm::vec3 end, Color color = Color(255,255,255)) : vertices(VertArray::Lines)
+            Line(glm::vec3 start, glm::vec3 end, Color color = Color(255, 255, 255)) : vertices(VertArray::Lines)
             {
 
                 startPoint = start;
                 endPoint = end;
 
-                vertices.add({{start.x, start.y, start.z}, color, glm::vec2 {99.f, 0.f},  glm::vec3{88.0, 0.0, 0.0}});
-                vertices.add({{end.x, end.y, end.z}, color,  glm::vec2{99.f, 0.f},  glm::vec3{0.0, 0.0, 88.0}});
+                vertices.add({{start.x, start.y, start.z}, color, glm::vec2{99.f, 0.f}, glm::vec3{88.0, 0.0, 0.0}});
+                vertices.add({{end.x, end.y, end.z}, color, glm::vec2{99.f, 0.f}, glm::vec3{0.0, 0.0, 88.0}});
             }
 
             void init()
@@ -127,7 +132,6 @@ namespace palka
 
         void drawLine(Line& lx, palka::RenderContext context)
         {
-
             auto& buffer = *context.getUBO();
             glm::mat4 projection = glm::mat4(1.0f);
             projection = camera.getProjectionMatrix();
@@ -178,9 +182,9 @@ namespace palka
 
         //void draw(gltf_loader& m, RenderContext context, tinygltf::Model&, VertexArrayObject& vao);
 
-       // void draw(assimp_loader& m, RenderContext context);
+        // void draw(assimp_loader& m, RenderContext context);
 
-        void draw(VertexArrayObject& array,  RenderContext context, Vec3f lightPos);
+        void draw(VertexArrayObject& array, RenderContext context, Vec3f lightPos);
 
         void draw(unsigned int& vao, RenderContext context, int size);
 

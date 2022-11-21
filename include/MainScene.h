@@ -52,7 +52,8 @@ namespace Magpie
                 case State::Solve:
                 {
                     auto res = getView<Test>()->getResult();
-                    addView<GraphicalMethodView>({{0, 0}, Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}, res});
+                    GraphicalMethodView s{{0, 0}, Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}, res};
+                    addView<GraphicalMethodView>(std::move(s));
                 }
                     break;
                 default:
@@ -67,9 +68,9 @@ namespace Magpie
                                 Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
         }
 
-        void render() override
+        void render(palka::Window& w) override
         {
-            views()->render();
+            views()->render(w);
         }
 
         void update() override

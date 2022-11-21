@@ -19,7 +19,7 @@ namespace Magpie
 
         void init() override;
 
-        void render() override;
+        void render(palka::Window& w) override;
 
         void update() override;
 

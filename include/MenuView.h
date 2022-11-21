@@ -24,7 +24,7 @@ namespace Magpie
 
         }
 
-        void render() override
+        void render(palka::Window& w) override
         {
             ImGui::SetNextWindowPos(ImVec2((Config::WindowSize.x - (size.x)) / 2,
                                            (Config::WindowSize.y - (size.y)) / 2), ImGuiCond_Always, {0, 0});

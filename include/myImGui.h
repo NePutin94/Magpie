@@ -31,6 +31,7 @@ namespace ImGui
 
         bool windowIsFocus;
     public:
+        FileManager_Context() = default;
         FileManager_Context(std::string _path, bool selectOne = false, std::string filter = ".+") : selectOne(selectOne), Input(false),
                                                                                                     _path(_path), curr_id(++id),
                                                                                                     open(false), filter(filter),

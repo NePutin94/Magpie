@@ -6,17 +6,21 @@
 #define PALKA_VIEWPORT_H
 
 #define _USE_MATH_DEFINES
+
 #include <cmath>
 #include "config.h"
 #include "Vec2.h"
 #include "Rect.h"
 #include "Transform.h"
 #include <utility>
+
 #define M_PI 3.14159265358979323846
 
 #ifdef REFLECTION_CORE
+
 #include <rttr/type>
 #include <rttr/registration_friend>
+
 #endif
 
 namespace palka
@@ -36,8 +40,7 @@ namespace palka
         Transform t;
     public:
         Viewport(const RectF& r) : rect(r), size(r.w, r.h), needUpdate(true), rotation(0), center()
-        {
-        }
+        {}
 
         void reset(const RectF& r)
         {
@@ -82,7 +85,7 @@ namespace palka
             needUpdate = true;
         }
 
-        [[nodiscard]] const auto& getCenter()const
+        [[nodiscard]] const auto& getCenter() const
         {
             return center;
         }
@@ -94,7 +97,7 @@ namespace palka
 
         Transform getView()
         {
-            if (needUpdate)
+            if(needUpdate)
             {
                 Vec2f m_center = center;
                 Vec2f m_size(size.x, size.y);

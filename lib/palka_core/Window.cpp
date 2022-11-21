@@ -55,7 +55,7 @@ void palka::Window::create(std::string_view name, std::string_view icon_path)
         stbi_image_free(images[0].pixels);
     }
 //            initImgui();
-    EventManager::addEvent(WINDOWRESIZE, [this](EventData e)
+    EventManager::addEvent(_EventType::WINDOWRESIZE, [this](EventData e)
     {
         size.x = e.WindowResize.newX;
         size.y = e.WindowResize.newY;

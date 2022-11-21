@@ -13,12 +13,28 @@ namespace palka
     {
     private:
         Texture tex;
-        GLuint fbo = 0;
-        GLuint rbo;
+        GLuint fbo = -1;
+        GLuint rbo = -1;
+        bool inited = false;
     public:
-        RenderTexture(Vec2i size) : Renderer(size)
-        {
 
+        RenderTexture() = default;
+
+        RenderTexture(Vec2i size) : Renderer(size)
+        {}
+
+        RenderTexture(RenderTexture&& ot) : Renderer(std::move(ot))
+        {
+            if(this == &ot)
+                return;
+            tex = std::move(ot.tex);
+            fbo = ot.fbo;
+            rbo = ot.rbo;
+            inited = ot.inited;
+
+            ot.fbo = -1;
+            ot.rbo = -1;
+            ot.inited = false;
         }
 
         void create()
@@ -37,6 +53,7 @@ namespace palka
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); //
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            inited = true;
         }
 
         Texture& getTexture()
@@ -46,7 +63,8 @@ namespace palka
 
         ~RenderTexture()
         {
-            glDeleteFramebuffers(1, &fbo);
+            if(inited)
+                glDeleteFramebuffers(1, &fbo);
         }
 
         void bind()

@@ -34,7 +34,7 @@ void EventManager::WindowMotionEventHolder(GLFWwindow* window, int xpos, int ypo
     EventData data{};
     data.WindowPos.x = xpos;
     data.WindowPos.y = ypos;
-    auto range = TypeEvents.equal_range(WINDOWMOTION);
+    auto range = TypeEvents.equal_range(_EventType::WINDOWMOTION);
     for(auto it = range.first; it != range.second; ++it)
         it->second(data);
 }
@@ -42,7 +42,7 @@ void EventManager::WindowMotionEventHolder(GLFWwindow* window, int xpos, int ypo
 void EventManager::WindowCloseEventHolder(GLFWwindow* window)
 {
     EventData data{};
-    auto range = TypeEvents.equal_range(WINDOWCLOSE);
+    auto range = TypeEvents.equal_range(_EventType::WINDOWCLOSE);
     for(auto it = range.first; it != range.second; ++it)
         it->second(data);
 }
@@ -52,7 +52,7 @@ void EventManager::WindowResizeEventHolder(GLFWwindow* window, int width, int he
     EventData data{};
     data.WindowResize.newX = width;
     data.WindowResize.newY = height;
-    auto range = TypeEvents.equal_range(WINDOWRESIZE);
+    auto range = TypeEvents.equal_range(_EventType::WINDOWRESIZE);
     for(auto it = range.first; it != range.second; ++it)
         it->second(data);
 }
@@ -68,19 +68,19 @@ void EventManager::KeyBoardEventHolder(GLFWwindow* window, int key, int scancode
     {
         keyPressed.emplace(key);
         {
-            auto range = KeyboardEvents.equal_range(KBoardEvent{EventType::KEYDOWN, key});
+            auto range = KeyboardEvents.equal_range(KBoardEvent{_EventType::KEYDOWN, key});
             for(auto it = range.first; it != range.second; ++it)
                 it->second(data);
         }
         {
-            auto range = TypeEvents.equal_range(KEYDOWN);
+            auto range = TypeEvents.equal_range(_EventType::KEYDOWN);
             for(auto it = range.first; it != range.second; ++it)
                 it->second(data);
         }
     } else if(action == GLFW_RELEASE)
     {
         keyPressed.erase(key);
-        auto range = KeyboardEvents.equal_range(KBoardEvent{EventType::KEYUP, key});
+        auto range = KeyboardEvents.equal_range(KBoardEvent{_EventType::KEYUP, key});
         for(auto it = range.first; it != range.second; ++it)
             it->second(data);
     }
@@ -95,35 +95,35 @@ void EventManager::MouseButtonEventHolder(GLFWwindow* window, int button, int ac
     if(action == GLFW_PRESS)
     {
         mousebPress.emplace((MouseEvent::Mouse_Button) button);
-        auto range = MouseEvents.equal_range(MouseEvent{MOUSEBDOWN, (MouseEvent::Mouse_Button) button});
+        auto range = MouseEvents.equal_range(MouseEvent{_EventType::MOUSEBDOWN, (MouseEvent::Mouse_Button) button});
         for(auto it = range.first; it != range.second; ++it)
             it->second(data);
     } else if(action == GLFW_RELEASE)
     {
-        auto range = MouseEvents.equal_range(MouseEvent{MOUSEBUP, (MouseEvent::Mouse_Button) button});
+        auto range = MouseEvents.equal_range(MouseEvent{_EventType::MOUSEBUP, (MouseEvent::Mouse_Button) button});
         for(auto it = range.first; it != range.second; ++it)
             it->second(data);
     }
 }
 
-void EventManager::addEvent(EventType t, const std::function<void(EventData&)>& callback)
+unsigned int EventManager::addEvent(EventType t, const std::function<void(EventData&)>& callback)
 {
-    TypeEvents.emplace(t, callback);
+    return TypeEvents.emplace(t, callback)->first.getId();
 }
 
-void EventManager::addEvent(KBoardEvent e, const std::function<void(EventData&)>& callback)
+unsigned int EventManager::addEvent(KBoardEvent e, const std::function<void(EventData&)>& callback)
 {
-    KeyboardEvents.emplace(e, callback);
+    return KeyboardEvents.emplace(e, callback)->first.getId();
 }
 
-void EventManager::addInput(int k, const std::function<void()>& callback)
+unsigned int EventManager::addInput(int k, const std::function<void()>& callback)
 {
-    KeyboardInputs.emplace(KBoardEvent::KeyPressed(k), callback);
+    return KeyboardInputs.emplace(KBoardEvent::KeyPressed(k), callback)->first.getId();
 }
 
-void EventManager::addEvent(MouseEvent e, const std::function<void(EventData&)>& callback)
+unsigned int EventManager::addEvent(MouseEvent e, const std::function<void(EventData&)>& callback)
 {
-    MouseEvents.emplace(e, callback);
+    return MouseEvents.emplace(e, callback)->first.getId();
 }
 
 bool EventManager::isKeyPressed(int key)

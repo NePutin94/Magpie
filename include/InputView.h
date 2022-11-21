@@ -17,7 +17,7 @@ namespace Magpie
                 : UiView("MagicInput", pos, size, open, w_flag), rows(0), cols(0)
         {}
 
-        void render() override
+        void render(palka::Window& w) override
         {
             ImGui::SetNextWindowPos(ImVec2((Config::WindowSize.x - (size.x)) / 2,
                                            (Config::WindowSize.y - (size.y)) / 2), ImGuiCond_Always, {0, 0});

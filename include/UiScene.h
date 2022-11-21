@@ -3,6 +3,7 @@
 
 #include "UiView.h"
 #include "DockWrapper.h"
+#include "Window.h"
 #include <ranges>
 #include <vector>
 
@@ -55,7 +56,7 @@ namespace Magpie
 
         virtual void init() = 0;
 
-        virtual void render() = 0;
+        virtual void render(palka::Window& w) = 0;
 
         virtual void update() = 0;
     };

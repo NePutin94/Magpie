@@ -10,9 +10,9 @@ void Magpie::SimplexMethodScene::init()
     addView<SimplexMethodView>(std::move(s));
 }
 
-void Magpie::SimplexMethodScene::render()
+void Magpie::SimplexMethodScene::render(palka::Window& w)
 {
-    views()->render();
+    views()->render(w);
 }
 
 void Magpie::SimplexMethodScene::update()

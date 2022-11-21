@@ -87,7 +87,7 @@ namespace Magpie
 
         ~SimplexMethodView() override = default;
 
-        void render() override;
+        void render(palka::Window& w) override;
 
         void update() override;
 

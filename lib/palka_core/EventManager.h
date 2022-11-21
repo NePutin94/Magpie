@@ -13,7 +13,7 @@
 
 namespace palka
 {
-    enum EventType
+    enum class _EventType
     {
         NONE,
         KEYDOWN,
@@ -25,6 +25,27 @@ namespace palka
         WINDOWRESIZE,
         WINDOWMOTION,
         WINDOWCLOSE
+    };
+
+    class EventType
+    {
+    private:
+        static inline unsigned int _id = 0;
+        unsigned int id;
+        _EventType type;
+    public:
+        EventType(_EventType type) : type(type)
+        { id = EventType::_id++; }
+
+        operator _EventType() const
+        {
+            return type;
+        }
+
+        unsigned int getId() const
+        {
+            return id;
+        }
     };
 
     struct EventData
@@ -66,15 +87,22 @@ namespace palka
 
     struct KBoardEvent
     {
-        EventType type = NONE;
+        static inline unsigned int _id = 0;
+        unsigned int id;
+        EventType type = _EventType::NONE;
         int key = -1;
         //KBoardEvent() : type(), key() {}
 
         KBoardEvent(EventType type, int key) : type(type), key(key)
-        {}
+        { id = KBoardEvent::_id++; }
 
         KBoardEvent(int key) : key(key)
-        {}
+        { id = KBoardEvent::_id++; }
+
+        unsigned int getId() const
+        {
+            return id;
+        }
 
         bool operator==(const KBoardEvent& other) const
         { return key == other.key && type == other.type; }
@@ -86,17 +114,20 @@ namespace palka
 
         static KBoardEvent KeyPressed(int k)
         {
-            return KBoardEvent{KEYDOWN, k};
+            return KBoardEvent{_EventType::KEYDOWN, k};
         }
 
         static KBoardEvent KeyReleased(int k)
         {
-            return KBoardEvent{KEYUP, k};
+            return KBoardEvent{_EventType::KEYUP, k};
         }
     };
 
     struct MouseEvent
     {
+        static inline unsigned int _id = 0;
+        unsigned int id;
+
         enum Mouse_Button
         {
             None = 0,
@@ -105,17 +136,22 @@ namespace palka
             Middle = GLFW_MOUSE_BUTTON_MIDDLE
         };
 
-        EventType type = NONE;
+        EventType type = _EventType::NONE;
         Mouse_Button key = None;
 
         MouseEvent(EventType type, Mouse_Button b) : key(b), type(type)
-        {}
+        { id = MouseEvent::_id++; }
 
         MouseEvent(EventType type) : type(type)
-        {}
+        { id = MouseEvent::_id++; }
 
         MouseEvent(Mouse_Button b) : key(b)
-        {}
+        { id = MouseEvent::_id++; }
+
+        unsigned int getId() const
+        {
+            return id;
+        }
 
         bool operator==(const MouseEvent& other) const
         { return key == other.key && type == other.type; }
@@ -127,22 +163,22 @@ namespace palka
 
         static MouseEvent ButtonPressed(Mouse_Button b)
         {
-            return MouseEvent{MOUSEBDOWN, b};
+            return MouseEvent{_EventType::MOUSEBDOWN, b};
         }
 
         static MouseEvent ButtonReleased(Mouse_Button b)
         {
-            return MouseEvent{MOUSEBUP, b};
+            return MouseEvent{_EventType::MOUSEBUP, b};
         }
 
         static MouseEvent WheelScrolled()
         {
-            return MouseEvent{MOUSESCROLL, Mouse_Button::None};
+            return MouseEvent{_EventType::MOUSESCROLL, Mouse_Button::None};
         }
 
         static MouseEvent Motion()
         {
-            return MouseEvent{MOUSEMOTION, Mouse_Button::None};
+            return MouseEvent{_EventType::MOUSEMOTION, Mouse_Button::None};
         }
     };
 
@@ -158,13 +194,49 @@ namespace palka
         inline static std::set<MouseEvent::Mouse_Button> mousebPress{};
     public:
 
-        static void addEvent(EventType t, const std::function<void(EventData&)>& callback);
+        static void deleteKBoasrdInput(unsigned int id)
+        {
+            std::erase_if(KeyboardInputs, [id](const std::pair<KBoardEvent, std::function<void()>>& item)
+            {
+                auto const& [key, value] = item;
+                return key.getId() == id;
+            });
+        }
 
-        static void addEvent(KBoardEvent e, const std::function<void(EventData&)>& callback);
+        static void deleteEvent(unsigned int id)
+        {
+            std::erase_if(TypeEvents, [id](const std::pair<EventType, std::function<void(EventData&)>>& item)
+            {
+                auto const& [key, value] = item;
+                return key.getId() == id;
+            });
+        }
 
-        static void addInput(int k, const std::function<void()>& callback);
+        static void deleteKBoardEvent(unsigned int id)
+        {
+            std::erase_if(KeyboardEvents, [id](const std::pair<KBoardEvent, std::function<void(EventData&)>>& item)
+            {
+                auto const& [key, value] = item;
+                return key.getId() == id;
+            });
+        }
 
-        static void addEvent(MouseEvent e, const std::function<void(EventData&)>& callback);
+        static void deleteMouseEvent(unsigned int id)
+        {
+            std::erase_if(MouseEvents, [id](const std::pair<MouseEvent, std::function<void(EventData&)>>& item)
+            {
+                auto const& [key, value] = item;
+                return key.getId() == id;
+            });
+        }
+
+        static unsigned int addEvent(EventType t, const std::function<void(EventData&)>& callback);
+
+        static  unsigned int addEvent(KBoardEvent e, const std::function<void(EventData&)>& callback);
+
+        static  unsigned int addInput(int k, const std::function<void()>& callback);
+
+        static  unsigned int addEvent(MouseEvent e, const std::function<void(EventData&)>& callback);
 
         static bool isKeyPressed(int key);
 

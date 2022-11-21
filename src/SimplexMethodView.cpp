@@ -1,7 +1,7 @@
 #include "../include/SimplexMethodView.h"
 #include "../include/config.h"
 
-void Magpie::SimplexMethodView::render()
+void Magpie::SimplexMethodView::render(palka::Window& w)
 {
 }
 

@@ -4,6 +4,7 @@
 #include <imgui.h>
 #include <string>
 #include <Vec2.h>
+#include "Window.h"
 
 namespace Magpie
 {
@@ -50,7 +51,7 @@ namespace Magpie
             sceneCallback = call;
         }
 
-        virtual void render() = 0;
+        virtual void render(palka::Window& w) = 0;
 
         virtual void update() = 0;
 
