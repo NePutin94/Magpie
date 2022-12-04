@@ -94,12 +94,14 @@ void EventManager::MouseButtonEventHolder(GLFWwindow* window, int button, int ac
     data.MouseButtonPress.mods = mods;
     if(action == GLFW_PRESS)
     {
+        mouseKeyPressed.emplace(button);
         mousebPress.emplace((MouseEvent::Mouse_Button) button);
         auto range = MouseEvents.equal_range(MouseEvent{_EventType::MOUSEBDOWN, (MouseEvent::Mouse_Button) button});
         for(auto it = range.first; it != range.second; ++it)
             it->second(data);
     } else if(action == GLFW_RELEASE)
     {
+        mouseKeyPressed.erase(button);
         auto range = MouseEvents.equal_range(MouseEvent{_EventType::MOUSEBUP, (MouseEvent::Mouse_Button) button});
         for(auto it = range.first; it != range.second; ++it)
             it->second(data);
@@ -149,5 +151,10 @@ void EventManager::MouseScrollEventHolder(GLFWwindow* window, double xoffset, do
     auto range = MouseEvents.equal_range(MouseEvent::WheelScrolled());
     for(auto it = range.first; it != range.second; ++it)
         it->second(data);
+}
+
+bool EventManager::isMouseKeyPressed(int key)
+{
+    return mouseKeyPressed.count(key) == 1;
 }
 

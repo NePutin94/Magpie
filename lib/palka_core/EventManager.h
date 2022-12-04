@@ -191,6 +191,7 @@ namespace palka
         inline static std::multimap<EventType, std::function<void(EventData&)>> TypeEvents{};
 
         inline static std::set<int> keyPressed{};
+        inline static std::set<int> mouseKeyPressed{};
         inline static std::set<MouseEvent::Mouse_Button> mousebPress{};
     public:
 
@@ -240,10 +241,17 @@ namespace palka
 
         static bool isKeyPressed(int key);
 
+        static bool isMouseKeyPressed(int key);
+
         static void clearInput()
         {
             keyPressed.clear();
             mousebPress.clear();
+        }
+
+        static void GetMousePosition()
+        {
+
         }
 
         static void MouseMotionEventHolder(GLFWwindow* window, double xpos, double ypos);

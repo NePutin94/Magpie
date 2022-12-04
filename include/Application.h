@@ -37,13 +37,9 @@ namespace Magpie
         palka::assimp_loader test;
         palka::gltf_loader loader;
         tinygltf::Model mm;
-        palka::Model gltf_model;
-        palka::Model assimp_model;
         palka::PlaneMesh plane;
         palka::PlaneMesh plane2;
         palka::VertArray cub;
-        palka::VertexBufferObject vbo;
-        palka::VertexArrayObject vao;
         double oldTimeSinceStart = 0;
         double timeSinceStart;
         float t = 0;
@@ -53,10 +49,39 @@ namespace Magpie
 
         palka::RenderTexture renderTex;
         palka::Sprite renderSp;
+        palka::PolygonMesh pp;
     public:
-        explicit Application(palka::Vec2i size) : w(size), isRuning(false), view(palka::RectF(0, 0, size.x, size.y)), renderTex({500, 500})
+        explicit Application(palka::Vec2i size) : w(size), isRuning(false), view(palka::RectF(0, 0, size.x, size.y)), renderTex({size.x, size.y})
         {
             init();
+            m.init();
+            ubo.create(sizeof(float[16]) * 3);
+
+            palka::_Shader def1("Data\\Shaders\\Default.frag", palka::_Shader::FRAGMENT);
+            palka::_Shader def2("Data\\Shaders\\Default.vert", palka::_Shader::VERTEX);
+            def.createProgram();
+            def.addShader(def1);
+            def.addShader(def2);
+            def.linkProgram();
+            def.UBOBindingTo(def.getUBOIndex("matrixBuffer"), 0);
+
+            palka::_Shader l3("Data\\Shaders\\material.frag", palka::_Shader::FRAGMENT);
+            palka::_Shader l4("Data\\Shaders\\material.vert", palka::_Shader::VERTEX);
+            material_light.createProgram();
+            material_light.addShader(l3);
+            material_light.addShader(l4);
+            material_light.linkProgram();
+            material_light.UBOBindingTo(material_light.getUBOIndex("matrixBuffer"), 0);
+
+            ubo.bindToPoint(0);
+            lx.init();
+            ly.init();
+            lz.init();
+            renderTex.create();
+            renderTex.getViewport().setCenter({1920.f / 2.f, 1080.f / 2.f});
+            pp.init({palka::Vec3f{0, 0, 0}, palka::Vec3f{1, 0, 0}, palka::Vec3f{0, 1, 0},
+                     palka::Vec3f{0, 0, 1}, palka::Vec3f{0, 0, 0}});
+            //  renderTex.getCamera() = 0.005f;
         }
 
         palka::Renderer::Line lx{{0, 0, 0},
@@ -89,145 +114,113 @@ namespace Magpie
 
         void init();
 
-        glm::quat RotationBetweenVectors(glm::vec3 start, glm::vec3 dest)
-        {
-            start = normalize(start);
-            dest = normalize(dest);
-
-            float cosTheta = dot(start, dest);
-            glm::vec3 rotationAxis;
-
-            if(cosTheta < -1 + 0.001f)
-            {
-                // special case when vectors in opposite directions:
-                // there is no "ideal" rotation axis
-                // So guess one; any will do as long as it's perpendicular to start
-                rotationAxis = cross(glm::vec3(0.0f, 0.0f, 1.0f), start);
-                if(glm::length2(rotationAxis) < 0.01) // bad luck, they were parallel, try again!
-                    rotationAxis = cross(glm::vec3(1.0f, 0.0f, 0.0f), start);
-
-                rotationAxis = normalize(rotationAxis);
-                return glm::angleAxis(glm::radians(180.0f), rotationAxis);
-            }
-
-            rotationAxis = cross(start, dest);
-
-            float s = sqrt((1 + cosTheta) * 2);
-            float invs = 1 / s;
-
-            return glm::quat(
-                    s * 0.5f,
-                    rotationAxis.x * invs,
-                    rotationAxis.y * invs,
-                    rotationAxis.z * invs
-            );
-
-        }
-
         void render()
         {
-//            static bool update = false;
-//            static palka::Vec3f lp = {-5.f, 0.f, -5.f};
-//            static float posX = 0.f;
-//            static float posY = 0.f;
-//            static float posZ = 0.f;
-//            static int x = 1;
-//            static int y = 1;
-//            static int z = 0;
-//
-//            float abcd[4] = {1, 0, 0, 0};
-//            abcd[0] = x;
-//            abcd[1] = y;
-//            abcd[2] = z;
-//            glm::vec3 myPlaneNormal = {1, 0, 0};
-//            glm::vec3 planeNormal{abcd[0], abcd[2], abcd[1]};
-//
-//            auto RotAxis = glm::cross(myPlaneNormal, planeNormal);
-//            auto RotAngle = acos(glm::dot(myPlaneNormal, planeNormal) / (glm::length(myPlaneNormal) * glm::length(planeNormal)));
-            w.clear();
 
-//            if(ImGui::DragInt("x", &x)) update = true;
-//            if(ImGui::DragInt("y", &y)) update = true;
-//            if(ImGui::DragInt("z", &z)) update = true;
-//
-//            palka::Mat4f model3 = palka::Mat4f{1.f};
-//            model3 = glm::rotate(model3, RotAngle, RotAxis);
-//
+            w.clear();
+//            static bool move = false;
+//            static palka::Vec2f delta2d;
 //            static palka::Vec3f ambient = palka::Vec3f{1.0f, 0.5f, 0.31f};
 //            static palka::Vec3f diffuse = palka::Vec3f{1.0f, 0.5f, 0.31f};
 //            static palka::Vec3f specular = palka::Vec3f{0.5f, 0.5f, 0.5f};
 //            static palka::Vec3f l_ambient = palka::Vec3f{0.2f, 0.2f, 0.2f};
 //            static palka::Vec3f l_diffuse = palka::Vec3f{0.5f, 0.5f, 0.5f};
 //            static palka::Vec3f l_specular = palka::Vec3f{1.0f, 1.0f, 1.0f};
-//            static float shininess = 32.f;
+//            static bool rotatingCamera = false;
+//            static bool movingCamera = false;
+//            static double prevMousePosX = 0.0;
+//            static double prevMousePosY = 0.0;
+//            static double curMousePosX = 0.0;
+//            static double curMousePosY = 0.0;
+//            const auto leftMouseButtonState = glfwGetMouseButton(w.getWindow(), GLFW_MOUSE_BUTTON_LEFT);
+//            if(leftMouseButtonState == GLFW_PRESS)
+//            {
+//                if(!rotatingCamera && !movingCamera)
+//                {
+//                    rotatingCamera = true;
+//                    glfwGetCursorPos(w.getWindow(), &prevMousePosX, &prevMousePosY);
+//                }
+//            } else if(leftMouseButtonState == GLFW_RELEASE)
+//            {
+//                rotatingCamera = false;
+//            }
 //
+//            // Check, if user started to move with orbit camera with middle mouse button
+//            const auto middleMouseButtonState = glfwGetMouseButton(w.getWindow(), GLFW_MOUSE_BUTTON_MIDDLE);
+//            if(middleMouseButtonState == GLFW_PRESS)
+//            {
+//                if(!rotatingCamera && !movingCamera)
+//                {
+//                    movingCamera = true;
+//                    glfwGetCursorPos(w.getWindow(), &prevMousePosX, &prevMousePosY);
+//                }
+//            } else if(middleMouseButtonState == GLFW_RELEASE)
+//            {
+//                movingCamera = false;
+//            }
 //
-//            palka::RenderContext context2(&material_light, &ubo, model3, [](palka::ShaderProgram& shader)
+//            if(!(!rotatingCamera && !movingCamera))
+//            {
+//                // Only if we're rotating or moving we should calculate delta of mouse movement
+//                glfwGetCursorPos(w.getWindow(), &curMousePosX, &curMousePosY);
+//                const auto deltaX = static_cast<float>(curMousePosX - prevMousePosX);
+//                const auto deltaY = static_cast<float>(curMousePosY - prevMousePosY);
+//
+//                if(rotatingCamera)
+//                {
+//                    w.getCamera().rotateAzimuth(deltaX * 0.01f);
+//                    w.getCamera().rotatePolar(deltaY * 0.01f);
+//                    prevMousePosX = curMousePosX;
+//                    prevMousePosY = curMousePosY;
+//                } else if(movingCamera)
+//                {
+//                    w.getCamera().moveHorizontal(-deltaX * 0.05f);
+//                    w.getCamera().moveVertical(deltaY * 0.05f);
+//                    prevMousePosX = curMousePosX;
+//                    prevMousePosY = curMousePosY;
+//                }
+//            }
+//            palka::RenderContext context1(&def, &ubo, palka::Mat4f{1.f}, [](palka::ShaderProgram& shader)
+//            {});
+//            palka::RenderContext context2(&material_light, &ubo, palka::Mat4f{1.f}, [](palka::ShaderProgram& shader)
 //            {
 //                shader.setUniform("material.ambient", ambient);
 //                shader.setUniform("material.diffuse", diffuse);
 //                shader.setUniform("material.specular", specular);
-//                shader.setUniform("material.shininess", shininess);
+//                shader.setUniform("material.shininess", 35.f);
 //
 //                shader.setUniform("light.ambient", l_ambient);
 //                shader.setUniform("light.diffuse", l_diffuse);
 //                shader.setUniform("light.specular", l_specular);
-//                shader.setUniform("light.position", lp);
+//                shader.setUniform("light.position", palka::Vec3f{10, 0, 0});
 //            });
-//            palka::RenderContext context1(&def, &ubo, palka::Mat4f{1.f}, [](palka::ShaderProgram& shader)
-//            {});
-//
 //            w.drawLine(lx, context1);
 //            w.drawLine(ly, context1);
 //            w.drawLine(lz, context1);
-//
-//            glEnable(GL_CLIP_DISTANCE0);
-//            w.draw(plane, context2, lp);
-//
-//
-//            glm::vec3 myPlaneNormal2 = {1, 0, 0};
-//            glm::vec3 planeNormal2{0, 1, 0};
-//
-//            auto RotAxis2 = glm::cross(myPlaneNormal2, planeNormal2);
-//            auto RotAngle2 = acos(glm::dot(myPlaneNormal2, planeNormal2) / (glm::length(myPlaneNormal2) * glm::length(planeNormal2)));
-//            palka::Mat4f model4 = palka::Mat4f{1.f};
-//            model4 = glm::rotate(model4, RotAngle2, RotAxis2);
-//
-//            float PlaneEquation[] = {1, 1, 0, 0};
-//            palka::RenderContext context3(&material_light, &ubo, model4, [&](palka::ShaderProgram& shader)
-//            {
-//                shader.setUniform("material.ambient", ambient);
-//                shader.setUniform("material.diffuse", diffuse);
-//                shader.setUniform("material.specular", specular);
-//                shader.setUniform("material.shininess", shininess);
-//
-//                shader.setUniform("light.ambient", l_ambient);
-//                shader.setUniform("light.diffuse", l_diffuse);
-//                shader.setUniform("light.specular", l_specular);
-//                shader.setUniform("light.position", lp);
-//                shader.setUniform("ClipPlane", &PlaneEquation[0], 4);
-//            });
-//
-//            w.draw(plane2, context3, lp);
-//
-//            glDisable(GL_CLIP_PLANE0);
-//            w.draw(m, context2, lp);
+//            w.draw(pp, context2, {1, 0, 1});
+            //w.draw(m, context2, {1, 0, 1});
+
+
 //            renderTex.bind();
 //            renderTex.clear(palka::Color(0, 0, 0, 0));
-//            renderTex.draw(m, context2, lp);
+//            renderTex.drawLine(lx, context1);
+//            renderTex.drawLine(ly, context1);
+//            renderTex.drawLine(lz, context1);
+//            renderTex.draw(m, context2, {1, 0, 1});
 //            renderTex.unbind();
-//
-//            ImGui::Begin("Game Window");
+//            ImGui::SetNextWindowPos(ImVec2((Config::WindowSize.x - (size.x)) / 2,
+//                                           (Config::WindowSize.y - (size.y)) / 2), ImGuiCond_Always, {0, 0});
+//            ImGui::Begin("View", NULL, ImGuiWindowFlags_::ImGuiWindowFlags_NoResize | ImGuiWindowFlags_::ImGuiWindowFlags_NoMove);
+//            ImGui::SetWindowSize({size.x, size.y});
 //            ImVec2 pos = ImGui::GetCursorScreenPos();
 //            ImDrawList* drawList = ImGui::GetWindowDrawList();
 //            unsigned int f_tex = renderTex.getTexture().textureID;
-//            drawList->AddImage((void*)f_tex,
+//            drawList->AddImage((void*) f_tex,
 //                               pos,
-//                               ImVec2(pos.x + 512, pos.y + 512),
+//                               ImVec2(pos.x + 1280 * 0.85, pos.y + 720 * 0.85),
 //                               ImVec2(0, 1),
 //                               ImVec2(1, 0));
 //            ImGui::End();
-
             manager.getScene()->render(w);
             palka::Console::Draw("Console", &console_open);
             w.ImGuiEndFrame();

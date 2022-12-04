@@ -6,6 +6,7 @@
 #include <cassert>
 #include <valarray>
 #include <set>
+#include <ranges>
 #include "Plot.h"
 #include "MatrixStorage.h"
 #include "ISolver.h"
@@ -13,7 +14,7 @@
 #include <chrono>
 #include <tracy/Tracy.hpp>
 #include <nlohmann/json.hpp>
-
+#include <glm/glm.hpp>
 
 namespace Magpie
 {
@@ -294,6 +295,253 @@ namespace Magpie
                 return res;
             }
             return MatrixStorage<double>(matrix);
+        }
+    };
+
+    template<class T>
+    class GraphicMet3D : public Solver<T, GraphicsResult<T>>
+    {
+        Plot3D<double> target;
+        std::vector<Magpie::Plot3D<double>> Plots;
+    public:
+    protected:
+        std::string serialize() override
+        {
+            return std::string();
+        }
+
+        void deserialize(const std::string& string) override
+        {
+
+        }
+
+    public:
+        GraphicMet3D() = default;
+
+        void init(const MatrixStorage<T>& data, int var_count, int limitations_count)
+        {
+#ifdef TracyProfiler
+            ZoneScoped;
+#endif
+            Plots.clear();
+            target = Magpie::Plot3D<T>(data.get(0, 0), data.get(1, 0), data.get(2, 0), 0);
+            for(int i = 1; i < limitations_count + 1; ++i)
+            {
+                auto a = data.get(0, i);
+                auto b = data.get(1, i);
+                auto c = data.get(2, i);
+                auto d = data.get(4, i);
+                auto s = (int) data.get(3, i);
+                Plots.emplace_back(Magpie::Plot3D<T>(a, b, c, d, (Sign) s));
+            }
+            Plots.emplace_back(Magpie::Plot3D<T>(1, 0, 0, 0, (Sign) Sign::GREATEROREQUAL));
+            Plots.emplace_back(Magpie::Plot3D<T>(0, 1, 0, 0, (Sign) Sign::GREATEROREQUAL));
+            Plots.emplace_back(Magpie::Plot3D<T>(0, 0, 1, 0, (Sign) Sign::GREATEROREQUAL));
+        }
+
+        std::vector<palka::Vec3f> points;
+
+        GraphicsResult<T> solve() override
+        {
+
+            std::vector<Ray> rays;
+            for(int i = 0; i < Plots.size() - 1; ++i) //find rays
+            {
+                for(int j = i + 1; j < Plots.size(); ++j)
+                {
+                    auto& v = Plots[i];
+                    auto& v2 = Plots[j];
+                    if(v != v2)
+                    {
+                        palka::Vec3<T> t1;
+                        palka::Vec3<T> t2;
+                        if(v.isect_plane_plane_to_normal_ray(v2, t1, t2))
+                        {
+                            rays.emplace_back(t1, t2);
+                        }
+                    }
+                }
+            }
+
+
+            for(int i = 0; i < rays.size() - 1; ++i) //find points of ray intersection (unique)
+            {
+                for(int j = i + 1; j < rays.size(); ++j)
+                {
+                    auto& v = rays[i];
+                    auto& v2 = rays[j];
+                    if(v != v2)
+                    {
+                        if(auto res = v.intersects(v2); res != std::nullopt)
+                        {
+                            if(std::ranges::find(points, res) == points.end())
+                            {
+                                for(auto& l: Plots)
+                                {
+                                    if(l.on_line(res.value()))
+                                    {
+                                        points.emplace_back(res.value());
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            auto find_delte = [](std::vector<palka::Vec3f>& points2)
+            {
+                float maxDist = std::numeric_limits<float>::min();
+                int pi1 = -1;
+                int pi2 = -1;
+                for(int i = 0; i < points2.size(); ++i)
+                {
+                    for(int j = i + 1; j < points2.size(); ++j)
+                    {
+                        auto& p1 = points2[i];
+                        auto& p2 = points2[j];
+                        if(auto d = glm::distance(p1, p2); d > maxDist)
+                        {
+                            maxDist = d;
+                            pi1 = i;
+                            pi2 = j;
+                        }
+                    }
+                }
+                return std::vector<palka::Vec3f>{points2[pi1], points2[pi2]};
+            };
+
+            std::vector<palka::Vec3f> filtered_p;
+
+            for(int i = 0; i < points.size() - 1; ++i) //delete duplicates
+            {
+                auto& v = points[i];
+                for(auto& l: rays)
+                {
+                    if(l.containsPoint(v))
+                    {
+                        std::vector<palka::Vec3f> points2;
+                        points2.emplace_back(v);
+                        for(int j = 0; j < points.size(); ++j)
+                        {
+                            if(i == j)
+                                continue;
+                            auto& v2 = points[j];
+                            if(l.containsPoint(v2))
+                                points2.emplace_back(v2);
+                        }
+                        if(points2.size() >= 2)
+                        {
+                            auto vec = find_delte(points2);
+                            std::move(vec.begin(), vec.end(), std::back_inserter(filtered_p));
+                        }
+                    }
+                }
+            }
+
+            auto end = filtered_p.end();
+            for(auto it = filtered_p.begin(); it != end; ++it)
+                end = std::remove(it + 1, end, *it);
+            filtered_p.erase(end, filtered_p.end());
+
+
+            std::vector<triangel> pointstriangles;
+            for(size_t i = 0; i < filtered_p.size() - 1; ++i)
+            {
+                auto& p = filtered_p[i];
+                for(auto& pl: Plots)
+                {
+                    if(pl.on_line(p))
+                    {
+                        std::vector<palka::Vec3f> pointsInSurf;
+                        pointsInSurf.emplace_back(p);
+                        for(size_t j = 0; j < filtered_p.size(); ++j)
+                        {
+                            auto& p2 = filtered_p[j];
+                            if(i == j)
+                                continue;
+                            if(pl.on_line(p2))
+                                pointsInSurf.emplace_back(p2);
+                        }
+                        if(pointsInSurf.size() > 3)
+                        {
+
+                        } else if(pointsInSurf.size() == 3)
+                        {
+                            pointstriangles.push_back(triangel{{pointsInSurf[0], pointsInSurf[1], pointsInSurf[2]}});
+                        }
+                    }
+                }
+            }
+
+
+
+//            for(size_t i = 0; i < filtered_p.size() - 1; ++i)
+//            {
+//                auto& p = filtered_p[i];
+//                bool find = false;
+//                for(size_t j = i + 1; j < filtered_p.size(); ++j)
+//                {
+//                    auto& p2 = filtered_p[j];
+//                    for(auto& r: rays)
+//                    {
+//                        if(r.containsPoint(p) && r.containsPoint(p2))
+//                        {
+//                            std::swap(filtered_p[i + 1], filtered_p[j]);
+//                            find = true;
+//                            break;
+//                        }
+//                    }
+//                    if(find)
+//                        break;
+//                }
+//            }
+
+            remove(pointstriangles);
+            points.clear();
+            for(auto& t : pointstriangles)
+            {
+                for(auto p : t.getPoints())
+                {
+                    points.emplace_back(p);
+                }
+            }
+
+            return GraphicsResult<T>();
+        }
+
+        struct triangel
+        {
+            std::array<palka::Vec3f, 3> points;
+
+            bool operator==(const triangel& ot) const
+            {
+                std::set<int> equals;
+                for(size_t i = 0; i < points.size(); ++i)
+                    for(size_t j = 0; j < ot.points.size(); ++j)
+                    {
+                        if(points[i] == ot.points[j] && !equals.contains(j))
+                        {
+                            if(!equals.emplace(j).second)
+                                return false;
+                        }
+                    }
+                return equals.size() == 3;
+            }
+
+            auto getPoints()
+            {
+                return points;
+            }
+        };
+
+        void remove(std::vector<triangel>& vec)
+        {
+            auto end = vec.end();
+            for(auto it = vec.begin(); it != end; ++it)
+                end = std::remove(it + 1, end, *it);
+            vec.erase(end, vec.end());
         }
     };
 

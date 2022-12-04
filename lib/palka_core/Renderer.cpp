@@ -59,14 +59,14 @@ void palka::Renderer::draw(palka::VertexArrayObject& array, palka::RenderContext
 
     array.bind();
     glm::mat4 projection = glm::mat4(1.0f);
-    projection = camera.getProjectionMatrix();
+    projection = getProjectionMatrix();
     auto _view = camera.getViewMatrix();
 
     shader.bind();
     shader.setUniform("objectColor", Vec3f{0.9f, 0.1f, 0.20f});
     shader.setUniform("lightColor", Vec3f{0.9f, 0.9f, 1.0f});
     shader.setUniform("lightPos", lightPos);
-    shader.setUniform("viewPos", camera.cameraPos);
+    shader.setUniform("viewPos", camera.getEye());
 
     buffer.setData(glm::value_ptr(projection), sizeof(float[16]), 0);
     buffer.setData(glm::value_ptr(_view), sizeof(float[16]), sizeof(float[16]));
@@ -81,14 +81,14 @@ void palka::Renderer::draw(palka::StaticMesh& m, palka::RenderContext context, V
     auto& shader = *context.getShader();
     auto& buffer = *context.getUBO();
     glm::mat4 projection = glm::mat4(1.0f);
-    projection = camera.getProjectionMatrix();
+    projection = getProjectionMatrix();
     auto _view = camera.getViewMatrix();
 
     shader.bind();
     shader.setUniform("objectColor", Vec3f{0.2f, 0.1f, 0.9f});
     shader.setUniform("lightColor", Vec3f{1.f, 0.1f, 0.1f});
     shader.setUniform("lightPos", lightPos);
-    shader.setUniform("viewPos", camera.cameraPos);
+    shader.setUniform("viewPos", camera.getEye());
     context();
 
     buffer.setData(glm::value_ptr(projection), sizeof(float[16]), 0);
@@ -126,13 +126,13 @@ void palka::Renderer::draw(palka::Model& m, palka::RenderContext context)
     auto& shader = *context.getShader();
     auto& buffer = *context.getUBO();
     glm::mat4 projection = glm::mat4(1.0f);
-    projection = camera.getProjectionMatrix();
+    projection = getProjectionMatrix();
     auto _view = camera.getViewMatrix();
 
     shader.bind();
     shader.setUniform("objectColor", Vec3f{0.2f, 0.1f, 0.9f});
     shader.setUniform("lightColor", Vec3f{1.f, 0.1f, 0.1f});
-    shader.setUniform("viewPos", camera.cameraPos);
+    shader.setUniform("viewPos", camera.getEye());
     context();
 
     buffer.setData(glm::value_ptr(projection), sizeof(float[16]), 0);
@@ -150,14 +150,14 @@ void palka::Renderer::draw(unsigned int& vao, palka::RenderContext context,int s
 
     glBindVertexArray(vao);
     glm::mat4 projection = glm::mat4(1.0f);
-    projection = camera.getProjectionMatrix();
+    projection = getProjectionMatrix();
     auto _view = camera.getViewMatrix();
 
     shader.bind();
     shader.setUniform("objectColor", Vec3f{0.9f, 0.1f, 0.20f});
     shader.setUniform("lightColor", Vec3f{0.9f, 0.9f, 1.0f});
   //  shader.setUniform("lightPos", lightPos);
-    shader.setUniform("viewPos", camera.cameraPos);
+    shader.setUniform("viewPos", camera.getEye());
 
     buffer.setData(glm::value_ptr(projection), sizeof(float[16]), 0);
     buffer.setData(glm::value_ptr(_view), sizeof(float[16]), sizeof(float[16]));
@@ -172,7 +172,6 @@ void palka::Renderer::clear(palka::Color color)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, size.x, size.y);
 }
-
 
 //
 //void palka::Renderer::VAODraw2(palka::Mesh& m, palka::ShaderProgram& s, UniformBuffer& buff)

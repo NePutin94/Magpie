@@ -47,7 +47,7 @@ namespace palka
 
         glm::mat4 getProjectionMatrix()
         {
-            return glm::perspective(glm::radians(fov), (float) size.x / (float) size.y, 0.1f, 100.0f);
+            return glm::perspective(glm::radians(fov), (float) size.x / (float) size.y, 0.1f, 500.0f);
         }
 
         std::set<unsigned int> inputIds;
@@ -134,7 +134,7 @@ namespace palka
 
         ~Camera()
         {
-            unbind();
+            //unbind();
         }
 
     public:

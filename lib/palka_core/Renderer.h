@@ -19,6 +19,8 @@
 #include "ShaderProgram.h"
 #include "Mesh.h"
 #include "PlaneMesh.h"
+#include "OrbitCamera.h"
+#include "PolygonMesh.h"
 
 namespace palka
 {
@@ -27,20 +29,27 @@ namespace palka
     private:
         Viewport view;
         Vec2i size;
-        Camera camera;
+        OrbitCamera camera;
     public:
-        Renderer() : view({0, 0, 0, 0})
+        Renderer() : view({0, 0, 0, 0}), camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0, 1.0f, 0.0f), 15.0f, 3.0f, glm::pi<float>() * 0.5f, 0.0f)
         {}
 
-        Renderer(Vec2i sz) : size(sz), view({0, 0, (float) sz.x, (float) sz.y}), camera(sz)
+        Renderer(Vec2i sz) : size(sz), view({0, 0, (float) sz.x, (float) sz.y}),
+                             camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0, 1.0f, 0.0f), 15.0f, 3.0f, glm::pi<float>() * 0.5f, 0.0f)
         {}
 
-        Renderer(Renderer&& ot) : view({0,0,0,0})
+        Renderer(Renderer&& ot) : view({0, 0, 0, 0}), camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0, 1.0f, 0.0f), 15.0f, 3.0f, glm::pi<float>() * 0.5f, 0.0f)
         {
             view = ot.view;
             size = ot.size;
             camera = ot.camera;
         }
+
+        glm::mat4 getProjectionMatrix()
+        {
+            return glm::perspective(glm::radians(45.f), (float) size.x / (float) size.y, 0.1f, 500.0f);
+        }
+
         auto getSize()
         {
             return size;
@@ -57,7 +66,7 @@ namespace palka
             return view;
         }
 
-        Camera& getCamera()
+        OrbitCamera& getCamera()
         {
             return camera;
         }
@@ -134,13 +143,12 @@ namespace palka
         {
             auto& buffer = *context.getUBO();
             glm::mat4 projection = glm::mat4(1.0f);
-            projection = camera.getProjectionMatrix();
+            projection = getProjectionMatrix();
             auto _view = camera.getViewMatrix();
-
 
             auto& shader = *context.getShader();
             shader.bind();
-            shader.setUniform("viewPos", camera.cameraPos);
+            shader.setUniform("viewPos", camera.getEye());
             context();
             lx.vao.bind();
 
@@ -151,20 +159,43 @@ namespace palka
             glDrawArrays(GL_LINES, static_cast<GLint>(0), lx.vao.getSize());
         }
 
-        void draw(palka::PlaneMesh& m, palka::RenderContext context, Vec3f lightPos)
+        void draw(palka::PolygonMesh& m, palka::RenderContext context, Vec3f lightPos)
         {
             applyBlend(context.getBlend());
             auto& shader = *context.getShader();
             auto& buffer = *context.getUBO();
             glm::mat4 projection = glm::mat4(1.0f);
-            projection = camera.getProjectionMatrix();
+            projection = getProjectionMatrix();
             auto _view = camera.getViewMatrix();
 
             shader.bind();
             shader.setUniform("objectColor", Vec3f{0.2f, 0.1f, 0.9f});
             shader.setUniform("lightColor", Vec3f{1.f, 0.1f, 0.1f});
             shader.setUniform("lightPos", lightPos);
-            shader.setUniform("viewPos", camera.cameraPos);
+            shader.setUniform("viewPos", camera.getEye());
+            context();
+
+            buffer.setData(glm::value_ptr(projection), sizeof(float[16]), 0);
+            buffer.setData(glm::value_ptr(_view), sizeof(float[16]), sizeof(float[16]));
+            buffer.setData(glm::value_ptr(context.getTransform()), sizeof(float[16]), sizeof(float[16]) * 2);
+
+            m.render();
+        }
+
+        void draw(palka::PlaneMesh& m, palka::RenderContext context, Vec3f lightPos)
+        {
+            applyBlend(context.getBlend());
+            auto& shader = *context.getShader();
+            auto& buffer = *context.getUBO();
+            glm::mat4 projection = glm::mat4(1.0f);
+            projection = getProjectionMatrix();
+            auto _view = camera.getViewMatrix();
+
+            shader.bind();
+            shader.setUniform("objectColor", Vec3f{0.2f, 0.1f, 0.9f});
+            shader.setUniform("lightColor", Vec3f{1.f, 0.1f, 0.1f});
+            shader.setUniform("lightPos", lightPos);
+            shader.setUniform("viewPos", camera.getEye());
             context();
 
             buffer.setData(glm::value_ptr(projection), sizeof(float[16]), 0);
