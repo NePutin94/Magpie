@@ -493,7 +493,7 @@ namespace Magpie
                     storage.get(3, 8) = 18;
                     break;
                 case 11://3d
-                    storage.alloc_matrix(2, 5);
+                    storage.alloc_matrix(3, 5);
                     storage.get(0, 0) = 1;
                     storage.get(1, 0) = 1;
                     storage.get(2, 0) = -1;
@@ -502,7 +502,13 @@ namespace Magpie
                     storage.get(1, 1) = 1;
                     storage.get(2, 1) = 1;
                     storage.get(3, 1) = (int) Sign::LESSOREQUAL;
-                    storage.get(4, 1) = 1;
+                    storage.get(4, 1) = 3;
+
+                    storage.get(0, 2) = 1;
+                    storage.get(1, 2) = 1;
+                    storage.get(2, 2) = 3;
+                    storage.get(3, 2) = (int) Sign::GREATEROREQUAL;
+                    storage.get(4, 2) = 2;
                     break;
             }
         }

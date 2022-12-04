@@ -9,6 +9,7 @@
 
 Features:
 
-- Graphical solution method (2D).
-- Simplex method.
-- Artificial basis method.
+- [x] Graphical solution method (2D). 
+- [ ] Graphical solution method (3D). 
+- [x] Simplex method. 
+- [ ] Artificial basis method. 

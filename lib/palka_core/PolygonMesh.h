@@ -7,6 +7,7 @@
 
 #include "VertexArrayObject.h"
 #include <glm/gtx/vector_angle.hpp>
+#include <random>
 
 namespace palka
 {
@@ -24,13 +25,60 @@ namespace palka
             return inited;
         }
 
-        void init(std::vector<glm::vec3> points)
+        void init(std::multimap<int, glm::vec3> points) //painted faces
         {
-           // sortPoints(points);
             inited = true;
             palka::VertArray array;
+            std::random_device rd;
+            std::mt19937 mt(rd());
+            std::uniform_int_distribution<int> red(80, 255);
+            std::uniform_int_distribution<int> green(80, 255);
+            std::uniform_int_distribution<int> blue(80, 255);
+
+            Color color(red(mt), green(mt), blue(mt));
+            for(auto it = points.begin(), end = points.end(); it != end; it = points.upper_bound(it->first))
+            {
+                auto range = points.equal_range(it->first);
+                for(auto f = range.first; f != range.second; ++f)
+                    array.add(Vertex(f->second, color));
+
+                color = Color(red(mt), green(mt), blue(mt));
+            }
+            vao.create(array.getSize());
+            vao.bind();
+
+            vbo.create(sizeof(Vertex) * array.getSize());
+            vbo.setData(sizeof(Vertex) * array.getSize(), &array[0].pos.x);
+
+            vao.setPointers(vbo, sizeof(Vertex));
+            vbo.unbind();
+            vao.unbind();
+        }
+
+        void init(std::vector<glm::vec3> points)
+        {
+            inited = true;
+            palka::VertArray array;
+            Color color(90, 50, 0);
+            int triangle = 0;
             for(auto& e: points)
-                array.add(e);
+            {
+                if(triangle > 2)
+                {
+                    if(color.r + 20 < 255)
+                        color.r += 100;
+                    else color.r = 20;
+                    if(color.g + 20 < 255)
+                        color.g += 50;
+                    else color.g = 0;
+                    if(color.b + 20 < 255)
+                        color.b += 90;
+                    else color.b = 100;
+                    triangle = 0;
+                }
+                triangle++;
+                array.add(Vertex(e, color));
+            }
 
             vao.create(array.getSize());
             vao.bind();
@@ -43,43 +91,30 @@ namespace palka
             vao.unbind();
         }
 
-        void sortPoints(std::vector<glm::vec3>& points)
-        {
-            palka::Vec3f center{0, 0, 0};
-            for(auto& p: points)
-            {
-                center += p;
-            }
-            center /= palka::Vec3f{points.size(), points.size(), points.size()};
-            for(auto& p: points)
-            {
-                p -= center;
-            }
-            std::ranges::sort(points, [&](palka::Vec3f p1, palka::Vec3f p2)
-            {
-                auto angle1 = glm::angle(center, p1);
-                auto angle2 = glm::angle(center, p2);
-                if(angle1 < angle2)
-                    return true;
-                auto d1 = glm::distance(center, p1);
-                auto d2 = glm::distance(center, p2);
-                if(angle1 == angle2 && d1 < d2)
-                    return true;
-                return false;
-            });
-            for(auto& p: points)
-            {
-                p += center;
-            }
-        }
-
         void update(std::vector<glm::vec3> points)
         {
-           // sortPoints(points);
             inited = true;
             palka::VertArray array;
+            Color color(90, 150, 120);
+            int triangle = 0;
             for(auto& e: points)
-                array.add(e);
+            {
+                if(triangle > 2)
+                {
+                    if(color.r + 20 < 255)
+                        color.r += 100;
+                    else color.r = 20;
+                    if(color.g + 20 < 255)
+                        color.g += 50;
+                    else color.g = 0;
+                    if(color.b + 20 < 255)
+                        color.b += 90;
+                    else color.b = 100;
+                    triangle = 0;
+                }
+                triangle++;
+                array.add(Vertex(e, color));
+            }
 
             vao.bind();
             vbo.setData(sizeof(Vertex) * array.getSize(), &array[0].pos.x);

@@ -441,12 +441,21 @@ namespace Magpie
             }
 
             auto end = filtered_p.end();
+
             for(auto it = filtered_p.begin(); it != end; ++it)
-                end = std::remove(it + 1, end, *it);
+                end = std::remove_if(it + 1, end, [&](const auto& elem) //the default comparison operator is not suitable
+                {
+                    return PlotCompare(elem.x, (*it).x) && PlotCompare(elem.y, (*it).y) && PlotCompare(elem.z, (*it).z);
+                });
+
             filtered_p.erase(end, filtered_p.end());
 
+            filtered_p = deleteBadPoints(filtered_p);
 
-            std::vector<triangel> pointstriangles;
+            std::vector<points_store < 3>>
+            pointstriangles;
+            std::vector<points_store < 4>>
+            pointquads;
             for(size_t i = 0; i < filtered_p.size() - 1; ++i)
             {
                 auto& p = filtered_p[i];
@@ -464,18 +473,19 @@ namespace Magpie
                             if(pl.on_line(p2))
                                 pointsInSurf.emplace_back(p2);
                         }
-                        if(pointsInSurf.size() > 3)
+                        if(pointsInSurf.size() == 4) //quads
                         {
-
-                        } else if(pointsInSurf.size() == 3)
+                            pointquads.emplace_back(points_store < 4 > {pointsInSurf[0], pointsInSurf[1], pointsInSurf[2], pointsInSurf[3]});
+                        } else if(pointsInSurf.size() == 3) //triangles
                         {
-                            pointstriangles.push_back(triangel{{pointsInSurf[0], pointsInSurf[1], pointsInSurf[2]}});
+                            pointstriangles.push_back(points_store < 3 > {{pointsInSurf[0], pointsInSurf[1], pointsInSurf[2]}});
+                        } else
+                        {
+                            palka::Console::addLog("Algorithm did not process the faces", palka::Console::logType::info);
                         }
                     }
                 }
             }
-
-
 
 //            for(size_t i = 0; i < filtered_p.size() - 1; ++i)
 //            {
@@ -498,36 +508,62 @@ namespace Magpie
 //                }
 //            }
 
+            remove(pointquads);
+            int face = 0;
+            for(auto& q: pointquads)
+            {
+                auto qpoints = q.getPoints();
+                points_faces.emplace(face, qpoints[0]);
+                points_faces.emplace(face, qpoints[1]);
+                points_faces.emplace(face, qpoints[2]);
+                points_faces.emplace(face, qpoints[1]);
+                points_faces.emplace(face, qpoints[2]);
+                points_faces.emplace(face, qpoints[3]);
+//                pointstriangles.emplace_back(triangel<3>{{qpoints[0], qpoints[1], qpoints[2]}});
+//                pointstriangles.emplace_back(triangel<3>{{qpoints[1], qpoints[2], qpoints[3]}});
+                face++;
+            }
             remove(pointstriangles);
             points.clear();
-            for(auto& t : pointstriangles)
+            for(auto& t: pointstriangles)
             {
-                for(auto p : t.getPoints())
+                for(auto p: t.getPoints())
                 {
-                    points.emplace_back(p);
+                    //points.emplace_back(p);
+                    points_faces.emplace(face, p);
                 }
+                face++;
             }
 
             return GraphicsResult<T>();
         }
 
-        struct triangel
-        {
-            std::array<palka::Vec3f, 3> points;
+        std::multimap<int, palka::Vec3f> points_faces;
 
-            bool operator==(const triangel& ot) const
+        template<int size>
+        struct points_store
+        {
+            std::array<palka::Vec3f, size> points;
+
+            bool operator==(const points_store& ot) const
             {
                 std::set<int> equals;
-                for(size_t i = 0; i < points.size(); ++i)
-                    for(size_t j = 0; j < ot.points.size(); ++j)
+                for(auto& p: points)
+                {
+                    for(size_t i = 0; i < ot.points.size(); ++i)
                     {
-                        if(points[i] == ot.points[j] && !equals.contains(j))
+                        auto& p2 = ot.points[i];
+                        if(PlotCompare(p.x, p2.x) && PlotCompare(p.y, p2.y) && PlotCompare(p.z, p2.z))
                         {
-                            if(!equals.emplace(j).second)
-                                return false;
+                            if(!equals.emplace(i).second)
+                            {
+                                if(!equals.emplace(i).second)
+                                    return false;
+                            }
                         }
                     }
-                return equals.size() == 3;
+                }
+                return equals.size() == size;
             }
 
             auto getPoints()
@@ -536,7 +572,28 @@ namespace Magpie
             }
         };
 
-        void remove(std::vector<triangel>& vec)
+        std::vector<palka::Vec3f> deleteBadPoints(const std::vector<palka::Vec3f>& vec)
+        {
+            std::vector<palka::Vec3f> out;
+            for(auto& p: vec)
+            {
+                bool all = true;
+                for(auto& l: Plots)
+                {
+                    if(!l.containsPoint(p))
+                    {
+                        all = false;
+                        break;
+                    }
+                }
+                if(all)
+                    out.emplace_back(p);
+            }
+            return out;
+        }
+
+        template<int t>
+        void remove(std::vector<points_store<t>>& vec)
         {
             auto end = vec.end();
             for(auto it = vec.begin(); it != end; ++it)

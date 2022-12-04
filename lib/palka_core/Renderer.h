@@ -38,7 +38,8 @@ namespace palka
                              camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0, 1.0f, 0.0f), 15.0f, 3.0f, glm::pi<float>() * 0.5f, 0.0f)
         {}
 
-        Renderer(Renderer&& ot) : view({0, 0, 0, 0}), camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0, 1.0f, 0.0f), 15.0f, 3.0f, glm::pi<float>() * 0.5f, 0.0f)
+        Renderer(Renderer&& ot) : view({0, 0, 0, 0}),
+                                  camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0, 1.0f, 0.0f), 15.0f, 3.0f, glm::pi<float>() * 0.5f, 0.0f)
         {
             view = ot.view;
             size = ot.size;
@@ -168,6 +169,30 @@ namespace palka
             projection = getProjectionMatrix();
             auto _view = camera.getViewMatrix();
 
+            shader.bind();
+            shader.setUniform("objectColor", Vec3f{0.2f, 0.1f, 0.9f});
+            shader.setUniform("lightColor", Vec3f{1.f, 0.1f, 0.1f});
+            shader.setUniform("lightPos", lightPos);
+            shader.setUniform("viewPos", camera.getEye());
+            context();
+
+            buffer.setData(glm::value_ptr(projection), sizeof(float[16]), 0);
+            buffer.setData(glm::value_ptr(_view), sizeof(float[16]), sizeof(float[16]));
+            buffer.setData(glm::value_ptr(context.getTransform()), sizeof(float[16]), sizeof(float[16]) * 2);
+
+            m.render();
+        }
+
+        void draw_t(palka::PolygonMesh& m, palka::RenderContext context, Vec3f lightPos, const Texture& t)
+        {
+            applyBlend(context.getBlend());
+            auto& shader = *context.getShader();
+            auto& buffer = *context.getUBO();
+            glm::mat4 projection = glm::mat4(1.0f);
+            projection = getProjectionMatrix();
+            auto _view = camera.getViewMatrix();
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, t.textureID);
             shader.bind();
             shader.setUniform("objectColor", Vec3f{0.2f, 0.1f, 0.9f});
             shader.setUniform("lightColor", Vec3f{1.f, 0.1f, 0.1f});

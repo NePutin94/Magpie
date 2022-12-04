@@ -49,8 +49,10 @@ namespace Magpie
 
         //3D staff//
         palka::RenderTexture renderTex;
+        palka::RenderTexture screenTexture;
         palka::ShaderProgram material_light;
         palka::ShaderProgram def;
+        palka::ShaderProgram outline;
         palka::UniformBuffer ubo;
         // std::vector<palka::PlaneMesh> planes;
         palka::Renderer::Line lx{{-10, 0, 0},
@@ -87,12 +89,24 @@ namespace Magpie
             material_light.linkProgram();
             material_light.UBOBindingTo(material_light.getUBOIndex("matrixBuffer"), 0);
 
+
+            palka::_Shader outlineFrag("Data\\Shaders\\Outline.frag", palka::_Shader::FRAGMENT);
+            palka::_Shader outlineVert("Data\\Shaders\\Outline.vert", palka::_Shader::VERTEX);
+            outline.createProgram();
+            outline.addShader(outlineFrag);
+            outline.addShader(outlineVert);
+            outline.linkProgram();
+            outline.UBOBindingTo(outline.getUBOIndex("matrixBuffer"), 0);
+
             ubo.bindToPoint(0);
             lx.init();
             ly.init();
             lz.init();
             renderTex.create();
             renderTex.getViewport().setCenter({1920.f / 2.f, 1080.f / 2.f});
+
+            screenTexture.create();
+            screenTexture.getViewport().setCenter({1920.f / 2.f, 1080.f / 2.f});
 //            renderTex.getCamera().cameraSpeed = 0.005f;
             //  renderSp.setTexture(renderTex.getTexture());
             //  renderSp.setPosition({500, 0});
@@ -101,12 +115,42 @@ namespace Magpie
     public:
         GraphicalMethodView(palka::Vec2f pos, palka::Vec2f size, MatrixStorage<double> input, bool open = true,
                             ImGuiWindowFlags w_flag = ImGuiWindowFlags_None)
-                : UiView("GraphicalMethodView", pos, size, open, w_flag), input(std::move(input)), c("./", true), renderTex({1920.f, 1080.f})
+                : UiView("GraphicalMethodView", pos, size, open, w_flag), input(std::move(input)), c("./", true), renderTex({1920.f, 1080.f}),
+                  screenTexture({1920.f, 1080.f})
         {
             init3D();
         }
 
         GraphicalMethodView(GraphicalMethodView&& ot) = default;
+
+        void renderScreen(palka::Window& w)
+        {
+            static palka::Vec3f ambient = palka::Vec3f{1.0f, 0.5f, 0.31f};
+            static palka::Vec3f diffuse = palka::Vec3f{1.0f, 0.5f, 0.31f};
+            static palka::Vec3f specular = palka::Vec3f{0.5f, 0.5f, 0.5f};
+            static palka::Vec3f l_ambient = palka::Vec3f{0.2f, 0.2f, 0.2f};
+            static palka::Vec3f l_diffuse = palka::Vec3f{0.5f, 0.5f, 0.5f};
+            static palka::Vec3f l_specular = palka::Vec3f{1.0f, 1.0f, 1.0f};
+            screenTexture.getCamera().updateCamera(w.getWindow());
+
+            palka::RenderContext context2(&material_light, &ubo, palka::Mat4f{1.f}, [](palka::ShaderProgram& shader)
+            {
+                shader.setUniform("material.ambient", ambient);
+                shader.setUniform("material.diffuse", diffuse);
+                shader.setUniform("material.specular", specular);
+                shader.setUniform("material.shininess", 35.f);
+
+                shader.setUniform("light.ambient", l_ambient);
+                shader.setUniform("light.diffuse", l_diffuse);
+                shader.setUniform("light.specular", l_specular);
+                shader.setUniform("light.position", palka::Vec3f{10, 0, 0});
+            });
+            screenTexture.bind();
+            screenTexture.clear(palka::Color(0, 0, 0, 0));
+            if(polygon.isInit())
+                screenTexture.draw(polygon, context2, {1, 0, 1});
+            screenTexture.unbind();
+        }
 
         void render(palka::Window& w) override
         {
@@ -170,7 +214,7 @@ namespace Magpie
 //                    prevMousePosY = curMousePosY;
 //                }
 //            }
-
+             renderScreen(w);
             renderTex.getCamera().updateCamera(w.getWindow());
 
             palka::RenderContext context1(&def, &ubo, palka::Mat4f{1.f}, [](palka::ShaderProgram& shader)
@@ -187,29 +231,35 @@ namespace Magpie
                 shader.setUniform("light.specular", l_specular);
                 shader.setUniform("light.position", palka::Vec3f{10, 0, 0});
             });
+
+            palka::RenderContext context3(&outline, &ubo, palka::Mat4f{1.f}, [&](palka::ShaderProgram& shader)
+            {});
+
             renderTex.bind();
             renderTex.clear(palka::Color(0, 0, 0, 0));
             renderTex.drawLine(lx, context1);
             renderTex.drawLine(ly, context1);
             renderTex.drawLine(lz, context1);
             if(polygon.isInit())
-                renderTex.draw(polygon, context2, {1, 0, 1});
+            {
+                renderTex.draw_t(polygon, context3, {1, 0, 1}, screenTexture.getTexture());
+            }
             //renderTex.draw(m, context2, {1, 0, 1});
             renderTex.unbind();
 
-//            if(ImGui::Begin("View"))
-//            {
-//                ImGui::SetWindowSize({size.x, size.y});
-//                ImVec2 pos = ImGui::GetCursorScreenPos();
-//                ImDrawList* drawList = ImGui::GetWindowDrawList();
-//                unsigned int f_tex = renderTex.getTexture().textureID;
-//                drawList->AddImage((void*) f_tex,
-//                                   pos,
-//                                   ImVec2(pos.x + 1280 * 0.85, pos.y + 720 * 0.85),
-//                                   ImVec2(0, 1),
-//                                   ImVec2(1, 0));
-//                ImGui::End();
-//            }
+            if(ImGui::Begin("View2"))
+            {
+                ImGui::SetWindowSize({size.x, size.y});
+                ImVec2 pos = ImGui::GetCursorScreenPos();
+                ImDrawList* drawList = ImGui::GetWindowDrawList();
+                unsigned int f_tex = screenTexture.getTexture().textureID;
+                drawList->AddImage((void*) f_tex,
+                                   pos,
+                                   ImVec2(pos.x + 1280 * 0.85, pos.y + 720 * 0.85),
+                                   ImVec2(0, 1),
+                                   ImVec2(1, 0));
+                ImGui::End();
+            }
 
             ImGui::SetNextWindowPos(ImVec2((Config::WindowSize.x - (size.x)) / 2,
                                            (Config::WindowSize.y - (size.y)) / 2), ImGuiCond_Always, {0, 0});
@@ -222,7 +272,7 @@ namespace Magpie
                 {
                     solver3d.init(input, input.columns_count() - 2, input.rows_count() - 1);
                     solver3d.solve();
-                    polygon.init(solver3d.points);
+                    polygon.init(solver3d.points_faces);
                 }
 //                if(ImGui::Button("Solve"))
 //                {
