@@ -53,6 +53,8 @@ namespace Magpie
     public:
         explicit Application(palka::Vec2i size) : w(size), isRuning(false), view(palka::RectF(0, 0, size.x, size.y)), renderTex({size.x, size.y})
         {
+            manager.init();
+
             init();
             m.init();
             ubo.create(sizeof(float[16]) * 3);
@@ -221,7 +223,7 @@ namespace Magpie
 //                               ImVec2(0, 1),
 //                               ImVec2(1, 0));
 //            ImGui::End();
-            manager.getScene()->render(w);
+            manager.render(w);
             palka::Console::Draw("Console", &console_open);
             w.ImGuiEndFrame();
             w.EndFrame();
@@ -229,7 +231,7 @@ namespace Magpie
 
         void update()
         {
-            manager.getScene()->update();
+            manager.update();
             timeSinceStart = glfwGetTime();
             delta = timeSinceStart - oldTimeSinceStart;
             oldTimeSinceStart = timeSinceStart;

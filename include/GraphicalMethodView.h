@@ -18,20 +18,21 @@
 
 namespace Magpie
 {
+    template<class T>
     class GraphicalMethodView : public UiView
     {
     private:
         struct MLine
         {
-            std::vector<double> X;
-            std::vector<double> Y;
+            std::vector<T> X;
+            std::vector<T> Y;
         };
         bool solveDone = false;
-        MatrixStorage<double> input;
-        GraphicMet2D<Fractus> solver;
-        GraphicMet3D<double> solver3d;
+        //MatrixStorage<T> input;
+        GraphicMet2D<T> solver;
+        GraphicMet3D<T> solver3d;
 
-        palka::Vec2f result;
+        glm::vec<2, T, glm::defaultp> result;
         MLine Union;
 
         MLine tagetPlot;
@@ -42,7 +43,7 @@ namespace Magpie
 
         MLine GradVecAnim;
         float delta = 0;
-        palka::Vec2f vec;
+        glm::vec<2, T, glm::defaultp> vec;
         bool file_browser_op = false;
         double resultValue;
         ImGui::FileManager_Context c;
@@ -51,10 +52,10 @@ namespace Magpie
         palka::RenderTexture renderTex;
         palka::RenderTexture screenTexture;
         palka::ShaderProgram material_light;
+        palka::ShaderProgram normals;
         palka::ShaderProgram def;
         palka::ShaderProgram outline;
         palka::UniformBuffer ubo;
-        // std::vector<palka::PlaneMesh> planes;
         palka::Renderer::Line lx{{-10, 0, 0},
                                  {10, 0, 0},
                                  palka::Color(255, 0, 0)};
@@ -64,13 +65,10 @@ namespace Magpie
         palka::Renderer::Line lz{{0, 0, -10},
                                  {0, 0, 10},
                                  palka::Color(0, 0, 255)};
-        // palka::Sprite renderSp;
-        palka::StaticMesh m;
         palka::PolygonMesh polygon;
 
         void init3D()
         {
-            m.init();
             ubo.create(sizeof(float[16]) * 3);
 
             palka::_Shader def1("Data\\Shaders\\Default.frag", palka::_Shader::FRAGMENT);
@@ -81,14 +79,25 @@ namespace Magpie
             def.linkProgram();
             def.UBOBindingTo(def.getUBOIndex("matrixBuffer"), 0);
 
-            palka::_Shader l3("Data\\Shaders\\material.frag", palka::_Shader::FRAGMENT);
-            palka::_Shader l4("Data\\Shaders\\material.vert", palka::_Shader::VERTEX);
+            palka::_Shader l3("Data\\Shaders\\explode.frag", palka::_Shader::FRAGMENT);
+            palka::_Shader l4("Data\\Shaders\\explode.vert", palka::_Shader::VERTEX);
+            palka::_Shader l5("Data\\Shaders\\explode.gs", palka::_Shader::GEOMETRY);
             material_light.createProgram();
             material_light.addShader(l3);
             material_light.addShader(l4);
+            material_light.addShader(l5);
             material_light.linkProgram();
             material_light.UBOBindingTo(material_light.getUBOIndex("matrixBuffer"), 0);
 
+            palka::_Shader l6("Data\\Shaders\\normals.frag", palka::_Shader::FRAGMENT);
+            palka::_Shader l7("Data\\Shaders\\normals.vert", palka::_Shader::VERTEX);
+            palka::_Shader l8("Data\\Shaders\\normals.gs", palka::_Shader::GEOMETRY);
+            normals.createProgram();
+            normals.addShader(l6);
+            normals.addShader(l7);
+            normals.addShader(l8);
+            normals.linkProgram();
+            normals.UBOBindingTo(normals.getUBOIndex("matrixBuffer"), 0);
 
             palka::_Shader outlineFrag("Data\\Shaders\\Outline.frag", palka::_Shader::FRAGMENT);
             palka::_Shader outlineVert("Data\\Shaders\\Outline.vert", palka::_Shader::VERTEX);
@@ -107,15 +116,20 @@ namespace Magpie
 
             screenTexture.create();
             screenTexture.getViewport().setCenter({1920.f / 2.f, 1080.f / 2.f});
-//            renderTex.getCamera().cameraSpeed = 0.005f;
-            //  renderSp.setTexture(renderTex.getTexture());
-            //  renderSp.setPosition({500, 0});
         }
 
     public:
-        GraphicalMethodView(palka::Vec2f pos, palka::Vec2f size, MatrixStorage<double> input, bool open = true,
+        GraphicalMethodView(palka::Vec2f pos, palka::Vec2f size, MatrixStorage<T> input, bool open = true,
                             ImGuiWindowFlags w_flag = ImGuiWindowFlags_None)
-                : UiView("GraphicalMethodView", pos, size, open, w_flag), input(std::move(input)), c("./", true), renderTex({1920.f, 1080.f}),
+                : UiView("GraphicalMethodView", pos, size, open, w_flag), c("./", true), renderTex({1920.f, 1080.f}),
+                  screenTexture({1920.f, 1080.f})
+        {
+            init3D();
+        }
+
+        GraphicalMethodView(std::string name, palka::Vec2f size)
+                : UiView(name, size), c("./", true),
+                  renderTex({1920.f, 1080.f}),
                   screenTexture({1920.f, 1080.f})
         {
             init3D();
@@ -160,61 +174,7 @@ namespace Magpie
             static palka::Vec3f l_ambient = palka::Vec3f{0.2f, 0.2f, 0.2f};
             static palka::Vec3f l_diffuse = palka::Vec3f{0.5f, 0.5f, 0.5f};
             static palka::Vec3f l_specular = palka::Vec3f{1.0f, 1.0f, 1.0f};
-//            static bool rotatingCamera = false;
-//            static bool movingCamera = false;
-//            static double prevMousePosX = 0.0;
-//            static double prevMousePosY = 0.0;
-//            static double curMousePosX = 0.0;
-//            static double curMousePosY = 0.0;
-//            const auto leftMouseButtonState = glfwGetMouseButton(w.getWindow(), GLFW_MOUSE_BUTTON_LEFT);
-//            if(leftMouseButtonState == GLFW_PRESS)
-//            {
-//                if(!rotatingCamera && !movingCamera)
-//                {
-//                    rotatingCamera = true;
-//                    glfwGetCursorPos(w.getWindow(), &prevMousePosX, &prevMousePosY);
-//                }
-//            } else if(leftMouseButtonState == GLFW_RELEASE)
-//            {
-//                rotatingCamera = false;
-//            }
-//
-//            // Check, if user started to move with orbit camera with middle mouse button
-//            const auto middleMouseButtonState = glfwGetMouseButton(w.getWindow(), GLFW_MOUSE_BUTTON_MIDDLE);
-//            if(middleMouseButtonState == GLFW_PRESS)
-//            {
-//                if(!rotatingCamera && !movingCamera)
-//                {
-//                    movingCamera = true;
-//                    glfwGetCursorPos(w.getWindow(), &prevMousePosX, &prevMousePosY);
-//                }
-//            } else if(middleMouseButtonState == GLFW_RELEASE)
-//            {
-//                movingCamera = false;
-//            }
-//
-//            if(!(!rotatingCamera && !movingCamera))
-//            {
-//                // Only if we're rotating or moving we should calculate delta of mouse movement
-//                glfwGetCursorPos(w.getWindow(), &curMousePosX, &curMousePosY);
-//                const auto deltaX = static_cast<float>(curMousePosX - prevMousePosX);
-//                const auto deltaY = static_cast<float>(curMousePosY - prevMousePosY);
-//
-//                if(rotatingCamera)
-//                {
-//                    renderTex.getCamera().rotateAzimuth(deltaX * 0.01f);
-//                    renderTex.getCamera().rotatePolar(deltaY * 0.01f);
-//                    prevMousePosX = curMousePosX;
-//                    prevMousePosY = curMousePosY;
-//                } else if(movingCamera)
-//                {
-//                    renderTex.getCamera().moveHorizontal(-deltaX * 0.05f);
-//                    renderTex.getCamera().moveVertical(deltaY * 0.05f);
-//                    prevMousePosX = curMousePosX;
-//                    prevMousePosY = curMousePosY;
-//                }
-//            }
-             renderScreen(w);
+            //renderScreen(w);
             renderTex.getCamera().updateCamera(w.getWindow());
 
             palka::RenderContext context1(&def, &ubo, palka::Mat4f{1.f}, [](palka::ShaderProgram& shader)
@@ -230,9 +190,13 @@ namespace Magpie
                 shader.setUniform("light.diffuse", l_diffuse);
                 shader.setUniform("light.specular", l_specular);
                 shader.setUniform("light.position", palka::Vec3f{10, 0, 0});
+                shader.setUniform("time", (float) glfwGetTime());
             });
 
             palka::RenderContext context3(&outline, &ubo, palka::Mat4f{1.f}, [&](palka::ShaderProgram& shader)
+            {});
+
+            palka::RenderContext context4(&normals, &ubo, palka::Mat4f{1.f}, [&](palka::ShaderProgram& shader)
             {});
 
             renderTex.bind();
@@ -242,7 +206,9 @@ namespace Magpie
             renderTex.drawLine(lz, context1);
             if(polygon.isInit())
             {
-                renderTex.draw_t(polygon, context3, {1, 0, 1}, screenTexture.getTexture());
+                renderTex.draw(polygon, context2, {1, 0, 1});
+                //renderTex.draw(polygon, context4, {1, 0, 1});
+                // renderTex.draw_t(polygon, context3, {1, 0, 1}, screenTexture.getTexture());
             }
             //renderTex.draw(m, context2, {1, 0, 1});
             renderTex.unbind();
@@ -270,14 +236,17 @@ namespace Magpie
                 ImGui::SliderFloat("animation delta", &delta, -10.f, 10.f);
                 if(ImGui::Button("Solve3D"))
                 {
-                    solver3d.init(input, input.columns_count() - 2, input.rows_count() - 1);
+                    auto data = storage->getData<T>();
+                    solver3d.init(data, data.columns_count() - 2, data.rows_count() - 1);
+                   // solver3d.init(input, input.columns_count() - 2, input.rows_count() - 1);
                     solver3d.solve();
-                    polygon.init(solver3d.points_faces);
+                    polygon.init(solver3d.points_faces, solver3d.normals);
                 }
 //                if(ImGui::Button("Solve"))
 //                {
-//
-//                    solver.init(input, input.columns_count() - 2, input.rows_count() - 1);
+//                    auto data = storage->getData<T>();
+//                    solver.init(data, data.columns_count() - 2, data.rows_count() - 1);
+//                    //solver.init(input, input.columns_count() - 2, input.rows_count() - 1);
 //                    auto res = solver.solve();
 //                    auto u = res.getVisualUnion();
 //                    Union.X = u.first;
@@ -370,9 +339,9 @@ namespace Magpie
         std::pair<int, int> getResul()
         {}
 
-        bool check(palka::Vec2f p)
+        bool check(glm::vec<2, T, glm::defaultp> p)
         {
-            return compare_float((p.x - tagetPlotAnim.X[0]) / (tagetPlotAnim.X[1] - tagetPlotAnim.X[0]),
+            return compare_float<T>((p.x - tagetPlotAnim.X[0]) / (tagetPlotAnim.X[1] - tagetPlotAnim.X[0]),
                                  (p.y - tagetPlotAnim.Y[0]) / (tagetPlotAnim.Y[1] - tagetPlotAnim.Y[0]), 0.0001);
         }
 

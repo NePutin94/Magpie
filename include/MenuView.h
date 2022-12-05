@@ -9,14 +9,14 @@
 #include <imgui.h>
 #include <implot.h>
 #include <fmt/format.h>
-#include "SceneManager.h"
+#include "config.h"
 
 namespace Magpie
 {
     class MenuView : public UiView
     {
     private:
-        SceneManager::States res;
+       States res;
     public:
 
         MenuView(std::string_view name, palka::Vec2f size) : UiView(name, size)
@@ -31,19 +31,38 @@ namespace Magpie
             if(ImGui::Begin("Menu"))
             {
                 ImGui::SetWindowSize({size.x, size.y});
+
+                static int item_current_idx = 0;
+                std::string_view combo_preview_value = storage->types[item_current_idx];
+                if(ImGui::BeginCombo("Data type", combo_preview_value.data()))
+                {
+                    for(int i = 0; i < storage->types.size(); i++)
+                    {
+                        const bool is_selected = (item_current_idx == i);
+                        if(ImGui::Selectable(storage->types[i].data(), is_selected))
+                        {
+                            storage->type = (DataStorage::DataType)i;
+                            item_current_idx = i;
+                        }
+                        if(is_selected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
+
                 if(ImGui::Button("Graphical method"))
                 {
-                    res = SceneManager::States::Solver1;
+                    nextSatet = States::SolverGraphics;
                     sceneCallback();
                 }
-                if(ImGui::Button("Graphics & magic input"))
+                if(ImGui::Button("Graphics 3D"))
                 {
-                    res = SceneManager::States::Solver2;
+                    nextSatet = States::SolverGraphics3D;
                     sceneCallback();
                 }
                 if(ImGui::Button("Simplex method"))
                 {
-                    res = SceneManager::States::SimpleMet;
+                    nextSatet = States::SolverSimplex;
                     sceneCallback();
                 }
                 ImGui::End();

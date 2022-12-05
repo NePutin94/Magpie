@@ -205,9 +205,9 @@ namespace Magpie
             return Plot(newB, 1, newC);
         }
 
-        palka::Vec2<double> getGrad()
+        palka::Vec2<T> getGrad()
         {
-            return glm::normalize(palka::Vec2<double>((double) a, (double) b));
+            return glm::normalize(palka::Vec2<T>((T) a, (T) b));
         }
 
         bool hasPoint(const palka::Vec2<T>& p) const
@@ -270,6 +270,17 @@ namespace Magpie
         palka::Vec3<T> normal() const
         {
             return {a, b, c};
+        }
+
+        palka::Vec3<T> DirNormal() const
+        {
+            if((Sign) sign == LESSOREQUAL)
+            {
+                return palka::Vec3<T>{a, b, c} * palka::Vec3<T>(-1, -1, -1);
+            } else
+            {
+                return {a, b, c};
+            }
         }
 
         bool containsPoint(const palka::Vec3<T>& p, T epsilon = 0.000001) const

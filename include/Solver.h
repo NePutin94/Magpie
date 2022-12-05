@@ -53,13 +53,13 @@ namespace Magpie
                                                                                               plot_perpendicular(plot_perpendicular)
         {}
 
-        std::pair<std::vector<double>, std::vector<double>> getVisualUnion()
+        std::pair<std::vector<T>, std::vector<T>> getVisualUnion()
         {
 #ifdef TracyProfiler
             ZoneScopedS(6);
 #endif
-            std::vector<double> X;
-            std::vector<double> Y;
+            std::vector<T> X;
+            std::vector<T> Y;
             for(auto vec: Union)
             {
                 X.emplace_back(vec.x);
@@ -73,13 +73,13 @@ namespace Magpie
             return {X, Y};
         }
 
-        std::pair<std::vector<double>, std::vector<double>> getVisualTargetPlot()
+        std::pair<std::vector<T>, std::vector<T>> getVisualTargetPlot()
         {
 #ifdef TracyProfiler
             ZoneScopedS(6);
 #endif
-            std::vector<double> X;
-            std::vector<double> Y;
+            std::vector<T> X;
+            std::vector<T> Y;
             for(auto vec: target_plot)
             {
                 X.emplace_back(vec.x);
@@ -301,8 +301,8 @@ namespace Magpie
     template<class T>
     class GraphicMet3D : public Solver<T, GraphicsResult<T>>
     {
-        Plot3D<double> target;
-        std::vector<Magpie::Plot3D<double>> Plots;
+        Plot3D<T> target;
+        std::vector<Magpie::Plot3D<T>> Plots;
     public:
     protected:
         std::string serialize() override
@@ -340,6 +340,25 @@ namespace Magpie
         }
 
         std::vector<palka::Vec3f> points;
+
+        auto findSolution()
+        {
+#ifdef TracyProfiler
+            ZoneScoped;
+#endif
+            T min = std::numeric_limits<T>::max();
+            palka::Vec3<T> resVec;
+            for(auto& vec: points_faces) //find min point and value
+            {
+                auto p = vec.second;
+                if(auto val = target.a * p.x + target.b * p.y + p.z * target.c;val < min)
+                {
+                    min = val;
+                    resVec = p;
+                }
+            }
+            return std::make_pair(resVec, min);
+        }
 
         GraphicsResult<T> solve() override
         {
@@ -390,9 +409,9 @@ namespace Magpie
                 }
             }
 
-            auto find_delte = [](std::vector<palka::Vec3f>& points2)
+            auto find_delte = [](std::vector<palka::Vec3<T>>& points2)
             {
-                float maxDist = std::numeric_limits<float>::min();
+                float maxDist = std::numeric_limits<T>::min();
                 int pi1 = -1;
                 int pi2 = -1;
                 for(int i = 0; i < points2.size(); ++i)
@@ -409,10 +428,10 @@ namespace Magpie
                         }
                     }
                 }
-                return std::vector<palka::Vec3f>{points2[pi1], points2[pi2]};
+                return std::vector<palka::Vec3<T>>{points2[pi1], points2[pi2]};
             };
 
-            std::vector<palka::Vec3f> filtered_p;
+            std::vector<palka::Vec3<T>> filtered_p;
 
             for(int i = 0; i < points.size() - 1; ++i) //delete duplicates
             {
@@ -421,7 +440,7 @@ namespace Magpie
                 {
                     if(l.containsPoint(v))
                     {
-                        std::vector<palka::Vec3f> points2;
+                        std::vector<palka::Vec3<T>> points2;
                         points2.emplace_back(v);
                         for(int j = 0; j < points.size(); ++j)
                         {
@@ -463,7 +482,7 @@ namespace Magpie
                 {
                     if(pl.on_line(p))
                     {
-                        std::vector<palka::Vec3f> pointsInSurf;
+                        std::vector<palka::Vec3<T>> pointsInSurf;
                         pointsInSurf.emplace_back(p);
                         for(size_t j = 0; j < filtered_p.size(); ++j)
                         {
@@ -475,10 +494,10 @@ namespace Magpie
                         }
                         if(pointsInSurf.size() == 4) //quads
                         {
-                            pointquads.emplace_back(points_store < 4 > {pointsInSurf[0], pointsInSurf[1], pointsInSurf[2], pointsInSurf[3]});
+                            pointquads.emplace_back(points_store < 4 > {{pointsInSurf[0], pointsInSurf[1], pointsInSurf[2], pointsInSurf[3]}, pl.DirNormal()});
                         } else if(pointsInSurf.size() == 3) //triangles
                         {
-                            pointstriangles.push_back(points_store < 3 > {{pointsInSurf[0], pointsInSurf[1], pointsInSurf[2]}});
+                            pointstriangles.push_back(points_store < 3 > {{pointsInSurf[0], pointsInSurf[1], pointsInSurf[2]}, pl.DirNormal()});
                         } else
                         {
                             palka::Console::addLog("Algorithm did not process the faces", palka::Console::logType::info);
@@ -519,6 +538,7 @@ namespace Magpie
                 points_faces.emplace(face, qpoints[1]);
                 points_faces.emplace(face, qpoints[2]);
                 points_faces.emplace(face, qpoints[3]);
+                normals.emplace_back(q.normal);
 //                pointstriangles.emplace_back(triangel<3>{{qpoints[0], qpoints[1], qpoints[2]}});
 //                pointstriangles.emplace_back(triangel<3>{{qpoints[1], qpoints[2], qpoints[3]}});
                 face++;
@@ -532,18 +552,22 @@ namespace Magpie
                     //points.emplace_back(p);
                     points_faces.emplace(face, p);
                 }
+                normals.emplace_back(t.normal);
                 face++;
             }
 
+            auto vec = findSolution();
             return GraphicsResult<T>();
         }
 
-        std::multimap<int, palka::Vec3f> points_faces;
+        std::vector<palka::Vec3<T>> normals;
+        std::multimap<int, palka::Vec3<T>> points_faces;
 
         template<int size>
         struct points_store
         {
-            std::array<palka::Vec3f, size> points;
+            std::array<palka::Vec3<T>, size> points;
+            palka::Vec3<T> normal;
 
             bool operator==(const points_store& ot) const
             {
@@ -572,9 +596,9 @@ namespace Magpie
             }
         };
 
-        std::vector<palka::Vec3f> deleteBadPoints(const std::vector<palka::Vec3f>& vec)
+        std::vector<palka::Vec3<T>> deleteBadPoints(const std::vector<palka::Vec3<T>>& vec)
         {
-            std::vector<palka::Vec3f> out;
+            std::vector<palka::Vec3<T>> out;
             for(auto& p: vec)
             {
                 bool all = true;

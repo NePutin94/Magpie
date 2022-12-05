@@ -6,8 +6,8 @@
 void Magpie::SimplexMethodScene::init()
 {
 
-    SimplexMethodView s(Config::WindowSize * palka::Vec2f{0.9, 0.9}, set7(), {2,3});
-    addView<SimplexMethodView>(std::move(s));
+//    SimplexMethodView s(Config::WindowSize * palka::Vec2f{0.9, 0.9}, set7(), {2,3});
+ //   addView<SimplexMethodView>(std::move(s));
 }
 
 void Magpie::SimplexMethodScene::render(palka::Window& w)

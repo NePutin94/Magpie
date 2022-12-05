@@ -25,7 +25,8 @@ namespace palka
             return inited;
         }
 
-        void init(std::multimap<int, glm::vec3> points) //painted faces
+        template<class T>
+        void init(std::multimap<int, Vec3<T>> points, std::vector<Vec3<T>> normals) //painted faces
         {
             inited = true;
             palka::VertArray array;
@@ -36,13 +37,15 @@ namespace palka
             std::uniform_int_distribution<int> blue(80, 255);
 
             Color color(red(mt), green(mt), blue(mt));
+            auto norm = normals.begin();
             for(auto it = points.begin(), end = points.end(); it != end; it = points.upper_bound(it->first))
             {
                 auto range = points.equal_range(it->first);
                 for(auto f = range.first; f != range.second; ++f)
-                    array.add(Vertex(f->second, color));
+                    array.add(Vertex(f->second, color, palka::Vec2f{}, *norm));
 
                 color = Color(red(mt), green(mt), blue(mt));
+                ++norm;
             }
             vao.create(array.getSize());
             vao.bind();
