@@ -8,6 +8,7 @@
 #include "ArtificialBasis.h"
 #include "imgui_internal.h"
 #include <imgui.h>
+#include <regex>
 
 namespace Magpie
 {
@@ -21,6 +22,12 @@ namespace Magpie
         MementoHistory<SimplexMethod2<T>> h;
         MementoHistory<SimplexResultIterative2<T>> hist_result;
         SimplexResultIterative2<T> result;
+
+        template<typename... Args>
+        static void ShowText(const std::string& rt_fmt_str, Args&& ... args)
+        {
+            ImGui::Text(vformat(rt_fmt_str, fmt::make_format_args(args...)).c_str());
+        }
 
         void simplex_table_render()
         {
@@ -76,32 +83,45 @@ namespace Magpie
                             ImU32 cell_bg_color = ImGui::GetColorU32(resolving_elem_color);
                             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
                         }
-                        ImGui::Text("%s (?)", result.after.get(j, i));
+                        ShowText("{} (?)", result.after.get(j, i));
+                        //ImGui::Text("%s (?)", result.after.get(j, i));
                         if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
                         {
                             ImGui::BeginTooltip();
                             ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
                             if(i == result.resolving_row && j == result.resolving_col)
                             {
-                                ImGui::Text("%s", fmt::format("1 / {} = {} ", result.before.get(result.resolving_col, result.resolving_row),
-                                                              result.after.get(j, i)).c_str());
+                                ShowText("1 / {} = {} ", result.before.get(result.resolving_col, result.resolving_row),
+                                         result.after.get(j, i));
+//                                ImGui::Text("%s", fmt::format("1 / {} = {} ", result.before.get(result.resolving_col, result.resolving_row),
+//                                                              result.after.get(j, i)).c_str());
                             } else if(i == result.resolving_row)
                             {
-                                ImGui::Text("%s / %s = %s", result.before.get(i, result.resolving_row),
-                                            result.before.get(result.resolving_col, result.resolving_row),
-                                            result.after.get(i, result.resolving_row));
+                                ShowText("{} / {} = {}", result.before.get(i, result.resolving_row),
+                                         result.before.get(result.resolving_col, result.resolving_row),
+                                         result.after.get(i, result.resolving_row));
+//                                ImGui::Text("%s / %s = %s", result.before.get(i, result.resolving_row),
+//                                            result.before.get(result.resolving_col, result.resolving_row),
+//                                            result.after.get(i, result.resolving_row));
                             } else if(j == result.resolving_col)
                             {
-                                ImGui::Text("%s / %s * -1 = %s", result.before.get(result.resolving_col, i),
-                                            result.before.get(result.resolving_col, result.resolving_row),
-                                            result.after.get(result.resolving_col, i));
+                                ShowText("{} / {} * -1 = {}", result.before.get(result.resolving_col, i),
+                                         result.before.get(result.resolving_col, result.resolving_row),
+                                         result.after.get(result.resolving_col, i));
+//                                ImGui::Text("%s / %s * -1 = %s", result.before.get(result.resolving_col, i),
+//                                            result.before.get(result.resolving_col, result.resolving_row),
+//                                            result.after.get(result.resolving_col, i));
                             } else
                             {
-                                ImGui::Text("%s",
-                                            fmt::format("{} - {} * {} = {} ", result.before.get(j, i),
-                                                        result.after.get(j, result.resolving_row),
-                                                        result.before.get(result.resolving_col, i),
-                                                        result.after.get(j, i)).c_str());
+                                ShowText("{} - {} * {} = {} ", result.before.get(j, i),
+                                         result.after.get(j, result.resolving_row),
+                                         result.before.get(result.resolving_col, i),
+                                         result.after.get(j, i));
+//                                ImGui::Text("%s",
+//                                            fmt::format("{} - {} * {} = {} ", result.before.get(j, i),
+//                                                        result.after.get(j, result.resolving_row),
+//                                                        result.before.get(result.resolving_col, i),
+//                                                        result.after.get(j, i)).c_str());
                             }
 
                             ImGui::PopTextWrapPos();
@@ -285,8 +305,7 @@ namespace Magpie
                     }
                     ImGui::TableNextColumn();
                     ImGui::PushID(id++);
-                    layout_sign(signToStr((Sign) (int) result.after.get(result.after.columns_count() - 2, row)).data(),
-                                (int) result.after.get(result.after.columns_count() - 2, row), 0);
+                    layout_sign((int) result.after.get(result.after.columns_count() - 2, row), 0, cell_height);
                     ImGui::TableNextColumn();
                     layout2("%s", result.after.get(result.after.columns_count() - 1, row), 4, cell_height);
                     ImGui::PopID();
@@ -306,6 +325,16 @@ namespace Magpie
             ImGui::Text(fmt.data(), val.c_str());
         }
 
+        void layout2(std::string_view fmt, double val, int col, int col_h)
+        {
+            auto size = ImGui::CalcTextSize("0.002");
+            float ww = ImGui::GetColumnWidth(col);
+            auto start_pos = ImGui::GetCursorPos();
+            ImGui::SetCursorPosY(start_pos.y + (col_h - size.y) / 2.f);
+            ImGui::SetCursorPosX(start_pos.x + (ww - size.x) / 2.f);
+            ImGui::Text("%.3f", val);
+        }
+
         bool layout_selectable(std::string_view value, int cell_height, int cell_width)
         {
             ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
@@ -316,26 +345,31 @@ namespace Magpie
             return ret;
         }
 
-        void layout_sign(const char* label, int val, int col)
+        void layout_sign(int val, int col,int col_h)
         {
-            //ImGui::AlignTextToFramePadding();
-            auto start_pos = ImGui::GetCursorPos();
-            auto size = ImGui::CalcTextSize("=");
-            float input_w = size.x;
+            auto ssign = signToStr((Sign) val);
+            auto size = ImGui::CalcTextSize(ssign.data());
             float ww = ImGui::GetColumnWidth(col);
-            const float center_offset = (ww - input_w) / 2.f;
-            auto pos_s = ImGui::GetCursorScreenPos();
-            ImGui::SetCursorPosX(start_pos.x + center_offset);
-            ImGui::SetCursorPosY(start_pos.y + (60 - size.y) / 2.f);
-            ImGui::Text(signToStr((Sign) val).data());
+            auto start_pos = ImGui::GetCursorPos();
+            ImGui::SetCursorPosY(start_pos.y + (col_h - size.y) / 2.f);
+            ImGui::SetCursorPosX(start_pos.x + (ww - size.x) / 2.f);
+            ImGui::Text(ssign.data());
         }
 
 
     public:
         SimplexMethodView(SimplexMethodView&&) = default;
 
-        SimplexMethodView& operator=(SimplexMethodView&&) = default;
+        SimplexMethodView& operator=(SimplexMethodView&&) noexcept = default;
 
+        void init() override
+        {
+            std::vector<size_t> basis;
+            result = s2.init(storage->getData<T>(), basis);
+            h.update(s2);
+            hist_result.update(result);
+        }
+        
         SimplexMethodView(palka::Vec2f size, bool open = true,
                           ImGuiWindowFlags w_flag = ImGuiWindowFlags_None)
                 : UiView("SimplexMethodView", size, open, w_flag)
@@ -344,10 +378,7 @@ namespace Magpie
 //            artificialBasis.simplex_method();
 //            artificialBasis.simplex_method();
 //            artificialBasis.simplex_method();
-            std::vector<size_t> basis;
-            result = s2.init(storage->getData<T>(), basis);
-            h.update(s2);
-            hist_result.update(result);
+
         }
 
         SimplexMethodView(palka::Vec2f size, MatrixStorage<Fractus> store, std::vector<size_t> basis, bool open = true,
@@ -358,9 +389,9 @@ namespace Magpie
 //            artificialBasis.simplex_method();
 //            artificialBasis.simplex_method();
 //            artificialBasis.simplex_method();
-            result = s2.init(store, basis);
-            h.update(s2);
-            hist_result.update(result);
+//            result = s2.init(store, basis);
+//            h.update(s2);
+//            hist_result.update(result);
         }
 
         ~SimplexMethodView() override = default;

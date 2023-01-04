@@ -427,7 +427,7 @@ namespace Magpie
                     }
                     break;
                 case States::SolverSimplex:
-                   // addView<SimplexMethodView<double>>(SimplexMethodView<double>{Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                    addView<SimplexMethodView<double>>(SimplexMethodView<double>{Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
                     break;
             }
         }

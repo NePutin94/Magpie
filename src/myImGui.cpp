@@ -17,7 +17,7 @@
 
 using namespace ImGui;
 namespace fs = std::filesystem;
-short ImGui::FileManager_Context::id = 0;
+long ImGui::FileManager_Context::id = 0;
 
 bool ImGui::SelectableImage(const palka::Texture& texture, bool selected, const ImVec2& size)
 {

@@ -6,6 +6,7 @@
 #include "SolverMemento.h"
 #include <tracy/Tracy.hpp>
 #include <map>
+#include <numeric>
 
 namespace Magpie
 {
@@ -213,6 +214,82 @@ namespace Magpie
             return SimplexResultIterative2<T>();
         }
 
+        bool negativeBCheck()
+        {
+            bool hasNegativeB = false;
+            for(int i = 0; i < data.rows_count(); ++i)
+            {
+                T val = data.get(data.columns_count() - 1, i);
+                if(!compare_float(val, 0.0) && val < 0)
+                    hasNegativeB = true;
+            }
+            return hasNegativeB;
+        }
+
+        void removeNegativeB()
+        {
+#ifdef TracyProfiler
+            ZoneScoped;
+#endif
+            if(negativeBCheck())
+            {
+                auto maxBRow = -1;
+                T maxB = 0;
+                for(int i = 0; i < data.rows_count(); ++i)
+                {
+                    T val = data.get(data.columns_count() - 1, i);
+                    if(val < 0 && !compare_float(maxB, val) && std::abs(maxB) < std::abs(val))
+                    {
+                        maxB = val;
+                        maxBRow = i;
+                    }
+                }
+
+                auto maxBCol = -1;
+                T maxElemAtBRow = 0;
+                bool allPositive = true;
+                for(int i = 0; i < data.columns_count() - 1; ++i)
+                {
+                    T val = data.get(i, maxBRow);
+                    if(val < 0)
+                    {
+                        allPositive = false;
+                        if(!compare_float(maxElemAtBRow, val) && std::abs(maxElemAtBRow) < std::abs(val))
+                        {
+                            maxElemAtBRow = val;
+                            maxBCol = i;
+                        }
+                    }
+                }
+
+                if(allPositive || maxBCol == -1 || maxBCol == -1) //throw?
+                {
+                    return;
+                }
+
+                auto resolvingElement = data.get(maxBCol, maxBRow);
+                for(int i = 0; i < data.columns_count(); ++i)
+                {
+                    T a = data.get(i, maxBRow);
+                    T res = a / resolvingElement;
+                    data.get(i, maxBRow) = res;
+                }
+
+                for(int i = 0; i < data.rows_count(); ++i)
+                {
+                    if(i != maxBRow)
+                    {
+                        auto b = data.get(maxBCol, i);
+                        for(int j = 0; j < data.columns_count(); ++j)
+                        {
+                            T a = data.get(j, maxBRow);
+                            data.get(j, i) -= a * b;
+                        }
+                    }
+                }
+            }
+        }
+
         void makeCanonicalForm()
         {
 #ifdef TracyProfiler
@@ -258,8 +335,12 @@ namespace Magpie
             }
             for(int j = 0; j < data.columns_count(); ++j)
             {
-                data.get(j, data.rows_count() - 1) = target_function[j];
+                if(j < target_function.size())
+                    data.get(j, data.rows_count() - 1) = target_function[j];
+                else
+                    data.get(j, data.rows_count() - 1) = 0;
             }
+            removeNegativeB();
             alg_state = SimxpleMetState2::BAZIS_FIND;
         }
 
@@ -285,7 +366,10 @@ namespace Magpie
                 ++row;
             }
             data = data.dropColumns(toDrop);
-            alg_state = SimxpleMetState2::SELECT_SUPPORT_ELEM;
+            if(positiveDeltaCheck())
+                alg_state = SimxpleMetState2::DONE_HAS_RESULT;
+            else
+                alg_state = SimxpleMetState2::SELECT_SUPPORT_ELEM;
         }
 
         void findBazisAt(size_t col, size_t row)
@@ -516,7 +600,12 @@ namespace Magpie
             for(int i = 0; i < input.columns_count() - 1; ++i)
                 target_function.emplace_back(input.get(i, 0));
             vars_count = input.columns_count() - 2;
-            limit_count = input.rows_count() - 2;
+            limit_count = input.rows_count() - 1;
+            if(basis.empty())
+            {
+                basis.resize(limit_count);
+                std::iota(basis.begin(), basis.end(), 0);
+            }
             init_basis = basis;
             alg_state = SimxpleMetState2::CANONICAL_FORM;
             return SimplexResultIterative2<T>(input, input, SiMetResultType::INPUT_DATA, basis);

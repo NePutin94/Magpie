@@ -68,7 +68,11 @@ namespace Magpie
         void setData(DataStorage& dstorage)
         {
             storage = &dstorage;
+            init();
         }
+
+        virtual void init()
+        {}
 
         States getState()
         { return nextSatet; }
