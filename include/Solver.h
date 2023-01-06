@@ -339,7 +339,7 @@ namespace Magpie
             Plots.emplace_back(Magpie::Plot3D<T>(0, 0, 1, 0, (Sign) Sign::GREATEROREQUAL));
         }
 
-        std::vector<palka::Vec3f> points;
+        std::vector<palka::Vec3<T>> points;
 
         auto findSolution()
         {
@@ -350,7 +350,7 @@ namespace Magpie
             palka::Vec3<T> resVec;
             for(auto& vec: points_faces) //find min point and value
             {
-                auto p = vec.second;
+                auto p = palka::Vec3<T>::convertFrom(vec.second);
                 if(auto val = target.a * p.x + target.b * p.y + p.z * target.c;val < min)
                 {
                     min = val;
@@ -363,7 +363,7 @@ namespace Magpie
         GraphicsResult<T> solve() override
         {
 
-            std::vector<Ray> rays;
+            std::vector<Ray<T>> rays;
             for(int i = 0; i < Plots.size() - 1; ++i) //find rays
             {
                 for(int j = i + 1; j < Plots.size(); ++j)
@@ -393,13 +393,14 @@ namespace Magpie
                     {
                         if(auto res = v.intersects(v2); res != std::nullopt)
                         {
+                            auto res_val = res.value();
                             if(std::ranges::find(points, res) == points.end())
                             {
                                 for(auto& l: Plots)
                                 {
-                                    if(l.on_line(res.value()))
+                                    if(l.on_line(res_val))
                                     {
-                                        points.emplace_back(res.value());
+                                        points.emplace_back(res_val);
                                         break;
                                     }
                                 }
@@ -411,7 +412,7 @@ namespace Magpie
 
             auto find_delte = [](std::vector<palka::Vec3<T>>& points2)
             {
-                float maxDist = std::numeric_limits<T>::min();
+                T maxDist = std::numeric_limits<T>::min();
                 int pi1 = -1;
                 int pi2 = -1;
                 for(int i = 0; i < points2.size(); ++i)
@@ -532,13 +533,13 @@ namespace Magpie
             for(auto& q: pointquads)
             {
                 auto qpoints = q.getPoints();
-                points_faces.emplace(face, qpoints[0]);
-                points_faces.emplace(face, qpoints[1]);
-                points_faces.emplace(face, qpoints[2]);
-                points_faces.emplace(face, qpoints[1]);
-                points_faces.emplace(face, qpoints[2]);
-                points_faces.emplace(face, qpoints[3]);
-                normals.emplace_back(q.normal);
+                points_faces.emplace(face, qpoints[0].convert());
+                points_faces.emplace(face, qpoints[1].convert());
+                points_faces.emplace(face, qpoints[2].convert());
+                points_faces.emplace(face, qpoints[1].convert());
+                points_faces.emplace(face, qpoints[2].convert());
+                points_faces.emplace(face, qpoints[3].convert());
+                normals.emplace_back(q.normal.convert());
 //                pointstriangles.emplace_back(triangel<3>{{qpoints[0], qpoints[1], qpoints[2]}});
 //                pointstriangles.emplace_back(triangel<3>{{qpoints[1], qpoints[2], qpoints[3]}});
                 face++;
@@ -550,9 +551,9 @@ namespace Magpie
                 for(auto p: t.getPoints())
                 {
                     //points.emplace_back(p);
-                    points_faces.emplace(face, p);
+                    points_faces.emplace(face, p.convert());
                 }
-                normals.emplace_back(t.normal);
+                normals.emplace_back(t.normal.convert());
                 face++;
             }
 
@@ -560,8 +561,8 @@ namespace Magpie
             return GraphicsResult<T>();
         }
 
-        std::vector<palka::Vec3<T>> normals;
-        std::multimap<int, palka::Vec3<T>> points_faces;
+        std::vector<palka::Vec3f> normals;
+        std::multimap<int, palka::Vec3f> points_faces;
 
         template<int size>
         struct points_store

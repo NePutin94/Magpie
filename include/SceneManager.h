@@ -411,7 +411,6 @@ namespace Magpie
                         case DataStorage::FRACTUS:
                             break;
                     }
-
                     break;
                 case States::SolverGraphics3D:
                     switch(globData.type)
@@ -421,13 +420,29 @@ namespace Magpie
                                                                                              Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
                             break;
                         case DataStorage::FLOAT:
+                            addView<GraphicalMethodView<float>>(GraphicalMethodView<float>{"GraphicalMethodView",
+                                                                                             Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
                             break;
                         case DataStorage::FRACTUS:
+                            addView<GraphicalMethodView<Fractus>>(GraphicalMethodView<Fractus>{"GraphicalMethodView",
+                                                                                           Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
                             break;
                     }
                     break;
                 case States::SolverSimplex:
-                    addView<SimplexMethodView<double>>(SimplexMethodView<double>{Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                    switch(globData.type)
+                    {
+                        case DataStorage::DOUBLE:
+                            addView<SimplexMethodView<double>>(SimplexMethodView<double>{Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                            break;
+                        case DataStorage::FLOAT:
+                            addView<SimplexMethodView<float>>(SimplexMethodView<float>{Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                            break;
+                        case DataStorage::FRACTUS:
+                            addView<SimplexMethodView<Fractus>>(SimplexMethodView<Fractus>{Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                            break;
+                    }
+
                     break;
             }
         }

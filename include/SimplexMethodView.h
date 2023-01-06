@@ -8,7 +8,7 @@
 #include "ArtificialBasis.h"
 #include "imgui_internal.h"
 #include <imgui.h>
-#include <regex>
+#include <fmt/core.h>
 
 namespace Magpie
 {
@@ -197,7 +197,8 @@ namespace Magpie
                             }
                         } else
                         {
-                            layout2("%s", result.after.get(j, i), i, cell_height);
+                            ShowCellText(i, cell_height, result.after.get(j, i));
+                            // layout2("%s", result.after.get(j, i), i, cell_height);
                         }
                     }
                 }
@@ -208,7 +209,7 @@ namespace Magpie
 
         void result_render()
         {
-            ImGui::Text("Table");
+            ImGui::Text(result.answer_str.c_str());
             ImGui::Spacing();
             ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
             constexpr int cell_height = 80;
@@ -224,7 +225,8 @@ namespace Magpie
                     {
                         ImGui::TableNextColumn();
                         ImGui::PushID(id++);
-                        layout2("%s", result.after.get(j, i), j, cell_height);
+                        ShowCellText(j, cell_height, result.after.get(j, i));
+                        //layout2("%s", result.after.get(j, i), j, cell_height);
                         ImGui::PopID();
                     }
                 }
@@ -234,7 +236,7 @@ namespace Magpie
 
         void table_render()
         {
-            ImGui::Text("Table");
+            ImGui::Text(result.answer_str.c_str());
             ImGui::Spacing();
             ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
             constexpr int cell_height = 80;
@@ -250,7 +252,8 @@ namespace Magpie
                     {
                         ImGui::TableNextColumn();
                         ImGui::PushID(id++);
-                        layout2("%s", result.after.get(j, i), j, cell_height);
+                        ShowCellText(j, cell_height, result.after.get(j, i));
+                        //layout2("%s", result.after.get(j, i), j, cell_height);
                         ImGui::PopID();
                     }
                 }
@@ -300,19 +303,47 @@ namespace Magpie
                     {
                         ImGui::TableNextColumn();
                         ImGui::PushID(id++);
-                        layout2("%s", result.after.get(column, row), column, cell_height);
+                        ShowCellText(column, cell_height, result.after.get(column, row));
+                        // layout2("%s", result.after.get(column, row), column, cell_height);
                         ImGui::PopID();
                     }
                     ImGui::TableNextColumn();
                     ImGui::PushID(id++);
                     layout_sign((int) result.after.get(result.after.columns_count() - 2, row), 0, cell_height);
                     ImGui::TableNextColumn();
-                    layout2("%s", result.after.get(result.after.columns_count() - 1, row), 4, cell_height);
+                    ShowCellText(4, cell_height, result.after.get(result.after.columns_count() - 1, row));
+                    //layout2("%s", result.after.get(result.after.columns_count() - 1, row), 4, cell_height);
                     ImGui::PopID();
                 }
 
                 ImGui::EndTable();
             }
+        }
+
+        template<typename Argt>
+        requires std::is_floating_point_v<Argt>
+        static void ShowCellText(int col, int col_h, const Argt& arg)
+        {
+            auto str = vformat("{:.3f}", fmt::make_format_args(arg));
+            auto size = ImGui::CalcTextSize(str.c_str());
+            float ww = ImGui::GetColumnWidth(col);
+            auto start_pos = ImGui::GetCursorPos();
+            ImGui::SetCursorPosY(start_pos.y + (col_h - size.y) / 2.f);
+            ImGui::SetCursorPosX(start_pos.x + (ww - size.x) / 2.f);
+            ImGui::Text(str.c_str());
+        }
+
+        template<typename Argt>
+        requires std::is_same_v<Argt, Fractus>
+        static void ShowCellText(int col, int col_h, const Argt& arg)
+        {
+            auto str = vformat("{}", fmt::make_format_args(arg));
+            auto size = ImGui::CalcTextSize(str.c_str());
+            float ww = ImGui::GetColumnWidth(col);
+            auto start_pos = ImGui::GetCursorPos();
+            ImGui::SetCursorPosY(start_pos.y + (col_h - size.y) / 2.f);
+            ImGui::SetCursorPosX(start_pos.x + (ww - size.x) / 2.f);
+            ImGui::Text(str.c_str());
         }
 
         void layout2(std::string_view fmt, std::string val, int col, int col_h)
@@ -335,6 +366,16 @@ namespace Magpie
             ImGui::Text("%.3f", val);
         }
 
+        void layout2(std::string_view fmt, float val, int col, int col_h)
+        {
+            auto size = ImGui::CalcTextSize("0.002");
+            float ww = ImGui::GetColumnWidth(col);
+            auto start_pos = ImGui::GetCursorPos();
+            ImGui::SetCursorPosY(start_pos.y + (col_h - size.y) / 2.f);
+            ImGui::SetCursorPosX(start_pos.x + (ww - size.x) / 2.f);
+            ImGui::Text("%.3f", val);
+        }
+
         bool layout_selectable(std::string_view value, int cell_height, int cell_width)
         {
             ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
@@ -345,7 +386,7 @@ namespace Magpie
             return ret;
         }
 
-        void layout_sign(int val, int col,int col_h)
+        void layout_sign(int val, int col, int col_h)
         {
             auto ssign = signToStr((Sign) val);
             auto size = ImGui::CalcTextSize(ssign.data());
@@ -369,7 +410,7 @@ namespace Magpie
             h.update(s2);
             hist_result.update(result);
         }
-        
+
         SimplexMethodView(palka::Vec2f size, bool open = true,
                           ImGuiWindowFlags w_flag = ImGuiWindowFlags_None)
                 : UiView("SimplexMethodView", size, open, w_flag)
@@ -437,13 +478,16 @@ namespace Magpie
                                                                           ImGuiWindowFlags_NoBackground))
                 {
                     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 248.f) / 2.f);
-                    if(ImGui::Button("Next iteration", {120, 35}))
+                    if(result.state != SiMetResultType::RESULT_TABLE)
                     {
-                        result = s2.solve_iterative();
-                        hist_result.update(result);
-                        h.update(s2);
+                        if(ImGui::Button("Next iteration", {120, 35}))
+                        {
+                            result = s2.solve_iterative();
+                            hist_result.update(result);
+                            h.update(s2);
+                        }
+                        ImGui::SameLine();
                     }
-                    ImGui::SameLine();
                     if(ImGui::Button("Back", {120, 35}))
                     {
                         h.undo(s2);

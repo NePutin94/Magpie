@@ -2,9 +2,13 @@ name: Ubuntu
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - "main"
+      - "3d_graphic_method"
   pull_request:
-    branches: [ "master" ]
+    branches:
+      - "main"
+      - "3d_graphic_method"
   workflow_dispatch:
 
 jobs:

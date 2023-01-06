@@ -22,28 +22,29 @@ namespace Magpie
     class GraphicalMethodView : public UiView
     {
     private:
+        template<class T2>
         struct MLine
         {
-            std::vector<T> X;
-            std::vector<T> Y;
+            std::vector<T2> X;
+            std::vector<T2> Y;
         };
         bool solveDone = false;
         //MatrixStorage<T> input;
         GraphicMet2D<T> solver;
         GraphicMet3D<T> solver3d;
 
-        glm::vec<2, T, glm::defaultp> result;
-        MLine Union;
+        palka::Vec2<double> result;
+        MLine<double> Union;
 
-        MLine tagetPlot;
+        MLine<double> tagetPlot;
 
-        MLine tagetPlotAnim;
+        MLine<double> tagetPlotAnim;
 
-        MLine GradVec;
+        MLine<double> GradVec;
 
-        MLine GradVecAnim;
+        MLine<double> GradVecAnim;
         float delta = 0;
-        glm::vec<2, T, glm::defaultp> vec;
+        palka::Vec2<double> vec;
         bool file_browser_op = false;
         double resultValue;
         ImGui::FileManager_Context c;
@@ -238,7 +239,7 @@ namespace Magpie
                 {
                     auto data = storage->getData<T>();
                     solver3d.init(data, data.columns_count() - 2, data.rows_count() - 1);
-                   // solver3d.init(input, input.columns_count() - 2, input.rows_count() - 1);
+                    // solver3d.init(input, input.columns_count() - 2, input.rows_count() - 1);
                     solver3d.solve();
                     polygon.init(solver3d.points_faces, solver3d.normals);
                 }
@@ -339,10 +340,10 @@ namespace Magpie
         std::pair<int, int> getResul()
         {}
 
-        bool check(glm::vec<2, T, glm::defaultp> p)
+        bool check(palka::Vec2<double> p)
         {
-            return compare_float<T>((p.x - tagetPlotAnim.X[0]) / (tagetPlotAnim.X[1] - tagetPlotAnim.X[0]),
-                                 (p.y - tagetPlotAnim.Y[0]) / (tagetPlotAnim.Y[1] - tagetPlotAnim.Y[0]), 0.0001);
+            return compare_float<double>((p.x - tagetPlotAnim.X[0]) / (tagetPlotAnim.X[1] - tagetPlotAnim.X[0]),
+                                    (p.y - tagetPlotAnim.Y[0]) / (tagetPlotAnim.Y[1] - tagetPlotAnim.Y[0]), 0.0001);
         }
 
         void update() override
@@ -354,18 +355,18 @@ namespace Magpie
                 if(!check(result))
                 {
                     delta += ImGui::GetIO().DeltaTime * 2;
-                    auto szX = sqrt(vec.x * vec.x + vec.y * vec.y);
+                    auto szX = std::sqrt(vec.x * vec.x + vec.y * vec.y);
                     for(int i = 0; i < tagetPlot.X.size(); ++i)
                     {
-                        tagetPlotAnim.X[i] = tagetPlot.X[i] + delta * vec.x / szX;
-                        tagetPlotAnim.Y[i] = tagetPlot.Y[i] + delta * vec.y / szX;
+                        tagetPlotAnim.X[i] = tagetPlot.X[i] + vec.x * delta / szX;
+                        tagetPlotAnim.Y[i] = tagetPlot.Y[i] + vec.y * delta / szX;
                     }
 
-                    GradVecAnim.X[0] = GradVec.X[0] + delta * vec.x / szX;
-                    GradVecAnim.Y[0] = GradVec.Y[0] + delta * vec.y / szX;
+                    GradVecAnim.X[0] = GradVec.X[0] + vec.x * delta / szX;
+                    GradVecAnim.Y[0] = GradVec.Y[0] + vec.y * delta / szX;
 
-                    GradVecAnim.X[1] = GradVec.X[1] + delta * vec.x / szX;
-                    GradVecAnim.Y[1] = GradVec.Y[1] + delta * vec.y / szX;
+                    GradVecAnim.X[1] = GradVec.X[1] + vec.x * delta / szX;
+                    GradVecAnim.Y[1] = GradVec.Y[1] + vec.y * delta / szX;
                 }
             }
         }

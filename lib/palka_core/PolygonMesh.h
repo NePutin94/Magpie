@@ -25,8 +25,7 @@ namespace palka
             return inited;
         }
 
-        template<class T>
-        void init(std::multimap<int, Vec3<T>> points, std::vector<Vec3<T>> normals) //painted faces
+        void init(std::multimap<int, Vec3f> points, std::vector<Vec3f> normals) //painted faces
         {
             inited = true;
             palka::VertArray array;

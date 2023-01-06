@@ -311,8 +311,8 @@ namespace Magpie
             det *= det;
             if(det != 0.0)
             {
-                r_point = (glm::cross(p3_normal, p2.normal()) * (d * -1) +
-                           glm::cross(normal(), p3_normal) * (p2.d * -1)) / det;
+                r_point = (glm::cross(p3_normal, p2.normal()) * (d * (T)-1) +
+                           glm::cross(normal(), p3_normal) * (p2.d * (T)-1)) / det;
                 r_normal = p3_normal;
                 return true;
             } else
@@ -323,7 +323,7 @@ namespace Magpie
 
         static palka::Vec3<T> getIntersection(const Plot3D& plane1, const Plot3D& plane2, const Plot3D& plane3)
         {
-            float det = glm::determinant(palka::Mat3f(plane1.normal(), plane2.normal(), plane3.normal()));
+            T det = glm::determinant(palka::Mat3f(plane1.normal(), plane2.normal(), plane3.normal()));
             if(det == 0.f) return palka::Vec3<T>{0.f}; //could return inf or whatever
             return (glm::cross(plane2.normal(), plane3.normal()) * -plane1.d +
                     glm::cross(plane3.normal(), plane1.normal()) * -plane2.d +
@@ -359,15 +359,16 @@ namespace Magpie
         }
     };
 
+    template<class T>
     struct Ray
     {
-        palka::Vec3f start;
-        palka::Vec3f dir;
+        palka::Vec3<T> start;
+        palka::Vec3<T> dir;
 
-        float checkAxis(float t, float d)
+        T checkAxis(T t, T d)
         {
             if(d == 0)
-                return std::numeric_limits<float>::min();
+                return std::numeric_limits<T>::min();
             return t / d;
         }
 
@@ -381,45 +382,45 @@ namespace Magpie
             return !(*this == ot);
         }
 
-        std::optional<palka::Vec3f> intersects(Ray r)
+        std::optional<palka::Vec3<T>> intersects(Ray r)
         {
             if(glm::normalize(dir) == glm::normalize(r.dir) || glm::normalize(dir) == -glm::normalize(r.dir))
                 return {};
-            palka::Vec3f v1 = dir;
-            palka::Vec3f v2 = r.dir;
-            palka::Vec3f v3 = r.start - start;
-            double a = glm::dot(v1, v1);
-            double b = glm::dot(v2, v2);
-            double c = glm::dot(v1, v2);
-            double e = glm::dot(v1, v3);
-            double f = glm::dot(v2, v3);
-            double d = (c * c - a * b);
+            palka::Vec3<T> v1 = dir;
+            palka::Vec3<T> v2 = r.dir;
+            palka::Vec3<T> v3 = r.start - start;
+            auto a = glm::dot(v1, v1);
+            auto b = glm::dot(v2, v2);
+            auto c = glm::dot(v1, v2);
+            auto e = glm::dot(v1, v3);
+            auto f = glm::dot(v2, v3);
+            auto d = (c * c - a * b);
 
-            if(d * d < 0.000001)
+            if(d * d < (T)0.000001)
                 return start;
 
-            double m = (c * f - b * e) / d;
+            T m = (c * f - b * e) / d;
 
-            return start + palka::Vec3f{m, m, m} * v1;
+            return start + palka::Vec3<T>{m, m, m} * v1;
         }
 
-        bool containsPoint(palka::Vec3f p)
+        bool containsPoint(palka::Vec3<T> p)
         {
-            if(auto t = checkAxis(p.x - start.x, dir.x); t != std::numeric_limits<float>::min())
+            if(auto t = checkAxis(p.x - start.x, dir.x); t != std::numeric_limits<T>::min())
             {
                 if(start + dir * t == p)
                 {
                     return true;
                 }
             }
-            if(auto t = checkAxis((p.z - start.z), dir.z);t != std::numeric_limits<float>::min())
+            if(auto t = checkAxis((p.z - start.z), dir.z);t != std::numeric_limits<T>::min())
             {
                 if(start + dir * t == p)
                 {
                     return true;
                 }
             }
-            if(auto t = checkAxis((p.y - start.y), dir.y);t != std::numeric_limits<float>::min())
+            if(auto t = checkAxis((p.y - start.y), dir.y);t != std::numeric_limits<T>::min())
             {
                 if(start + dir * t == p)
                 {
@@ -429,25 +430,25 @@ namespace Magpie
             return false;
         }
 
-        std::optional<palka::Vec3f> intersexctRay(Ray& ot)
+        std::optional<palka::Vec3<T>> intersexctRay(Ray& ot)
         {
             if(glm::normalize(dir) == glm::normalize(ot.dir) || glm::normalize(dir) == -glm::normalize(ot.dir))
                 return {};
-            if(auto t = checkAxis(ot.start.x - start.x, dir.x - ot.dir.x); t != std::numeric_limits<float>::min())
+            if(auto t = checkAxis(ot.start.x - start.x, dir.x - ot.dir.x); t != std::numeric_limits<T>::min())
             {
                 if(start + dir * t == ot.start + ot.dir * t)
                 {
                     return start + dir * t;
                 }
             }
-            if(auto t = checkAxis((ot.start.z - start.z), dir.z - ot.dir.z);t != std::numeric_limits<float>::min())
+            if(auto t = checkAxis((ot.start.z - start.z), dir.z - ot.dir.z);t != std::numeric_limits<T>::min())
             {
                 if(start + dir * t == ot.start + ot.dir * t)
                 {
                     return start + dir * t;
                 }
             }
-            if(auto t = checkAxis((ot.start.y - start.y), dir.y - ot.dir.y);t != std::numeric_limits<float>::min())
+            if(auto t = checkAxis((ot.start.y - start.y), dir.y - ot.dir.y);t != std::numeric_limits<T>::min())
             {
                 if(start + dir * t == ot.start + ot.dir * t)
                 {

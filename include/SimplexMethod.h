@@ -73,26 +73,55 @@ namespace Magpie
             return true;
         }
 
+        void buildAnswerStr(SimxpleMetState2 siState)
+        {
+            switch(siState)
+            {
+                case SimxpleMetState2::WAIT_DATA:
+                    break;
+                case SimxpleMetState2::CANONICAL_FORM:
+                    answer_str = "canonical form";
+                    break;
+                case SimxpleMetState2::SIXPLEX_MET:
+                    answer_str = "simplex method iteration";
+                    break;
+                case SimxpleMetState2::SELECT_SUPPORT_ELEM:
+                    answer_str = "selection support elem";
+                    break;
+                case SimxpleMetState2::DONE_HAS_RESULT:
+                    answer_str = "Result";
+                    break;
+                case SimxpleMetState2::DONE_CANT_SOLVE:
+                    answer_str = "Can't solve";
+                    break;
+                case SimxpleMetState2::BAZIS_FIND:
+                    answer_str = "find bazis";
+                    break;
+            }
+        }
+
         SiMetResultType state;
+        std::string answer_str;
         size_t resolving_row;
         size_t resolving_col;
 
         SimplexResultIterative2() = default;
 
-        SimplexResultIterative2(MatrixStorage<T> before, MatrixStorage<T> after, SiMetResultType state, std::vector<size_t> basis) : after(after),
-                                                                                                                                     before(before),
-                                                                                                                                     state(state), basis(basis)
-        {}
+        SimplexResultIterative2(MatrixStorage<T> before, MatrixStorage<T> after, SiMetResultType state, std::vector<size_t> basis, SimxpleMetState2 siState)
+                : after(after),
+                  before(before),
+                  state(state), basis(basis)
+        { buildAnswerStr(siState); }
 
         SimplexResultIterative2(MatrixStorage<T> before, MatrixStorage<T> after, SiMetResultType state, size_t resolving_row, size_t resolving_col,
-                                std::vector<size_t> basis) : after(after), before(before), state(state),
-                                                             resolving_col(resolving_col), resolving_row(resolving_row), basis(basis)
-        {}
+                                std::vector<size_t> basis, SimxpleMetState2 siState) : after(after), before(before), state(state),
+                                                                                       resolving_col(resolving_col), resolving_row(resolving_row), basis(basis)
+        { buildAnswerStr(siState); }
 
         SimplexResultIterative2(MatrixStorage<T> before, MatrixStorage<T> after, SiMetResultType state, std::map<size_t, size_t> possibleSupportElems,
-                                std::pair<size_t, size_t> bestSupportElem, std::vector<size_t> basis)
+                                std::pair<size_t, size_t> bestSupportElem, std::vector<size_t> basis, SimxpleMetState2 siState)
                 : after(after), before(before), state(state), possibleSupportElems(possibleSupportElems), bestSupportElem(bestSupportElem), basis(basis)
-        {}
+        { buildAnswerStr(siState); }
     };
 
     template<class T>
@@ -183,30 +212,31 @@ namespace Magpie
                 case SimxpleMetState2::BAZIS_FIND:
                 {
                     basisFormation(init_basis);
-                    return SimplexResultIterative2<T>(before, data, SiMetResultType::TABLE, basis);
+                    return SimplexResultIterative2<T>(before, data, SiMetResultType::TABLE, basis, alg_state);
                 }
                 case SimxpleMetState2::DONE_CANT_SOLVE:
                 {
-                    return SimplexResultIterative2<T>(before, data, SiMetResultType::TABLE, basis);
+                    return SimplexResultIterative2<T>(before, data, SiMetResultType::TABLE, basis, alg_state);
                 }
                 case SimxpleMetState2::DONE_HAS_RESULT:
                 {
-                    return SimplexResultIterative2<T>(before, data, SiMetResultType::RESULT_TABLE, basis);
+                    return SimplexResultIterative2<T>(before, data, SiMetResultType::RESULT_TABLE, basis, alg_state);
                 }
                 case SimxpleMetState2::CANONICAL_FORM:
                 {
                     makeCanonicalForm();
-                    return SimplexResultIterative2<T>(before, data, SiMetResultType::TABLE, basis);
+                    return SimplexResultIterative2<T>(before, data, SiMetResultType::TABLE, basis, alg_state);
                 }
                 case SimxpleMetState2::SIXPLEX_MET:
                 {
                     simplex_iterative();
-                    return SimplexResultIterative2<T>(before, data, SiMetResultType::SIMPLEX_TABLE, curr_support_elem.first, curr_support_elem.second, basis);
+                    return SimplexResultIterative2<T>(before, data, SiMetResultType::SIMPLEX_TABLE, curr_support_elem.first, curr_support_elem.second, basis,
+                                                      alg_state);
                 }
                 case SimxpleMetState2::SELECT_SUPPORT_ELEM:
                 {
                     auto elems = possibleSupportElements();
-                    return SimplexResultIterative2<T>(before, data, SiMetResultType::SELECT_SUPPORT_ELEM, elems.second, elems.first, basis);
+                    return SimplexResultIterative2<T>(before, data, SiMetResultType::SELECT_SUPPORT_ELEM, elems.second, elems.first, basis, alg_state);
                 }
                 case SimxpleMetState2::WAIT_DATA:
                     break;
@@ -220,7 +250,7 @@ namespace Magpie
             for(int i = 0; i < data.rows_count(); ++i)
             {
                 T val = data.get(data.columns_count() - 1, i);
-                if(!compare_float(val, 0.0) && val < 0)
+                if(!compare_float<T>(val, 0.0) && val < 0)
                     hasNegativeB = true;
             }
             return hasNegativeB;
@@ -238,7 +268,7 @@ namespace Magpie
                 for(int i = 0; i < data.rows_count(); ++i)
                 {
                     T val = data.get(data.columns_count() - 1, i);
-                    if(val < 0 && !compare_float(maxB, val) && std::abs(maxB) < std::abs(val))
+                    if(val < 0 && !compare_float<T>(maxB, val) && abs(maxB) < abs(val))
                     {
                         maxB = val;
                         maxBRow = i;
@@ -254,7 +284,7 @@ namespace Magpie
                     if(val < 0)
                     {
                         allPositive = false;
-                        if(!compare_float(maxElemAtBRow, val) && std::abs(maxElemAtBRow) < std::abs(val))
+                        if(!compare_float<T>(maxElemAtBRow, val) && abs(maxElemAtBRow) < abs(val))
                         {
                             maxElemAtBRow = val;
                             maxBCol = i;
@@ -413,7 +443,7 @@ namespace Magpie
             int index = 0;
             for(int i = 0; i < data.rows_count(); i++)
             {
-                if(data.get(col, i) == 0)
+                if(data.get(col, i) == 0.0)
                     zeroCount++;
                 else
                     index = i;
@@ -608,7 +638,7 @@ namespace Magpie
             }
             init_basis = basis;
             alg_state = SimxpleMetState2::CANONICAL_FORM;
-            return SimplexResultIterative2<T>(input, input, SiMetResultType::INPUT_DATA, basis);
+            return SimplexResultIterative2<T>(input, input, SiMetResultType::INPUT_DATA, basis, SimxpleMetState2::WAIT_DATA);
         }
 
     protected:
