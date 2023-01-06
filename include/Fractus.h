@@ -361,16 +361,19 @@ namespace Magpie
 
 namespace fmt
 {
+
+#include <fmt/core.h>
+
     template<>
-    struct fmt::formatter<Magpie::Fractus> :
-            fmt::formatter<std::string>
+    struct formatter<Magpie::Fractus> :
+            formatter<std::string>
     {
 
         template<typename FormatContext>
         auto format(const Magpie::Fractus& number, FormatContext& ctx)
         {
-            return fmt::formatter<std::string>::format(number.toString(), ctx);
-          //  return fmt::format_to(ctx.out(), "{:.2f}", number.toString());
+            return formatter<std::string>::format(number.toString(), ctx);
+            //  return fmt::format_to(ctx.out(), "{:.2f}", number.toString());
         }
     };
 }

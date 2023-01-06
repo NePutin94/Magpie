@@ -43,8 +43,8 @@ namespace Magpie
 
     constexpr std::string SimxpleMetState2String(SimxpleMetState state)
     {
-        std::string_view arr[] = {"wait_data", "remove_neg_coeff", "calc_delta", "simplex_met", "done_has_result", "done_cant_solve", "bazis_find"};
-        return arr[(int) state].data();
+        std::string arr[] = {"wait_data", "remove_neg_coeff", "calc_delta", "simplex_met", "done_has_result", "done_cant_solve", "bazis_find"};
+        return arr[(int) state];
     }
 
     template<class T>
