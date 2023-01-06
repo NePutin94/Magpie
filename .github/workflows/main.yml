@@ -12,7 +12,7 @@ on:
 
 env:
   BUILD_TYPE: Release
-  
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,11 +29,6 @@ jobs:
           sudo apt-get install libglu1-mesa-dev freeglut3-dev mesa-common-dev
           sudo apt-get install libglfw3-dev
           sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
-          git clone https://github.com/Dav1dde/glad.git
-          cd glad
-          cmake ./
-          make
-          sudo cp -a include /usr/local/
           sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 
       - name: Configure CMake
