@@ -17,7 +17,8 @@ namespace Magpie
         SELECT_ARTI_SUPPORT_ELEM,
         DONE_HAS_RESULT,
         DONE_CANT_SOLVE,
-        BAZIS_FIND
+        BAZIS_FIND,
+        BAZIS_FIND_DONE
     };
 
     enum class ArtificialBasisResultType
@@ -159,10 +160,17 @@ namespace Magpie
             auto prev_state = alg_state;
             switch(alg_state)
             {
+                case ArtificialBasisState::BAZIS_FIND_DONE:
+                {
+                    prepare_simplex();
+                    return SimplexResultIterative3<T>(before, data, ArtificialBasisResultType::SIMPLEX_TABLE, basis, prev_state, vars, deleted_var,
+                                                      deleted_col);
+                }
                 case ArtificialBasisState::BAZIS_FIND:
                 {
                     find_basis_iterative();
-                    return SimplexResultIterative3<T>(before, data, ArtificialBasisResultType::FIND_BAZIS_TABLE, basis, prev_state, vars, deleted_var, deleted_col);
+                    return SimplexResultIterative3<T>(before, data, ArtificialBasisResultType::FIND_BAZIS_TABLE, basis, prev_state, vars, deleted_var,
+                                                      deleted_col);
                 }
                 case ArtificialBasisState::DONE_CANT_SOLVE:
                 {
@@ -608,7 +616,7 @@ namespace Magpie
                 }
             }
             if(allNullOrPositive)
-                prepare_simplex();
+                alg_state = ArtificialBasisState::BAZIS_FIND_DONE;
             return std::make_pair(std::make_pair(minBRow, maxDeltaCol), ret);
         }
 
@@ -667,7 +675,10 @@ namespace Magpie
                     }
                 }
                 data = data.dropColumn(maxDeltaCol);
-                alg_state = ArtificialBasisState::SELECT_ARTI_SUPPORT_ELEM;
+                if(check())
+                    alg_state = ArtificialBasisState::BAZIS_FIND_DONE;
+                else
+                    alg_state = ArtificialBasisState::SELECT_ARTI_SUPPORT_ELEM;
             } else
             {
                 alg_state = ArtificialBasisState::SELECT_SUPPORT_ELEM;

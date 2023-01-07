@@ -80,8 +80,7 @@ namespace Magpie
                     {
                         ImGui::TableNextColumn();
                         ShowCellText(i, cell_height, "F");
-                    }
-                    else
+                    } else
                     {
                         ImGui::TableNextColumn();
                         ShowCellText(i, cell_height, " ");
@@ -99,7 +98,6 @@ namespace Magpie
                         ShowCellText(j, cell_height, result.after.get(j, i));
                     }
                 }
-
                 ImGui::EndTable();
             }
         }
@@ -496,9 +494,7 @@ namespace Magpie
             ImGui::Text(str.c_str());
         }
 
-        template<typename Argt>
-        requires std::is_same_v<Argt, Fractus>
-        static void ShowCellText(int col, int col_h, const Argt& arg)
+        static void ShowCellText(int col, int col_h, const char* arg)
         {
             auto str = vformat("{}", fmt::make_format_args(arg));
             auto size = ImGui::CalcTextSize(str.c_str());
