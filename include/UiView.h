@@ -18,7 +18,8 @@ namespace Magpie
         InputRestrictionGraph,
         SolverGraphics,
         SolverGraphics3D,
-        SolverSimplex
+        SolverSimplex,
+        SolverSimplexArtificialBasis
     };
 
     class UiView

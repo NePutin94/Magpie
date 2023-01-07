@@ -65,6 +65,11 @@ namespace Magpie
                     nextSatet = States::SolverSimplex;
                     sceneCallback();
                 }
+                if(ImGui::Button("Artificial Basis"))
+                {
+                    nextSatet = States::SolverSimplexArtificialBasis;
+                    sceneCallback();
+                }
                 ImGui::End();
             }
         }

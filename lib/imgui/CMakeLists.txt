@@ -18,6 +18,7 @@ cmake_minimum_required(VERSION 3.21)
 #target_compile_definitions(IMGUI PUBLIC IMGUI_IMPL_OPENGL_LOADER_GLAD)
 #target_include_directories(IMGUI PUBLIC ".")
 #target_link_libraries(IMGUI glfw)
+
 project(imgui)
 add_library(${PROJECT_NAME} "")
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})

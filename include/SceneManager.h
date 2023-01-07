@@ -6,6 +6,7 @@
 #include "InputView.h"
 #include "Test.h"
 #include "MagicInput.h"
+#include "ArtificialBasisView.h"
 #include "GraphicalMethodView.h"
 #include "SimplexMethodView.h"
 #include <stack>
@@ -440,6 +441,20 @@ namespace Magpie
                             break;
                         case DataStorage::FRACTUS:
                             addView<SimplexMethodView<Fractus>>(SimplexMethodView<Fractus>{Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                            break;
+                    }
+                    break;
+                case States::SolverSimplexArtificialBasis:
+                    switch(globData.type)
+                    {
+                        case DataStorage::DOUBLE:
+                            addView<ArtificialBasisView<double>>(ArtificialBasisView<double>{Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                            break;
+                        case DataStorage::FLOAT:
+                            addView<ArtificialBasisView<float>>(ArtificialBasisView<float>{Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                            break;
+                        case DataStorage::FRACTUS:
+                            addView<ArtificialBasisView<Fractus>>(ArtificialBasisView<Fractus>{Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
                             break;
                     }
 

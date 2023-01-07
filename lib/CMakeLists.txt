@@ -126,9 +126,16 @@ set(HEADER_SOURCE palka_core/ReflectionDebug.h palka_core/Drawable.h)
 set(GLAD_INCLUDE "../glad/include")
 find_package(OpenGL REQUIRED)
 #IMGUI_GLFW
-
+if (UNIX)
+    SET(IMGUI_SRC imgui/imgui.cpp imgui/imgui_demo.cpp imgui/imgui_draw.cpp
+            imgui/imgui_impl_glfw.cpp imgui/imgui_impl_opengl3.cpp imgui/imgui_tables.cpp imgui/imgui_widgets.cpp imgui/implot.cpp
+            imgui/implot_demo.cpp imgui/implot_internal.h imgui/implot_items.cpp)
+endif ()
 if (WIN32)
-    file(GLOB IMGUI_SRC RELATIVE "${CMAKE_SOURCE_DIR}/lib" "../lib/imgui/*.cpp")
+    SET(IMGUI_SRC imgui/imgui.cpp imgui/imgui_demo.cpp imgui/imgui_draw.cpp imgui/imgui_impl_win32.cpp
+            imgui/imgui_impl_glfw.cpp imgui/imgui_impl_opengl3.cpp imgui/imgui_tables.cpp imgui/imgui_widgets.cpp imgui/implot.cpp
+            imgui/implot_demo.cpp imgui/implot_internal.h imgui/implot_items.cpp imgui/imgui.himgui/ imgui_impl_glfw.h
+            imgui/imgui_impl_opengl3.h imgui/imgui_impl_win32.h imgui/imgui_internal.h imgui/implot.h imgui/implot_internal.h)
 endif ()
 if (NOT MSVC)
     add_library(palka SHARED ${CORE_SRC} ${HEADER_SOURCE})

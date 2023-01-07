@@ -250,7 +250,7 @@ namespace Magpie
             for(int i = 0; i < data.rows_count(); ++i)
             {
                 T val = data.get(data.columns_count() - 1, i);
-                if(!compare_float<T>(val, 0.0) && val < 0)
+                if(!compare_float<T>(val, 0.0) && val < (T)0)
                     hasNegativeB = true;
             }
             return hasNegativeB;
@@ -268,7 +268,7 @@ namespace Magpie
                 for(int i = 0; i < data.rows_count(); ++i)
                 {
                     T val = data.get(data.columns_count() - 1, i);
-                    if(val < 0 && !compare_float<T>(maxB, val) && abs(maxB) < abs(val))
+                    if(val < (T)0 && !compare_float<T>(maxB, val) && abs(maxB) < abs(val))
                     {
                         maxB = val;
                         maxBRow = i;
@@ -368,7 +368,7 @@ namespace Magpie
                 if(j < target_function.size())
                     data.get(j, data.rows_count() - 1) = target_function[j];
                 else
-                    data.get(j, data.rows_count() - 1) = 0;
+                    data.get(j, data.rows_count() - 1) = (T)0;
             }
             removeNegativeB();
             alg_state = SimxpleMetState2::BAZIS_FIND;
@@ -443,7 +443,7 @@ namespace Magpie
             int index = 0;
             for(int i = 0; i < data.rows_count(); i++)
             {
-                if(data.get(col, i) == 0.0)
+                if(data.get(col, i) == (T)0)
                     zeroCount++;
                 else
                     index = i;
@@ -468,7 +468,7 @@ namespace Magpie
             for(int i = 0; i < data.columns_count() - 1; ++i)
             {
                 bool new_maxDelta = false;
-                if(data.get(i, data.rows_count() - 1) < 0)
+                if(data.get(i, data.rows_count() - 1) < (T)0)
                 {
                     if(auto new_val = data.get(i, data.rows_count() - 1); maxDelta < new_val)
                     {
@@ -568,7 +568,7 @@ namespace Magpie
                 for(int i = 0; i < data.columns_count(); ++i)
                 {
                     if(i == maxDeltaCol) //resolving = 1/resolving
-                        data.get(i, minBRow) = (T) 1 / data.get(i, minBRow);
+                        data.get(i, minBRow) = (T) 1.0 / data.get(i, minBRow);
                     else //the rest are divided into a resolving element
                         data.get(i, minBRow) /= resolvingElement;
                 }
@@ -611,7 +611,7 @@ namespace Magpie
             bool allPositive = true;
             for(int i = 0; i < data.columns_count() - 1; ++i)
             {
-                if(data.get(i, data.rows_count() - 1) < 0)
+                if(data.get(i, data.rows_count() - 1) < 0.0)
                 {
                     allPositive = false;
                     break;

@@ -149,11 +149,7 @@ IF (UNIX)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 ENDIF ()
 
-
 file(GLOB Magpie_SRC RELATIVE "${CMAKE_SOURCE_DIR}/" "src/*.cpp")
-file(GLOB IMGUI_SRC RELATIVE "${CMAKE_SOURCE_DIR}/" "lib/imgui/*.cpp")
-
-
 
 if (MSVC)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
@@ -292,14 +288,15 @@ set(HEADER_SOURCE lib/palka_core/ReflectionDebug.h lib/palka_core/Drawable.h)
 set(GLAD_INCLUDE "lib/glad/include")
 find_package(OpenGL REQUIRED)
 #IMGUI_GLFW
-message(STATUS ${Magpie_SRC})
-message(STATUS ${CORE_SRC})
+
 if (WIN32)
     file(GLOB IMGUI_SRC RELATIVE "${CMAKE_SOURCE_DIR}/" "lib/imgui/*.cpp")
+    add_executable(Magpie src/main.cpp ${Magpie_SRC} ${CORE_SRC} ${HEADER_SOURCE} ${IMGUI_SRC} include/config.h include/DataSets.h)
+else ()
+    add_executable(Magpie src/main.cpp ${Magpie_SRC} ${CORE_SRC} ${HEADER_SOURCE} include/config.h include/DataSets.h)
 endif ()
 
 
-add_executable(Magpie src/main.cpp ${Magpie_SRC} ${CORE_SRC} ${HEADER_SOURCE} ${IMGUI_SRC} include/config.h include/DataSets.h)
 target_link_libraries(Magpie PUBLIC ${OPENGL_LIBRARIES} TracyClient nlohmann_json::nlohmann_json tinygltf EnTT::EnTT assimp::assimp imgui::imgui fmt::fmt glm::glm glfw RTTR::Core GLAD STB imm32 ws2_32 dwmapi)
 target_compile_definitions(Magpie PUBLIC IMGUI_IMPL_OPENGL_LOADER_GLAD GL_GLEXT_PROTOTYPES=1)
 target_include_directories(Magpie PUBLIC ${OPENGL_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS} ../lib/imgui)
