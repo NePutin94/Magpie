@@ -29,7 +29,8 @@ namespace Magpie
         SELECT_SUPPORT_ELEM,
         SELECT_ARTI_SUPPORT_ELEM,
         RESULT_TABLE,
-        FIND_BAZIS_TABLE
+        FIND_BAZIS_TABLE,
+        FIND_BASIS_RESULT
     };
 
     template<class T>
@@ -163,7 +164,7 @@ namespace Magpie
                 case ArtificialBasisState::BAZIS_FIND_DONE:
                 {
                     prepare_simplex();
-                    return SimplexResultIterative3<T>(before, data, ArtificialBasisResultType::SIMPLEX_TABLE, basis, prev_state, vars, deleted_var,
+                    return SimplexResultIterative3<T>(before, data, ArtificialBasisResultType::FIND_BASIS_RESULT, basis, prev_state, vars, deleted_var,
                                                       deleted_col);
                 }
                 case ArtificialBasisState::BAZIS_FIND:
@@ -174,29 +175,29 @@ namespace Magpie
                 }
                 case ArtificialBasisState::DONE_CANT_SOLVE:
                 {
-                    return SimplexResultIterative3<T>(before, data, ArtificialBasisResultType::TABLE, basis, prev_state);
+                    return SimplexResultIterative3<T>(before, data, ArtificialBasisResultType::TABLE, basis, prev_state, vars);
                 }
                 case ArtificialBasisState::DONE_HAS_RESULT:
                 {
-                    return SimplexResultIterative3<T>(before, data, ArtificialBasisResultType::RESULT_TABLE, basis, prev_state);
+                    return SimplexResultIterative3<T>(before, data, ArtificialBasisResultType::RESULT_TABLE, basis, prev_state, vars);
                 }
                 case ArtificialBasisState::CANONICAL_FORM:
                 {
                     makeCanonicalForm();
-                    return SimplexResultIterative3<T>(before, data, ArtificialBasisResultType::TABLE, basis, prev_state);
+                    return SimplexResultIterative3<T>(before, data, ArtificialBasisResultType::TABLE, basis, prev_state, vars);
                 }
                 case ArtificialBasisState::SIXPLEX_MET:
                 {
                     simplex_iterative();
                     return SimplexResultIterative3<T>(before, data, ArtificialBasisResultType::SIMPLEX_TABLE, curr_support_elem.first, curr_support_elem.second,
                                                       basis,
-                                                      prev_state);
+                                                      prev_state, vars);
                 }
                 case ArtificialBasisState::SELECT_SUPPORT_ELEM:
                 {
                     auto elems = possibleSupportElements();
                     return SimplexResultIterative3<T>(before, data, ArtificialBasisResultType::SELECT_SUPPORT_ELEM, elems.second, elems.first, basis,
-                                                      prev_state);
+                                                      prev_state, vars);
                 }
                 case ArtificialBasisState::SELECT_ARTI_SUPPORT_ELEM:
                 {
@@ -339,7 +340,8 @@ namespace Magpie
 
                 const auto old_data = data;
                 const auto resolvingElement = data.get(maxDeltaCol, minBRow);
-                basis[minBRow] = maxDeltaCol + 1;
+                std::swap(basis[minBRow], vars[maxDeltaCol]);
+                //basis[minBRow] = maxDeltaCol + 1;
                 //dividing the row by the resolving element
                 for(int i = 0; i < data.columns_count(); ++i)
                 {
@@ -623,7 +625,10 @@ namespace Magpie
         void prepare_simplex()
         {
             data = data.dropRow(data.rows_count() - 2);
-            alg_state = ArtificialBasisState::SELECT_SUPPORT_ELEM;
+            if(!positiveDeltaCheck())
+                alg_state = ArtificialBasisState::SELECT_SUPPORT_ELEM;
+            else
+                alg_state = ArtificialBasisState::DONE_HAS_RESULT;
         }
 
         void find_basis_iterative()

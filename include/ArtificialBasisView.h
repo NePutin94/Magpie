@@ -53,10 +53,10 @@ namespace Magpie
                                 ImGui::TableNextColumn();
                                 ImU32 cell_bg_color = ImGui::GetColorU32(changed_row_color);
                                 ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
-                                layout2("x%s", std::to_string(result.deleted_var), j, cell_height);
+                                layout2(result.deleted_var, j, cell_height);
                             }
                             ImGui::TableNextColumn();
-                            layout2("x%s", std::to_string(result.vars[j]), j, cell_height);
+                            layout2(result.vars[j], j, cell_height);
                             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
                         }
                         if(result.deleted_col >= result.after.columns_count() - 1)
@@ -64,7 +64,7 @@ namespace Magpie
                             ImGui::TableNextColumn();
                             ImU32 cell_bg_color = ImGui::GetColorU32(changed_row_color);
                             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
-                            layout2("x%s", std::to_string(result.deleted_var), result.deleted_col, cell_height);
+                            layout2(result.deleted_var, result.deleted_col, cell_height);
                         }
                         ImGui::TableNextColumn();
                         ShowCellText(i, cell_height, "B");
@@ -74,7 +74,7 @@ namespace Magpie
                     if(i < result.after.rows_count() - 2)
                     {
                         ImGui::TableNextColumn();
-                        layout2("x%s", std::to_string(result.basis[i]), i, cell_height);
+                        layout2(result.basis[i], i, cell_height);
                         ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
                     } else if(i == result.after.rows_count() - 1)
                     {
@@ -102,13 +102,10 @@ namespace Magpie
             }
         }
 
-        void simplex_table_render()
+        void find_basis_res_render()
         {
             constexpr int cell_height = 80;
             ImGuiTableFlags flags = ImGuiTableFlags_Borders;
-            auto changed_row_color = ImVec4(0.9, 0.322, 0.375, 0.9);
-            auto changed_col_color = ImVec4(0.2, 0.922, 0.375, 0.9);
-            auto resolving_elem_color = ImVec4(0.4, 0.522, 0.775, 0.9);
             auto table_sz = ImVec2(cell_height * result.after.columns_count(), static_cast<float>(cell_height * (result.after.rows_count() + 1)));
             ImGui::SetCursorPosX((ImGui::GetWindowWidth() - table_sz.x) / 2.f);
             ImU32 cell_bg_color = ImGui::GetColorU32(ImGuiCol_TableHeaderBg);
@@ -124,7 +121,7 @@ namespace Magpie
                         for(int j = 0; j < result.after.columns_count() - 1; ++j)
                         {
                             ImGui::TableNextColumn();
-                            layout2("x%s", std::to_string(j), j, cell_height);
+                            layout2(result.vars[j], j, cell_height);
                             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
                         }
                         ImGui::TableNextRow(ImGuiTableRowFlags_None, cell_height);
@@ -133,7 +130,55 @@ namespace Magpie
                     if(i < result.after.rows_count() - 1)
                     {
                         ImGui::TableNextColumn();
-                        layout2("x%s", std::to_string(result.basis[i]), i, cell_height);
+                        layout2(result.basis[i], i, cell_height);
+                        ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
+                    } else
+                    {
+                        ImGui::TableNextColumn();
+                        ImGui::Text(" ");
+                    }
+                    for(int j = 0; j < result.after.columns_count(); ++j)
+                    {
+                        ImGui::TableNextColumn();
+                        ShowCellText(j, cell_height, result.after.get(j, i));
+                    }
+                }
+                ImGui::EndTable();
+            }
+        }
+
+        void simplex_table_render()
+        {
+            constexpr int cell_height = 100;
+            ImGuiTableFlags flags = ImGuiTableFlags_Borders;
+            auto changed_row_color = ImVec4(0.9, 0.322, 0.375, 0.9);
+            auto changed_col_color = ImVec4(0.2, 0.922, 0.375, 0.9);
+            auto resolving_elem_color = ImVec4(0.4, 0.522, 0.775, 0.9);
+            auto table_sz = ImVec2(cell_height * result.after.columns_count() + 1, static_cast<float>(cell_height * (result.after.rows_count() + 1)));
+            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - table_sz.x) / 2.f);
+            ImU32 cell_bg_color = ImGui::GetColorU32(ImGuiCol_TableHeaderBg);
+            if(ImGui::BeginTable("SimplexAfter", result.after.columns_count() + 1, flags, table_sz))
+            {
+                for(int i = 0; i < result.after.rows_count(); ++i)
+                {
+                    ImGui::TableNextRow(ImGuiTableRowFlags_None, cell_height);
+                    if(i == 0)
+                    {
+                        ImGui::TableNextColumn();
+                        ImGui::Text(" ");
+                        for(int j = 0; j < result.after.columns_count() - 1; ++j)
+                        {
+                            ImGui::TableNextColumn();
+                            layout2(j, j, cell_height);
+                            ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
+                        }
+                        ImGui::TableNextRow(ImGuiTableRowFlags_None, cell_height);
+                    }
+
+                    if(i < result.after.rows_count() - 1)
+                    {
+                        ImGui::TableNextColumn();
+                        layout2(result.basis[i], i, cell_height);
                         ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
                     } else
                     {
@@ -156,8 +201,7 @@ namespace Magpie
                             ImU32 cell_bg_color = ImGui::GetColorU32(resolving_elem_color);
                             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
                         }
-                        ShowText("{} (?)", result.after.get(j, i));
-                        //ImGui::Text("%s (?)", result.after.get(j, i));
+                        ShowCellText(j, cell_height, result.after.get(j, i), " (?)");
                         if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
                         {
                             ImGui::BeginTooltip();
@@ -166,35 +210,22 @@ namespace Magpie
                             {
                                 ShowText("1 / {} = {} ", result.before.get(result.resolving_col, result.resolving_row),
                                          result.after.get(j, i));
-//                                ImGui::Text("%s", fmt::format("1 / {} = {} ", result.before.get(result.resolving_col, result.resolving_row),
-//                                                              result.after.get(j, i)).c_str());
                             } else if(i == result.resolving_row)
                             {
                                 ShowText("{} / {} = {}", result.before.get(i, result.resolving_row),
                                          result.before.get(result.resolving_col, result.resolving_row),
                                          result.after.get(i, result.resolving_row));
-//                                ImGui::Text("%s / %s = %s", result.before.get(i, result.resolving_row),
-//                                            result.before.get(result.resolving_col, result.resolving_row),
-//                                            result.after.get(i, result.resolving_row));
                             } else if(j == result.resolving_col)
                             {
                                 ShowText("{} / {} * -1 = {}", result.before.get(result.resolving_col, i),
                                          result.before.get(result.resolving_col, result.resolving_row),
                                          result.after.get(result.resolving_col, i));
-//                                ImGui::Text("%s / %s * -1 = %s", result.before.get(result.resolving_col, i),
-//                                            result.before.get(result.resolving_col, result.resolving_row),
-//                                            result.after.get(result.resolving_col, i));
                             } else
                             {
                                 ShowText("{} - {} * {} = {} ", result.before.get(j, i),
                                          result.after.get(j, result.resolving_row),
                                          result.before.get(result.resolving_col, i),
                                          result.after.get(j, i));
-//                                ImGui::Text("%s",
-//                                            fmt::format("{} - {} * {} = {} ", result.before.get(j, i),
-//                                                        result.after.get(j, result.resolving_row),
-//                                                        result.before.get(result.resolving_col, i),
-//                                                        result.after.get(j, i)).c_str());
                             }
 
                             ImGui::PopTextWrapPos();
@@ -228,7 +259,7 @@ namespace Magpie
                         for(int j = 0; j < result.after.columns_count() - 1; ++j)
                         {
                             ImGui::TableNextColumn();
-                            layout2("x%s", std::to_string(j), j, cell_height);
+                            layout2(j, j, cell_height);
                             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
                         }
                         ImGui::TableNextRow(ImGuiTableRowFlags_None, cell_height);
@@ -237,7 +268,7 @@ namespace Magpie
                     if(i < result.after.rows_count() - 1)
                     {
                         ImGui::TableNextColumn();
-                        layout2("x%s", std::to_string(result.basis[i]), i, cell_height);
+                        layout2(result.basis[i], i, cell_height);
                         ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
                     } else
                     {
@@ -250,7 +281,7 @@ namespace Magpie
                         ImGui::TableNextColumn();
                         if(result.possibleSupportElems.contains(j) && result.possibleSupportElems[j] == i)
                         {
-                            if(layout_selectable(fmt::format("{}", result.after.get(j, i)).c_str(), cell_height, 120))
+                            if(layout_selectable(result.after.get(j, i), cell_height, cell_width))
                             {
                                 selected = j;
                                 artificialBasis.setSupportElem(i, j);
@@ -301,7 +332,7 @@ namespace Magpie
                         for(int j = 0; j < result.after.columns_count() - 1; ++j)
                         {
                             ImGui::TableNextColumn();
-                            layout2("x%s", std::to_string(result.vars[j]), j, cell_height);
+                            layout2(result.vars[j], j, cell_height);
                             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
                         }
                         ImGui::TableNextColumn();
@@ -312,7 +343,7 @@ namespace Magpie
                     if(i < result.after.rows_count() - 2)
                     {
                         ImGui::TableNextColumn();
-                        layout2("x%s", std::to_string(result.basis[i]), i, cell_height);
+                        layout2(result.basis[i], i, cell_height);
                         ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
                     } else
                     {
@@ -326,7 +357,7 @@ namespace Magpie
                         ImGui::TableNextColumn();
                         if(result.possibleSupportElems.contains(j) && result.possibleSupportElems[j] == i)
                         {
-                            if(layout_selectable(fmt::format("{}", result.after.get(j, i)).c_str(), cell_height, 120))
+                            if(layout_selectable(result.after.get(j, i), cell_height, cell_width))
                             {
                                 selected = j;
                                 artificialBasis.setSupportArtiElem(i, j);
@@ -471,9 +502,9 @@ namespace Magpie
 
         template<typename Argt>
         requires std::is_floating_point_v<Argt>
-        static void ShowCellText(int col, int col_h, const Argt& arg)
+        static void ShowCellText(int col, int col_h, const Argt& arg, std::string add = "")
         {
-            auto str = vformat("{:.3f}", fmt::make_format_args(arg));
+            auto str = vformat("{:.3f}" + add, fmt::make_format_args(arg));
             auto size = ImGui::CalcTextSize(str.c_str());
             float ww = ImGui::GetColumnWidth(col);
             auto start_pos = ImGui::GetCursorPos();
@@ -483,9 +514,9 @@ namespace Magpie
         }
 
         template<typename Argt>
-        static void ShowCellText(int col, int col_h, const Argt& arg)
+        static void ShowCellText(int col, int col_h, const Argt& arg, std::string add = "")
         {
-            auto str = vformat("{}", fmt::make_format_args(arg));
+            auto str = vformat("{}" + add, fmt::make_format_args(arg));
             auto size = ImGui::CalcTextSize(str.c_str());
             float ww = ImGui::GetColumnWidth(col);
             auto start_pos = ImGui::GetCursorPos();
@@ -494,9 +525,9 @@ namespace Magpie
             ImGui::Text(str.c_str());
         }
 
-        static void ShowCellText(int col, int col_h, const char* arg)
+        static void ShowCellText(int col, int col_h, const char* arg, std::string add = "")
         {
-            auto str = vformat("{}", fmt::make_format_args(arg));
+            auto str = vformat("{}" + add, fmt::make_format_args(arg));
             auto size = ImGui::CalcTextSize(str.c_str());
             float ww = ImGui::GetColumnWidth(col);
             auto start_pos = ImGui::GetCursorPos();
@@ -505,41 +536,56 @@ namespace Magpie
             ImGui::Text(str.c_str());
         }
 
-        void layout2(std::string_view fmt, std::string val, int col, int col_h)
+//        void layout2(std::string_view fmt, std::string val, int col, int col_h)
+//        {
+//            auto size = ImGui::CalcTextSize(val.c_str());
+//            float ww = ImGui::GetColumnWidth(col);
+//            auto start_pos = ImGui::GetCursorPos();
+//            ImGui::SetCursorPosY(start_pos.y + (col_h - size.y) / 2.f);
+//            ImGui::SetCursorPosX(start_pos.x + (ww - size.x) / 2.f);
+//            ImGui::Text(fmt.data(), val.c_str());
+//        }
+
+        template<typename Argt>
+        void layout2(const Argt& value,  int col,int col_h)
         {
-            auto size = ImGui::CalcTextSize(val.c_str());
+            auto str = vformat("x{}", fmt::make_format_args(value));
+            auto size = ImGui::CalcTextSize(str.c_str());
             float ww = ImGui::GetColumnWidth(col);
             auto start_pos = ImGui::GetCursorPos();
             ImGui::SetCursorPosY(start_pos.y + (col_h - size.y) / 2.f);
             ImGui::SetCursorPosX(start_pos.x + (ww - size.x) / 2.f);
-            ImGui::Text(fmt.data(), val.c_str());
+            ImGui::Text(str.c_str());
         }
 
-        void layout2(std::string_view fmt, double val, int col, int col_h)
-        {
-            auto size = ImGui::CalcTextSize("0.002");
-            float ww = ImGui::GetColumnWidth(col);
-            auto start_pos = ImGui::GetCursorPos();
-            ImGui::SetCursorPosY(start_pos.y + (col_h - size.y) / 2.f);
-            ImGui::SetCursorPosX(start_pos.x + (ww - size.x) / 2.f);
-            ImGui::Text("%.3f", val);
-        }
+//        bool layout_selectable(std::string_view value, int cell_height, int cell_width)
+//        {
+//            ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
+//            ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.2f, 0.5f));
+//            auto ret = ImGui::Selectable(value.data(), false, ImGuiItemFlags_None, ImVec2(cell_width, cell_height));
+//            ImGui::PopStyleVar();
+//            ImGui::PopStyleVar();
+//            return ret;
+//        }
 
-        void layout2(std::string_view fmt, float val, int col, int col_h)
-        {
-            auto size = ImGui::CalcTextSize("0.002");
-            float ww = ImGui::GetColumnWidth(col);
-            auto start_pos = ImGui::GetCursorPos();
-            ImGui::SetCursorPosY(start_pos.y + (col_h - size.y) / 2.f);
-            ImGui::SetCursorPosX(start_pos.x + (ww - size.x) / 2.f);
-            ImGui::Text("%.3f", val);
-        }
-
-        bool layout_selectable(std::string_view value, int cell_height, int cell_width)
+        template<typename Argt>
+        requires std::is_floating_point_v<Argt>
+        bool layout_selectable(const Argt& value, int cell_height, int cell_width)
         {
             ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
             ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.2f, 0.5f));
-            auto ret = ImGui::Selectable(value.data(), false, ImGuiItemFlags_None, ImVec2(cell_width, cell_height));
+            auto ret = ImGui::Selectable(vformat("{:.3f}", fmt::make_format_args(value)).c_str(), false, ImGuiItemFlags_None, ImVec2(cell_width, cell_height));
+            ImGui::PopStyleVar();
+            ImGui::PopStyleVar();
+            return ret;
+        }
+
+        template<typename Argt>
+        bool layout_selectable(const Argt& value, int cell_height, int cell_width)
+        {
+            ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 0.0f);
+            ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.2f, 0.5f));
+            auto ret = ImGui::Selectable(vformat("{}", fmt::make_format_args(value)).c_str(), false, ImGuiItemFlags_None, ImVec2(cell_width, cell_height));
             ImGui::PopStyleVar();
             ImGui::PopStyleVar();
             return ret;
@@ -598,6 +644,9 @@ namespace Magpie
                     {
                         case ArtificialBasisResultType::SIMPLEX_TABLE:
                             simplex_table_render();
+                            break;
+                        case ArtificialBasisResultType::FIND_BASIS_RESULT:
+                            find_basis_res_render();
                             break;
                         case ArtificialBasisResultType::FIND_BAZIS_TABLE:
                             find_bazis_table_render();

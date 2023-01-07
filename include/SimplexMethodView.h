@@ -51,7 +51,7 @@ namespace Magpie
                         for(int j = 0; j < result.after.columns_count() - 1; ++j)
                         {
                             ImGui::TableNextColumn();
-                            layout2("x%s", std::to_string(j), j, cell_height);
+                            layout2("x%s ", std::to_string(j), j, cell_height);
                             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
                         }
                         ImGui::TableNextRow(ImGuiTableRowFlags_None, cell_height);
@@ -60,7 +60,7 @@ namespace Magpie
                     if(i < result.after.rows_count() - 1)
                     {
                         ImGui::TableNextColumn();
-                        layout2("x%s", std::to_string(result.basis[i]), i, cell_height);
+                        layout2("x%s ", std::to_string(result.basis[i]), i, cell_height);
                         ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
                     } else
                     {
@@ -84,7 +84,6 @@ namespace Magpie
                             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, cell_bg_color);
                         }
                         ShowText("{} (?)", result.after.get(j, i));
-                        //ImGui::Text("%s (?)", result.after.get(j, i));
                         if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
                         {
                             ImGui::BeginTooltip();
@@ -93,35 +92,22 @@ namespace Magpie
                             {
                                 ShowText("1 / {} = {} ", result.before.get(result.resolving_col, result.resolving_row),
                                          result.after.get(j, i));
-//                                ImGui::Text("%s", fmt::format("1 / {} = {} ", result.before.get(result.resolving_col, result.resolving_row),
-//                                                              result.after.get(j, i)).c_str());
                             } else if(i == result.resolving_row)
                             {
                                 ShowText("{} / {} = {}", result.before.get(i, result.resolving_row),
                                          result.before.get(result.resolving_col, result.resolving_row),
                                          result.after.get(i, result.resolving_row));
-//                                ImGui::Text("%s / %s = %s", result.before.get(i, result.resolving_row),
-//                                            result.before.get(result.resolving_col, result.resolving_row),
-//                                            result.after.get(i, result.resolving_row));
                             } else if(j == result.resolving_col)
                             {
                                 ShowText("{} / {} * -1 = {}", result.before.get(result.resolving_col, i),
                                          result.before.get(result.resolving_col, result.resolving_row),
                                          result.after.get(result.resolving_col, i));
-//                                ImGui::Text("%s / %s * -1 = %s", result.before.get(result.resolving_col, i),
-//                                            result.before.get(result.resolving_col, result.resolving_row),
-//                                            result.after.get(result.resolving_col, i));
                             } else
                             {
                                 ShowText("{} - {} * {} = {} ", result.before.get(j, i),
                                          result.after.get(j, result.resolving_row),
                                          result.before.get(result.resolving_col, i),
                                          result.after.get(j, i));
-//                                ImGui::Text("%s",
-//                                            fmt::format("{} - {} * {} = {} ", result.before.get(j, i),
-//                                                        result.after.get(j, result.resolving_row),
-//                                                        result.before.get(result.resolving_col, i),
-//                                                        result.after.get(j, i)).c_str());
                             }
 
                             ImGui::PopTextWrapPos();
@@ -349,7 +335,7 @@ namespace Magpie
         void layout2(std::string_view fmt, std::string val, int col, int col_h)
         {
             auto size = ImGui::CalcTextSize(val.c_str());
-            float ww = ImGui::GetColumnWidth(col);
+            float ww = col_h;
             auto start_pos = ImGui::GetCursorPos();
             ImGui::SetCursorPosY(start_pos.y + (col_h - size.y) / 2.f);
             ImGui::SetCursorPosX(start_pos.x + (ww - size.x) / 2.f);
