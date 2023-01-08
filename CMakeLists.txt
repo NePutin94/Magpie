@@ -296,12 +296,14 @@ else ()
     add_executable(Magpie src/main.cpp ${Magpie_SRC} ${CORE_SRC} ${HEADER_SOURCE} include/config.h include/DataSets.h)
 endif ()
 
+
 if (WIN32)
     target_link_libraries(Magpie PUBLIC ${OPENGL_LIBRARIES} TracyClient nlohmann_json::nlohmann_json tinygltf EnTT::EnTT assimp::assimp imgui::imgui fmt::fmt glm::glm glfw RTTR::Core GLAD STB imm32 ws2_32 dwmapi)
 endif ()
 IF (UNIX)
-    target_link_libraries(Magpie PUBLIC ${OPENGL_LIBRARIES} tinygltf EnTT::EnTT assimp::assimp fmt::fmt glm::glm glfw RTTR::Core STB imgui::imgui GLAD)
+    target_link_libraries(Magpie PUBLIC ${OPENGL_LIBRARIES} TracyClient tinygltf EnTT::EnTT assimp::assimp fmt::fmt glm::glm glfw RTTR::Core STB imgui::imgui GLAD)
 endif ()
+
 target_compile_definitions(Magpie PUBLIC IMGUI_IMPL_OPENGL_LOADER_GLAD GL_GLEXT_PROTOTYPES=1)
 target_include_directories(Magpie PUBLIC ${OPENGL_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS} ../lib/imgui)
 include_directories(lib/palka_core)
