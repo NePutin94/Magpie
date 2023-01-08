@@ -3,11 +3,11 @@ name: Ubuntu
 on:
   push:
     branches:
-      - "main"
+      - "master"
       - "3d_graphic_method"
   pull_request:
     branches:
-      - "main"
+      - "master"
       - "3d_graphic_method"
 
 env:
