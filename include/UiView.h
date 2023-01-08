@@ -4,9 +4,24 @@
 #include <imgui.h>
 #include <string>
 #include <Vec2.h>
+#include "Window.h"
+#include "DataStorage.h"
 
 namespace Magpie
 {
+    enum class States
+    {
+        Back,
+        Menu,
+        InputNumber,
+        InputRestriction,
+        InputRestrictionGraph,
+        SolverGraphics,
+        SolverGraphics3D,
+        SolverSimplex,
+        SolverSimplexArtificialBasis
+    };
+
     class UiView
     {
     protected:
@@ -15,7 +30,8 @@ namespace Magpie
         palka::Vec2f size;
         palka::Vec2f pos;
         bool open;
-
+        States nextSatet;
+        DataStorage* storage;
         std::function<void()> sceneCallback; //to link UiScene and UIView, it is expected to be called when you need to switch UIView in the UiScene
     public:
         UiView() = default;
@@ -50,7 +66,19 @@ namespace Magpie
             sceneCallback = call;
         }
 
-        virtual void render() = 0;
+        void setData(DataStorage& dstorage)
+        {
+            storage = &dstorage;
+            init();
+        }
+
+        virtual void init()
+        {}
+
+        States getState()
+        { return nextSatet; }
+
+        virtual void render(palka::Window& w) = 0;
 
         virtual void update() = 0;
 

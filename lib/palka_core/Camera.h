@@ -38,7 +38,7 @@ namespace palka
         float lastX, lastY;
         Vec2f mousePos;
         bool keyPress = false;
-        const float sensitivity = 0.1f;
+        float sensitivity = 0.1f;
 
         glm::mat4 getViewMatrix()
         {
@@ -47,48 +47,51 @@ namespace palka
 
         glm::mat4 getProjectionMatrix()
         {
-            return glm::perspective(glm::radians(fov), (float) size.x / (float) size.y, 0.1f, 100.0f);
+            return glm::perspective(glm::radians(fov), (float) size.x / (float) size.y, 0.1f, 500.0f);
         }
+
+        std::set<unsigned int> inputIds;
+        std::set<unsigned int> mouseEventIds;
 
         void bind()
         {
-            EventManager::addInput(GLFW_KEY_W, [this]()
+            inputIds.emplace(EventManager::addInput(GLFW_KEY_W, [this]()
             {
                 cameraPos += cameraSpeed * cameraFront;
-            });
-            EventManager::addInput(GLFW_KEY_SPACE, [this]()
+            }));
+            inputIds.emplace(EventManager::addInput(GLFW_KEY_SPACE, [this]()
             {
                 cameraPos.y += cameraSpeed;
-            });
-            EventManager::addInput(GLFW_KEY_LEFT_CONTROL, [this]()
+            }));
+            inputIds.emplace(EventManager::addInput(GLFW_KEY_LEFT_CONTROL, [this]()
             {
                 cameraPos.y -= cameraSpeed;
-            });
-            EventManager::addInput(GLFW_KEY_S, [this]()
+            }));
+            inputIds.emplace(EventManager::addInput(GLFW_KEY_S, [this]()
             {
                 cameraPos -= cameraSpeed * cameraFront;
-            });
-            EventManager::addInput(GLFW_KEY_A, [this]()
+            }));
+            inputIds.emplace(EventManager::addInput(GLFW_KEY_A, [this]()
             {
                 cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-            });
-            EventManager::addInput(GLFW_KEY_D, [this]()
+            }));
+            inputIds.emplace(EventManager::addInput(GLFW_KEY_D, [this]()
             {
                 cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-            });
-            EventManager::addEvent(MouseEvent::ButtonPressed(MouseEvent::Mouse_Button::Left), [this](EventData& data)
+            }));
+            mouseEventIds.emplace(EventManager::addEvent(MouseEvent::ButtonPressed(MouseEvent::Mouse_Button::Left), [this](EventData& data)
             {
                 if(!ImGui::IsAnyItemHovered() && !ImGui::IsAnyItemFocused())
                 {
                     keyPress = true;
                     firstMouse = true;
                 }
-            });
-            EventManager::addEvent(MouseEvent::ButtonReleased(MouseEvent::Mouse_Button::Left), [this](EventData& data)
+            }));
+            mouseEventIds.emplace(EventManager::addEvent(MouseEvent::ButtonReleased(MouseEvent::Mouse_Button::Left), [this](EventData& data)
             {
                 keyPress = false;
-            });
-            EventManager::addEvent(MouseEvent::Motion(), [this](EventData& data)
+            }));
+            mouseEventIds.emplace(EventManager::addEvent(MouseEvent::Motion(), [this](EventData& data)
             {
                 if(keyPress)
                 {
@@ -118,7 +121,20 @@ namespace palka
                     direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
                     cameraFront = glm::normalize(direction);
                 }
-            });
+            }));
+        }
+
+        void unbind()
+        {
+            for(auto& id: inputIds)
+                EventManager::deleteKBoasrdInput(id);
+            for(auto& id: mouseEventIds)
+                EventManager::deleteMouseEvent(id);
+        }
+
+        ~Camera()
+        {
+            //unbind();
         }
 
     public:

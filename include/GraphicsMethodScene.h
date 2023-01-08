@@ -54,9 +54,9 @@ namespace Magpie
             getView<MagicInput>()->setEvents();
         }
 
-        void render() override
+        void render(palka::Window& w) override
         {
-            views()->render();
+            views()->render(w);
         }
 
         void update() override

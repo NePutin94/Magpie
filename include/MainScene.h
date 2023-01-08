@@ -39,20 +39,21 @@ namespace Magpie
             {
                 case State::Input:
                 {
-                    addView<InputView>({{0, 0},
-                                        Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+//                    addView<InputView>({{0, 0},
+//                                        Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
                 }
                     break;
                 case State::InputRest:
                 {
-                    auto res = getView<InputView>()->getResult();
-                    addView<Test>({{0, 0}, Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}, res.first, res.second});
+                 //   auto res = getView<InputView>()->getResult();
+                 //   addView<Test>({{0, 0}, Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}, res.first, res.second});
                 }
                     break;
                 case State::Solve:
                 {
                     auto res = getView<Test>()->getResult();
-                    addView<GraphicalMethodView>({{0, 0}, Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}, res});
+//                    GraphicalMethodView s{{0, 0}, Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}, res};
+              //      addView<GraphicalMethodView>(std::move(s));
                 }
                     break;
                 default:
@@ -63,13 +64,13 @@ namespace Magpie
         void init() override
         {
             state = State::Input;
-            addView<InputView>({{0, 0},
-                                Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+//            addView<InputView>({{0, 0},
+//                                Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
         }
 
-        void render() override
+        void render(palka::Window& w) override
         {
-            views()->render();
+            views()->render(w);
         }
 
         void update() override

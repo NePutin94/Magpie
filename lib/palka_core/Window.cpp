@@ -55,7 +55,7 @@ void palka::Window::create(std::string_view name, std::string_view icon_path)
         stbi_image_free(images[0].pixels);
     }
 //            initImgui();
-    EventManager::addEvent(WINDOWRESIZE, [this](EventData e)
+    EventManager::addEvent(_EventType::WINDOWRESIZE, [this](EventData e)
     {
         size.x = e.WindowResize.newX;
         size.y = e.WindowResize.newY;
@@ -64,7 +64,7 @@ void palka::Window::create(std::string_view name, std::string_view icon_path)
     //int i = 0;
     //glGetIntegerv(GL_MAX_DRAW_BUFFERS, &i);
     //Console::fmt_log("Draw buffer count: {}", Console::info, i);
-    // glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
 //            init();
 }
 

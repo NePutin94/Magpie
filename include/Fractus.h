@@ -50,7 +50,8 @@ namespace Magpie
             }
         }
 
-        void simplify() {
+        void simplify()
+        {
 
             if(numerator == 0 || denominator == 0)
             {
@@ -63,7 +64,8 @@ namespace Magpie
             a = numerator;
             b = denominator;
 
-            while (a % b != 0) {
+            while(a % b != 0)
+            {
                 c = a % b;
                 a = b;
                 b = c;
@@ -284,7 +286,7 @@ namespace Magpie
         }
 
         template<class U>
-        auto convertTO() const
+        U convertTO() const
         requires std::is_floating_point_v<U>
         {
             return (U) numerator / denominator;
@@ -356,8 +358,79 @@ namespace Magpie
             return std::abs(t);
     }
 }
+
+namespace fmt
+{
+
+#include <fmt/core.h>
+
+    template<>
+    struct formatter<Magpie::Fractus> :
+            formatter<std::string>
+    {
+
+        template<typename FormatContext>
+        auto format(const Magpie::Fractus& number, FormatContext& ctx)
+        {
+            return formatter<std::string>::format(number.toString(), ctx);
+            //  return fmt::format_to(ctx.out(), "{:.2f}", number.toString());
+        }
+    };
+}
+
+#include <Vec2.h>
+
+namespace glm
+{
+    inline auto sqrt(const palka::Vec3<Magpie::Fractus>& vec)
+    {
+        palka::Vec3<double> vec_d = {vec.x.convertTO<double>(), vec.y.convertTO<double>(), vec.z.convertTO<double>()};
+        auto res = glm::sqrt(vec_d);
+        return palka::Vec3<Magpie::Fractus>(Magpie::Fractus(res.x), Magpie::Fractus(res.y), Magpie::Fractus(res.z));
+    }
+
+    inline auto sqrt(const glm::vec<3, Magpie::Fractus, glm::defaultp>& vec)
+    {
+        glm::vec<3, double, glm::defaultp> vec_d = {vec.x.convertTO<double>(), vec.y.convertTO<double>(), vec.z.convertTO<double>()};
+        auto res = glm::sqrt(vec_d);
+        return palka::Vec3<Magpie::Fractus>(Magpie::Fractus(res.x), Magpie::Fractus(res.y), Magpie::Fractus(res.z));
+    }
+
+    inline auto length(const palka::Vec3<Magpie::Fractus>& vec)
+    {
+        glm::vec<3, double, glm::defaultp> vec_d = {vec.x.convertTO<double>(), vec.y.convertTO<double>(), vec.z.convertTO<double>()};
+        auto res = glm::length(vec_d);
+        return Magpie::Fractus(res);
+    }
+
+    inline auto length(const glm::vec<3, Magpie::Fractus, glm::defaultp>& vec)
+    {
+        glm::vec<3, double, glm::defaultp> vec_d = {vec.x.convertTO<double>(), vec.y.convertTO<double>(), vec.z.convertTO<double>()};
+        auto res = glm::length(vec_d);
+        return Magpie::Fractus(res);
+    }
+
+    inline auto normalize(const palka::Vec3<Magpie::Fractus>& vec)
+    {
+        glm::vec<3, double, glm::defaultp> vec_d = {vec.x.convertTO<double>(), vec.y.convertTO<double>(), vec.z.convertTO<double>()};
+        auto res = glm::normalize(vec_d);
+        return palka::Vec3<Magpie::Fractus>(Magpie::Fractus(res.x), Magpie::Fractus(res.y), Magpie::Fractus(res.z));
+    }
+
+    inline auto normalize(const glm::vec<3, Magpie::Fractus, glm::defaultp>& vec)
+    {
+        glm::vec<3, double, glm::defaultp> vec_d = {vec.x.convertTO<double>(), vec.y.convertTO<double>(), vec.z.convertTO<double>()};
+        auto res = glm::normalize(vec_d);
+        return palka::Vec3<Magpie::Fractus>(Magpie::Fractus(res.x), Magpie::Fractus(res.y), Magpie::Fractus(res.z));
+    }
+}
 namespace std
 {
+    inline long double sqrt(Magpie::Fractus val) noexcept
+    {
+        return std::sqrt(val.convertTO<double>());
+    }
+
     template<>
     class numeric_limits<Magpie::Fractus>
     {

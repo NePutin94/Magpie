@@ -23,6 +23,8 @@ namespace palka
 
         UniformBuffer(const UniformBuffer&) = delete;
 
+        UniformBuffer(UniformBuffer&&) = default;
+
         void bindToPoint(int p)
         {
             bind();

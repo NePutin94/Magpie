@@ -16,9 +16,24 @@ namespace palka
     class ShaderProgram
     {
     public:
+
         explicit ShaderProgram(bool create = false) : isLinked(false), shaderProgramID(-1), isCreated(false)
         {
             if(create) createProgram();
+        }
+
+        ShaderProgram(ShaderProgram&& ot)
+        {
+            if(this == &ot)
+                return;
+            shaderProgramID = ot.shaderProgramID;
+            isLinked = ot.isLinked;
+            isCreated = ot.isCreated;
+            uniformCache = std::move(ot.uniformCache);
+
+            ot.shaderProgramID = -1;
+            ot.isLinked = false;
+            ot.isCreated = false;
         }
 
         ~ShaderProgram()

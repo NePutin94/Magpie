@@ -9,39 +9,14 @@
 #include <imgui_stdlib.h>
 #include <imgui_internal.h>
 #include <imgui.h>
+#include "DataStorage.h"
 
 namespace Magpie
 {
-    class UniversalInput
-    {
-        std::string val;
-    public:
-        UniversalInput() = default;
-
-        template<class T>
-        UniversalInput(const T& value)
-        {
-            val = std::to_string(value);
-        }
-
-        std::string getValueNotNull()
-        {
-            if(val.empty())
-                return "0";
-            return val;
-        }
-
-        std::string& getValue()
-        {
-            return val;
-        }
-    };
-
     class Test : public UiView
     {
     private:
-        MatrixStorage<UniversalInput> storage;
-
+        //MatrixStorage<UniversalInput> storage;
         void layout2(const char* label, double& val, int col)
         {
             auto label_sz = ImGui::CalcTextSize("value");
@@ -183,314 +158,332 @@ namespace Magpie
 
 #if DEBUG
 
-        void fill(int var)
+        void fill(int var, DataStorage& storage)
         {
             switch(var)
             {
                 case 0:
-                    storage.alloc_matrix(3, 6);
-                    storage.get(0, 0) = -2;
-                    storage.get(1, 0) = -1;
-                    storage.get(2, 0) = -3;
-                    storage.get(3, 0) = -1;
+                    storage.data.alloc_matrix(3, 6);
+                    storage.data.get(0, 0) = -2;
+                    storage.data.get(1, 0) = -1;
+                    storage.data.get(2, 0) = -3;
+                    storage.data.get(3, 0) = -1;
 
-                    storage.get(0, 1) = 1;
-                    storage.get(1, 1) = 2;
-                    storage.get(2, 1) = 5;
-                    storage.get(3, 1) = -1;
-                    storage.get(4, 1) = 0;
-                    storage.get(5, 1) = 4;
+                    storage.data.get(0, 1) = 1;
+                    storage.data.get(1, 1) = 2;
+                    storage.data.get(2, 1) = 5;
+                    storage.data.get(3, 1) = -1;
+                    storage.data.get(4, 1) = 0;
+                    storage.data.get(5, 1) = 4;
 
-                    storage.get(0, 2) = 1;
-                    storage.get(1, 2) = -1;
-                    storage.get(2, 2) = -1;
-                    storage.get(3, 2) = 2;
-                    storage.get(4, 2) = 0;
-                    storage.get(5, 2) = 1;
+                    storage.data.get(0, 2) = 1;
+                    storage.data.get(1, 2) = -1;
+                    storage.data.get(2, 2) = -1;
+                    storage.data.get(3, 2) = 2;
+                    storage.data.get(4, 2) = 0;
+                    storage.data.get(5, 2) = 1;
                     break;
                 case 1: //open
-                    storage.alloc_matrix(4, 4);
-                    storage.get(0, 0) = -3;
-                    storage.get(1, 0) = -2;
+                    storage.data.alloc_matrix(4, 4);
+                    storage.data.get(0, 0) = -3;
+                    storage.data.get(1, 0) = -2;
 
-                    storage.get(0, 1) = 1;
-                    storage.get(1, 1) = 2;
-                    storage.get(2, 1) = 1;
-                    storage.get(3, 1) = 7;
+                    storage.data.get(0, 1) = 1;
+                    storage.data.get(1, 1) = 2;
+                    storage.data.get(2, 1) = 1;
+                    storage.data.get(3, 1) = 7;
 
-                    storage.get(0, 2) = 2;
-                    storage.get(1, 2) = 1;
-                    storage.get(2, 2) = 1;
-                    storage.get(3, 2) = 8;
+                    storage.data.get(0, 2) = 2;
+                    storage.data.get(1, 2) = 1;
+                    storage.data.get(2, 2) = 1;
+                    storage.data.get(3, 2) = 8;
 
-                    storage.get(0, 3) = 0;
-                    storage.get(1, 3) = 1;
-                    storage.get(2, 3) = 1;
-                    storage.get(3, 3) = 3;
+                    storage.data.get(0, 3) = 0;
+                    storage.data.get(1, 3) = 1;
+                    storage.data.get(2, 3) = 1;
+                    storage.data.get(3, 3) = 3;
                     break;
                 case 2://open
-                    storage.alloc_matrix(4, 4);
-                    storage.get(0, 0) = 1;
-                    storage.get(1, 0) = 2;
+                    storage.data.alloc_matrix(4, 4);
+                    storage.data.get(0, 0) = 1;
+                    storage.data.get(1, 0) = 2;
 
-                    storage.get(0, 1) = 2;
-                    storage.get(1, 1) = -1;
-                    storage.get(2, 1) = -1;
-                    storage.get(3, 1) = -1;
+                    storage.data.get(0, 1) = 2;
+                    storage.data.get(1, 1) = -1;
+                    storage.data.get(2, 1) = -1;
+                    storage.data.get(3, 1) = -1;
 
-                    storage.get(0, 2) = 1;
-                    storage.get(1, 2) = -2;
-                    storage.get(2, 2) = 1;
-                    storage.get(3, 2) = 0;
+                    storage.data.get(0, 2) = 1;
+                    storage.data.get(1, 2) = -2;
+                    storage.data.get(2, 2) = 1;
+                    storage.data.get(3, 2) = 0;
 
-                    storage.get(0, 3) = 1;
-                    storage.get(1, 3) = 1;
-                    storage.get(2, 3) = -1;
-                    storage.get(3, 3) = 1;
+                    storage.data.get(0, 3) = 1;
+                    storage.data.get(1, 3) = 1;
+                    storage.data.get(2, 3) = -1;
+                    storage.data.get(3, 3) = 1;
                     break;
                 case 3:
-                    storage.alloc_matrix(5, 4);
-                    storage.get(0, 0) = -1;
-                    storage.get(1, 0) = -2;
+                    storage.data.alloc_matrix(5, 4);
+                    storage.data.get(0, 0) = -1;
+                    storage.data.get(1, 0) = -2;
 
-                    storage.get(0, 1) = 2;
-                    storage.get(1, 1) = 1;
-                    storage.get(2, 1) = 1;
-                    storage.get(3, 1) = 5;
+                    storage.data.get(0, 1) = 2;
+                    storage.data.get(1, 1) = 1;
+                    storage.data.get(2, 1) = 1;
+                    storage.data.get(3, 1) = 5;
 
-                    storage.get(0, 2) = 1;
-                    storage.get(1, 2) = 2;
-                    storage.get(2, 2) = 1;
-                    storage.get(3, 2) = 8;
+                    storage.data.get(0, 2) = 1;
+                    storage.data.get(1, 2) = 2;
+                    storage.data.get(2, 2) = 1;
+                    storage.data.get(3, 2) = 8;
 
-                    storage.get(0, 3) = 5;
-                    storage.get(1, 3) = 1;
-                    storage.get(2, 3) = 1;
-                    storage.get(3, 3) = 9;
+                    storage.data.get(0, 3) = 5;
+                    storage.data.get(1, 3) = 1;
+                    storage.data.get(2, 3) = 1;
+                    storage.data.get(3, 3) = 9;
 
-                    storage.get(0, 4) = 6;
-                    storage.get(1, 4) = -1;
-                    storage.get(2, 4) = 1;
-                    storage.get(3, 4) = 9;
+                    storage.data.get(0, 4) = 6;
+                    storage.data.get(1, 4) = -1;
+                    storage.data.get(2, 4) = 1;
+                    storage.data.get(3, 4) = 9;
                     break;
                 case 4:
-                    storage.alloc_matrix(6, 4);
-                    storage.get(0, 0) = -1;
-                    storage.get(1, 0) = -2;
+                    storage.data.alloc_matrix(6, 4);
+                    storage.data.get(0, 0) = -1;
+                    storage.data.get(1, 0) = -2;
 
-                    storage.get(0, 1) = 2;
-                    storage.get(1, 1) = 1;
-                    storage.get(2, 1) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 1) = 5;
+                    storage.data.get(0, 1) = 2;
+                    storage.data.get(1, 1) = 1;
+                    storage.data.get(2, 1) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 1) = 5;
 
-                    storage.get(0, 2) = 1;
-                    storage.get(1, 2) = 2;
-                    storage.get(2, 2) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 2) = 8;
+                    storage.data.get(0, 2) = 1;
+                    storage.data.get(1, 2) = 2;
+                    storage.data.get(2, 2) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 2) = 8;
 
-                    storage.get(0, 3) = 1;
-                    storage.get(1, 3) = 1;
-                    storage.get(2, 3) = (int) Sign::GREATEROREQUAL;
-                    storage.get(3, 3) = 1;
+                    storage.data.get(0, 3) = 1;
+                    storage.data.get(1, 3) = 1;
+                    storage.data.get(2, 3) = (int) Sign::GREATEROREQUAL;
+                    storage.data.get(3, 3) = 1;
 
-                    storage.get(0, 4) = -15;
-                    storage.get(1, 4) = 2;
-                    storage.get(2, 4) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 4) = -8;
+                    storage.data.get(0, 4) = -15;
+                    storage.data.get(1, 4) = 2;
+                    storage.data.get(2, 4) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 4) = -8;
 
-                    storage.get(0, 5) = -10;
-                    storage.get(1, 5) = 5;
-                    storage.get(2, 5) = (int) Sign::GREATEROREQUAL;
-                    storage.get(3, 5) = -8;
+                    storage.data.get(0, 5) = -10;
+                    storage.data.get(1, 5) = 5;
+                    storage.data.get(2, 5) = (int) Sign::GREATEROREQUAL;
+                    storage.data.get(3, 5) = -8;
                     break;
                 case 5:
-                    storage.alloc_matrix(6, 4);
-                    storage.get(0, 0) = -1;
-                    storage.get(1, 0) = -2;
+                    storage.data.alloc_matrix(6, 4);
+                    storage.data.get(0, 0) = -1;
+                    storage.data.get(1, 0) = -2;
 
-                    storage.get(0, 1) = 4;
-                    storage.get(1, 1) = -1;
-                    storage.get(2, 1) = (int) Sign::GREATEROREQUAL;
-                    storage.get(3, 1) = -2;
+                    storage.data.get(0, 1) = 4;
+                    storage.data.get(1, 1) = -1;
+                    storage.data.get(2, 1) = (int) Sign::GREATEROREQUAL;
+                    storage.data.get(3, 1) = -2;
 
-                    storage.get(0, 2) = 1;
-                    storage.get(1, 2) = -2;
-                    storage.get(2, 2) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 2) = 0;
+                    storage.data.get(0, 2) = 1;
+                    storage.data.get(1, 2) = -2;
+                    storage.data.get(2, 2) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 2) = 0;
 
-                    storage.get(0, 3) = 1;
-                    storage.get(1, 3) = 2;
-                    storage.get(2, 3) = (int) Sign::GREATEROREQUAL;
-                    storage.get(3, 3) = 1;
+                    storage.data.get(0, 3) = 1;
+                    storage.data.get(1, 3) = 2;
+                    storage.data.get(2, 3) = (int) Sign::GREATEROREQUAL;
+                    storage.data.get(3, 3) = 1;
 
-                    storage.get(0, 4) = -3;
-                    storage.get(1, 4) = 4;
-                    storage.get(2, 4) = (int) Sign::GREATEROREQUAL;
-                    storage.get(3, 4) = -1;
+                    storage.data.get(0, 4) = -3;
+                    storage.data.get(1, 4) = 4;
+                    storage.data.get(2, 4) = (int) Sign::GREATEROREQUAL;
+                    storage.data.get(3, 4) = -1;
 
-                    storage.get(0, 5) = -3;
-                    storage.get(1, 5) = 3;
-                    storage.get(2, 5) = (int) Sign::GREATEROREQUAL;
-                    storage.get(3, 5) = -3;
+                    storage.data.get(0, 5) = -3;
+                    storage.data.get(1, 5) = 3;
+                    storage.data.get(2, 5) = (int) Sign::GREATEROREQUAL;
+                    storage.data.get(3, 5) = -3;
                     break;
                 case 6:
-                    storage.alloc_matrix(7, 4);
-                    storage.get(0, 0) = -1;
-                    storage.get(1, 0) = -2;
+                    storage.data.alloc_matrix(7, 4);
+                    storage.data.get(0, 0) = -1;
+                    storage.data.get(1, 0) = -2;
 
-                    storage.get(0, 1) = 1;
-                    storage.get(1, 1) = 2;
-                    storage.get(2, 1) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 1) = 8;
+                    storage.data.get(0, 1) = 1;
+                    storage.data.get(1, 1) = 2;
+                    storage.data.get(2, 1) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 1) = 8;
 
-                    storage.get(0, 2) = 1;
-                    storage.get(1, 2) = 4;
-                    storage.get(2, 2) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 2) = 14;
+                    storage.data.get(0, 2) = 1;
+                    storage.data.get(1, 2) = 4;
+                    storage.data.get(2, 2) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 2) = 14;
 
-                    storage.get(0, 3) = 1;
-                    storage.get(1, 3) = -2;
-                    storage.get(2, 3) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 3) = 1;
+                    storage.data.get(0, 3) = 1;
+                    storage.data.get(1, 3) = -2;
+                    storage.data.get(2, 3) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 3) = 1;
 
-                    storage.get(0, 4) = -2;
-                    storage.get(1, 4) = 4;
-                    storage.get(2, 4) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 4) = 12;
+                    storage.data.get(0, 4) = -2;
+                    storage.data.get(1, 4) = 4;
+                    storage.data.get(2, 4) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 4) = 12;
 
-                    storage.get(0, 5) = 1;
-                    storage.get(1, 5) = 1;
-                    storage.get(2, 5) = (int) Sign::GREATEROREQUAL;
-                    storage.get(3, 5) = 1;
+                    storage.data.get(0, 5) = 1;
+                    storage.data.get(1, 5) = 1;
+                    storage.data.get(2, 5) = (int) Sign::GREATEROREQUAL;
+                    storage.data.get(3, 5) = 1;
 
-                    storage.get(0, 6) = 8;
-                    storage.get(1, 6) = 1;
-                    storage.get(2, 6) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 6) = 30;
+                    storage.data.get(0, 6) = 8;
+                    storage.data.get(1, 6) = 1;
+                    storage.data.get(2, 6) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 6) = 30;
                     break;
                 case 7://open
-                    storage.alloc_matrix(4, 4);
-                    storage.get(0, 0) = -1;
-                    storage.get(1, 0) = -2;
+                    storage.data.alloc_matrix(4, 4);
+                    storage.data.get(0, 0) = -1;
+                    storage.data.get(1, 0) = -2;
 
-                    storage.get(0, 1) = -1;
-                    storage.get(1, 1) = 1;
-                    storage.get(2, 1) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 1) = -2;
+                    storage.data.get(0, 1) = -1;
+                    storage.data.get(1, 1) = 1;
+                    storage.data.get(2, 1) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 1) = -2;
 
-                    storage.get(0, 2) = 1;
-                    storage.get(1, 2) = -10;
-                    storage.get(2, 2) = (int) Sign::GREATEROREQUAL;
-                    storage.get(3, 2) = -30;
+                    storage.data.get(0, 2) = 1;
+                    storage.data.get(1, 2) = -10;
+                    storage.data.get(2, 2) = (int) Sign::GREATEROREQUAL;
+                    storage.data.get(3, 2) = -30;
 
-                    storage.get(0, 3) = 1;
-                    storage.get(1, 3) = 1;
-                    storage.get(2, 3) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 3) = 12;
+                    storage.data.get(0, 3) = 1;
+                    storage.data.get(1, 3) = 1;
+                    storage.data.get(2, 3) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 3) = 12;
                     break;
                 case 8://open
-                    storage.alloc_matrix(4, 4);
-                    storage.get(0, 0) = -1;
-                    storage.get(1, 0) = -2;
+                    storage.data.alloc_matrix(4, 4);
+                    storage.data.get(0, 0) = -1;
+                    storage.data.get(1, 0) = -2;
 
-                    storage.get(0, 1) = 1;
-                    storage.get(1, 1) = 1;
-                    storage.get(2, 1) = (int) Sign::GREATEROREQUAL;
-                    storage.get(3, 1) = 1;
+                    storage.data.get(0, 1) = 1;
+                    storage.data.get(1, 1) = 1;
+                    storage.data.get(2, 1) = (int) Sign::GREATEROREQUAL;
+                    storage.data.get(3, 1) = 1;
 
-                    storage.get(0, 2) = 1;
-                    storage.get(1, 2) = -1;
-                    storage.get(2, 2) = (int) Sign::GREATEROREQUAL;
-                    storage.get(3, 2) = -2;
+                    storage.data.get(0, 2) = 1;
+                    storage.data.get(1, 2) = -1;
+                    storage.data.get(2, 2) = (int) Sign::GREATEROREQUAL;
+                    storage.data.get(3, 2) = -2;
 
-                    storage.get(0, 3) = 0;
-                    storage.get(1, 3) = 1;
-                    storage.get(2, 3) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 3) = 3;
+                    storage.data.get(0, 3) = 0;
+                    storage.data.get(1, 3) = 1;
+                    storage.data.get(2, 3) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 3) = 3;
                 case 9://open
-                    storage.alloc_matrix(8, 4);
-                    storage.get(0, 0) = -1;
-                    storage.get(1, 0) = -2;
+                    storage.data.alloc_matrix(8, 4);
+                    storage.data.get(0, 0) = -1;
+                    storage.data.get(1, 0) = -2;
 
-                    storage.get(0, 1) = 6;
-                    storage.get(1, 1) = 1;
-                    storage.get(2, 1) = (int) Sign::GREATEROREQUAL;
-                    storage.get(3, 1) = 2;
+                    storage.data.get(0, 1) = 6;
+                    storage.data.get(1, 1) = 1;
+                    storage.data.get(2, 1) = (int) Sign::GREATEROREQUAL;
+                    storage.data.get(3, 1) = 2;
 
-                    storage.get(0, 2) = 0;
-                    storage.get(1, 2) = 1;
-                    storage.get(2, 2) = (int) Sign::GREATEROREQUAL;
-                    storage.get(3, 2) = 0;
+                    storage.data.get(0, 2) = 0;
+                    storage.data.get(1, 2) = 1;
+                    storage.data.get(2, 2) = (int) Sign::GREATEROREQUAL;
+                    storage.data.get(3, 2) = 0;
 
-                    storage.get(0, 3) = 1;
-                    storage.get(1, 3) = -4;
-                    storage.get(2, 3) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 3) = 5;
+                    storage.data.get(0, 3) = 1;
+                    storage.data.get(1, 3) = -4;
+                    storage.data.get(2, 3) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 3) = 5;
 
-                    storage.get(0, 4) = 1;
-                    storage.get(1, 4) = -2;
-                    storage.get(2, 4) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 4) = 6;
+                    storage.data.get(0, 4) = 1;
+                    storage.data.get(1, 4) = -2;
+                    storage.data.get(2, 4) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 4) = 6;
 
-                    storage.get(0, 5) = 1;
-                    storage.get(1, 5) = -1;
-                    storage.get(2, 5) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 5) = 8;
+                    storage.data.get(0, 5) = 1;
+                    storage.data.get(1, 5) = -1;
+                    storage.data.get(2, 5) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 5) = 8;
 
-                    storage.get(0, 6) = -2;
-                    storage.get(1, 6) = 1;
-                    storage.get(2, 6) = (int) Sign::GREATEROREQUAL;
-                    storage.get(3, 6) = -26;
+                    storage.data.get(0, 6) = -2;
+                    storage.data.get(1, 6) = 1;
+                    storage.data.get(2, 6) = (int) Sign::GREATEROREQUAL;
+                    storage.data.get(3, 6) = -26;
 
-                    storage.get(0, 7) = -10;
-                    storage.get(1, 7) = 1;
-                    storage.get(2, 7) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 7) = 8;
+                    storage.data.get(0, 7) = -10;
+                    storage.data.get(1, 7) = 1;
+                    storage.data.get(2, 7) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 7) = 8;
                     break;
                 case 10://open
-                    storage.alloc_matrix(9, 4);
-                    storage.get(0, 0) = 1;
-                    storage.get(1, 0) = 2;
+                    storage.data.alloc_matrix(9, 4);
+                    storage.data.get(0, 0) = 1;
+                    storage.data.get(1, 0) = 2;
 
-                    storage.get(0, 1) = 6;
-                    storage.get(1, 1) = 1;
-                    storage.get(2, 1) = (int) Sign::GREATEROREQUAL;
-                    storage.get(3, 1) = 2;
+                    storage.data.get(0, 1) = 6;
+                    storage.data.get(1, 1) = 1;
+                    storage.data.get(2, 1) = (int) Sign::GREATEROREQUAL;
+                    storage.data.get(3, 1) = 2;
 
-                    storage.get(0, 2) = 0;
-                    storage.get(1, 2) = 1;
-                    storage.get(2, 2) = (int) Sign::GREATEROREQUAL;
-                    storage.get(3, 2) = 0;
+                    storage.data.get(0, 2) = 0;
+                    storage.data.get(1, 2) = 1;
+                    storage.data.get(2, 2) = (int) Sign::GREATEROREQUAL;
+                    storage.data.get(3, 2) = 0;
 
-                    storage.get(0, 3) = 1;
-                    storage.get(1, 3) = -4;
-                    storage.get(2, 3) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 3) = 5;
+                    storage.data.get(0, 3) = 1;
+                    storage.data.get(1, 3) = -4;
+                    storage.data.get(2, 3) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 3) = 5;
 
-                    storage.get(0, 4) = 1;
-                    storage.get(1, 4) = -2;
-                    storage.get(2, 4) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 4) = 6;
+                    storage.data.get(0, 4) = 1;
+                    storage.data.get(1, 4) = -2;
+                    storage.data.get(2, 4) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 4) = 6;
 
-                    storage.get(0, 5) = 1;
-                    storage.get(1, 5) = -1;
-                    storage.get(2, 5) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 5) = 8;
+                    storage.data.get(0, 5) = 1;
+                    storage.data.get(1, 5) = -1;
+                    storage.data.get(2, 5) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 5) = 8;
 
-                    storage.get(0, 6) = -2;
-                    storage.get(1, 6) = 1;
-                    storage.get(2, 6) = (int) Sign::GREATEROREQUAL;
-                    storage.get(3, 6) = -26;
+                    storage.data.get(0, 6) = -2;
+                    storage.data.get(1, 6) = 1;
+                    storage.data.get(2, 6) = (int) Sign::GREATEROREQUAL;
+                    storage.data.get(3, 6) = -26;
 
-                    storage.get(0, 7) = 2;
-                    storage.get(1, 7) = 1;
-                    storage.get(2, 7) = (int) Sign::GREATEROREQUAL;
-                    storage.get(3, 7) = 6;
+                    storage.data.get(0, 7) = 2;
+                    storage.data.get(1, 7) = 1;
+                    storage.data.get(2, 7) = (int) Sign::GREATEROREQUAL;
+                    storage.data.get(3, 7) = 6;
 
-                    storage.get(0, 8) = -9;
-                    storage.get(1, 8) = 1;
-                    storage.get(2, 8) = (int) Sign::LESSOREQUAL;
-                    storage.get(3, 8) = 18;
+                    storage.data.get(0, 8) = -9;
+                    storage.data.get(1, 8) = 1;
+                    storage.data.get(2, 8) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(3, 8) = 18;
+                    break;
+                case 11://3d
+                    storage.data.alloc_matrix(3, 5);
+                    storage.data.get(0, 0) = 1;
+                    storage.data.get(1, 0) = 1;
+                    storage.data.get(2, 0) = -1;
+
+                    storage.data.get(0, 1) = 1;
+                    storage.data.get(1, 1) = 1;
+                    storage.data.get(2, 1) = 1;
+                    storage.data.get(3, 1) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(4, 1) = 3;
+
+                    storage.data.get(0, 2) = 1;
+                    storage.data.get(1, 2) = 1;
+                    storage.data.get(2, 2) = 3;
+                    storage.data.get(3, 2) = (int) Sign::GREATEROREQUAL;
+                    storage.data.get(4, 2) = 2;
                     break;
             }
         }
@@ -498,14 +491,21 @@ namespace Magpie
 #endif
     public:
         Test(palka::Vec2f pos, palka::Vec2f size, int n, int m, bool open = true, ImGuiWindowFlags w_flag = ImGuiWindowFlags_None)
-                : UiView("EnteringRestrictions", pos, size, open, w_flag), storage(n + 1, m + 2)
+                : UiView("EnteringRestrictions", pos, size, open, w_flag)
         {
 #if DEBUG
-            fill(6);
+            //fill(6, *storage);
 #endif
         }
 
-        void render() override
+        Test(std::string_view name, palka::Vec2f size)
+                : UiView(name, size)
+        {
+
+            nextSatet = States::Menu;
+        }
+
+        void render(palka::Window& w) override
         {
             ImGui::SetNextWindowPos(ImVec2((Config::WindowSize.x - (size.x)) / 2,
                                            (Config::WindowSize.y - (size.y)) / 2), ImGuiCond_Always, {0, 0});
@@ -513,15 +513,15 @@ namespace Magpie
             ImGui::SetWindowSize({size.x, size.y});
 
             ImGui::Text("f = c_1*x_1 + x_2*x_2 + ... + c_n*x_n");
-            if(ImGui::BeginTable("##table1", storage.columns_count() - 2, ImGuiTableFlags_SizingStretchProp))
+            if(ImGui::BeginTable("##table1", storage->data.columns_count() - 2, ImGuiTableFlags_SizingStretchProp))
             {
                 ImGui::TableNextRow();
-                for(int column = 0; column < storage.columns_count() - 2; ++column)
+                for(int column = 0; column < storage->data.columns_count() - 2; ++column)
                 {
                     ImGui::PushID(column);
                     ImGui::TableNextColumn();
                     std::string label = "x" + std::to_string(column);
-                    layout_universal(label.c_str(), storage.get(column, 0), column);
+                    layout_universal(label.c_str(), storage->data.get(column, 0), column);
                     ImGui::PopID();
                 }
                 ImGui::EndTable();
@@ -541,32 +541,32 @@ namespace Magpie
             ImGui::Text("a_1*x_1 + a_2*x_2 + ... + a_n*x_n [>=,=,<=] B");
             ImVec2 barrier = TextPos + ImVec2{0, 60.f};
 
-            if(auto pos = center_local.y - cell_height * storage.rows_count() / 2.f; barrier.y < pos) //center, 3 -> row count
-                ImGui::SetCursorPosY(center_local.y - cell_height * storage.rows_count() / 2.f);
+            if(auto pos = center_local.y - cell_height * storage->data.rows_count() / 2.f; barrier.y < pos) //center, 3 -> row count
+                ImGui::SetCursorPosY(center_local.y - cell_height * storage->data.rows_count() / 2.f);
             else
                 ImGui::SetCursorPosY(barrier.y);
 
             int id = 0;
-            if(ImGui::BeginTable("Layout", storage.columns_count(), flags, {}))
+            if(ImGui::BeginTable("Layout", storage->data.columns_count(), flags, {}))
             {
                 auto t = ImGui::GetCurrentTable();
-                for(int row = 1; row < storage.rows_count(); row++)
+                for(int row = 1; row < storage->data.rows_count(); row++)
                 {
                     ImGui::TableNextRow(ImGuiTableRowFlags_None, cell_height);
-                    for(int column = 0; column < storage.columns_count() - 2; column++)
+                    for(int column = 0; column < storage->data.columns_count() - 2; column++)
                     {
                         ImGui::TableNextColumn();
                         static int c = 0;
                         ImGui::PushID(id++);
-                        layout_universal("value", storage.get(column, row), column);
+                        layout_universal("value", storage->data.get(column, row), column);
                         ImGui::PopID();
                     }
                     ImGui::TableNextColumn();
                     ImGui::PushID(id++);
-                    layout_sign_universal("##sign", storage.get(storage.columns_count() - 2, row), 0);
+                    layout_sign_universal("##sign", storage->data.get(storage->data.columns_count() - 2, row), 0);
 
                     ImGui::TableNextColumn();
-                    layout_universal("asd", storage.get(storage.columns_count() - 1, row), 4);
+                    layout_universal("asd", storage->data.get(storage->data.columns_count() - 1, row), 4);
                     ImGui::PopID();
                 }
 
@@ -576,6 +576,11 @@ namespace Magpie
             //      ImGui::PopStyleVar();
             if(ImGui::Button("next"))
                 sceneCallback();
+            if(ImGui::Button("back"))
+            {
+                nextSatet = States::Back;
+                sceneCallback();
+            }
             //ImGui::GetForegroundDrawList()->AddRect(contentRect.Min, contentRect.Max, IM_COL32(255, 0, 255, 255));
             //ImGui::GetForegroundDrawList()->AddCircle(center, 4, IM_COL32(255, 255, 0, 255));
 
@@ -598,13 +603,13 @@ namespace Magpie
 
         auto getResult()
         {
-            MatrixStorage<Fractus> fractus;
-            fractus.alloc_matrix(storage.rows_count(), storage.columns_count());
+            MatrixStorage<double> fractus;
+            fractus.alloc_matrix(storage->data.rows_count(), storage->data.columns_count());
             for(int i = 0; i < fractus.rows_count(); ++i)
             {
                 for(int j = 0; j < fractus.columns_count(); ++j)
                 {
-                    fractus.get(j, i) = Fractus(storage.get(j, i).getValueNotNull());
+                    fractus.get(j, i) = std::stod(storage->data.get(j, i).getValueNotNull());
                 }
             }
             return fractus;

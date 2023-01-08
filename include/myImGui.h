@@ -24,21 +24,19 @@ namespace ImGui
         std::string filter;
         std::set<int> selected_nodes;
         std::multimap<size_t, std::filesystem::directory_entry> files;
-        static short id;
+        static long id;
         int curr_id;
         bool Input;
         bool selectOne;
 
         bool windowIsFocus;
     public:
+        FileManager_Context() = default;
         FileManager_Context(std::string _path, bool selectOne = false, std::string filter = ".+") : selectOne(selectOne), Input(false),
                                                                                                     _path(_path), curr_id(++id),
                                                                                                     open(false), filter(filter),
                                                                                                     updateDir(true), windowIsFocus(false)
         {}
-
-        ~FileManager_Context()
-        { --id; }
 
         std::string getPath()
         { return _path; }
