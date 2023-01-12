@@ -4,7 +4,7 @@
 #include "UiView.h"
 #include <implot.h>
 #include <fmt/format.h>
-#include "Solver.h"
+#include "GraphicsMethod2D.h"
 #include "config.h"
 #include <imgui_stdlib.h>
 #include <imgui_internal.h>

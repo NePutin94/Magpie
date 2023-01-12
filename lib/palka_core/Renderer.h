@@ -120,6 +120,8 @@ namespace palka
             palka::VertexBufferObject vbo;
             VertArray vertices;
 
+            Line() = default;
+
             Line(glm::vec3 start, glm::vec3 end, Color color = Color(255, 255, 255)) : vertices(VertArray::Lines)
             {
 
@@ -128,6 +130,17 @@ namespace palka
 
                 vertices.add({{start.x, start.y, start.z}, color, glm::vec2{99.f, 0.f}, glm::vec3{88.0, 0.0, 0.0}});
                 vertices.add({{end.x, end.y, end.z}, color, glm::vec2{99.f, 0.f}, glm::vec3{0.0, 0.0, 88.0}});
+            }
+
+            void update(glm::vec3 start, glm::vec3 end, Color color = Color(255, 255, 255))
+            {
+                startPoint = start;
+                endPoint = end;
+
+                VertArray newVertices(VertArray::Lines);
+                newVertices.add({{start.x, start.y, start.z}, color, glm::vec2{99.f, 0.f}, glm::vec3{88.0, 0.0, 0.0}});
+                newVertices.add({{end.x, end.y, end.z}, color, glm::vec2{99.f, 0.f}, glm::vec3{0.0, 0.0, 88.0}});
+                vertices = newVertices;
             }
 
             void init()

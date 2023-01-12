@@ -3,7 +3,7 @@
 
 #include "MatrixStorage.h"
 #include "SolverMemento.h"
-#include "Solver.h"
+#include "GraphicsMethod2D.h"
 
 namespace Magpie
 {
@@ -805,7 +805,18 @@ namespace Magpie
 
         std::string serialize() override
         {
-            return std::string();
+            nlohmann::json json;
+            auto& inputLayout = json["Input"];
+            for(int i = 0; i < input.columns_count() - 1; ++i)
+                inputLayout["TargetFunc"].emplace_back(input.get(i, 0));
+
+            for(int i = 1; i < input.rows_count(); ++i)
+            {
+                auto& lim = inputLayout["Limitations"][fmt::format("Lim_{}", i)];
+                for(int j = 0; j < input.columns_count();++j)
+                    lim.emplace_back(input.get(j, i));
+            }
+            return json.dump(4);
         }
 
         void deserialize(const std::string& string) override

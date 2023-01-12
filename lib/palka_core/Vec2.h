@@ -233,31 +233,31 @@ namespace glm
     }
 
     template<class T>
-    auto dot(const palka::Vec3 <T>& vec1, const palka::Vec3 <T>& vec2)
+    auto dot(const palka::Vec3<T>& vec1, const palka::Vec3 <T>& vec2)
     {
         return glm::dot<3, T, glm::defaultp>(vec1.convert(), vec2.convert());
     }
 
     template<class T>
-    auto normalize(const palka::Vec3 <T>& vec)
+    auto normalize(const palka::Vec3<T>& vec)
     {
         return palka::Vec3<T>::convertFrom(glm::normalize<3, T, glm::defaultp>(vec.convert()));
     }
 
     template<class T>
-    auto length(const palka::Vec3 <T>& vec)
+    auto length(const palka::Vec3<T>& vec)
     {
         return glm::length(vec.convert());
     }
 
     template<class T>
-    auto distance(const palka::Vec3 <T>& vec1, const palka::Vec3 <T>& vec2)
+    auto distance(const palka::Vec3<T>& vec1, const palka::Vec3<T>& vec2)
     {
         return glm::distance<3, T, glm::defaultp>(vec1.convert(), vec2.convert());
     }
 
     template<class T>
-    auto cross(const palka::Vec3 <T>& vec1, const palka::Vec3 <T>& vec2)
+    auto cross(const palka::Vec3<T>& vec1, const palka::Vec3<T>& vec2)
     {
         return palka::Vec3<T>::convertFrom(glm::cross(vec1.convert(), vec2.convert()));
     }

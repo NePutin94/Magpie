@@ -12,9 +12,11 @@ namespace palka
         VertexArrayObject vao;
         VertexBufferObject vbo;
     public:
+        static constexpr glm::vec3 normal{1.f, 0.f, 0.f};
+
         void init()//, Vec3f bottom_left,Vec3f bottom_right
         {
-           // plane = {top_left, top_right, bottom_left};
+            // plane = {top_left, top_right, bottom_left};
             //,bottom_left, bottom_right,top_right
             plane = {glm::vec3(0, -0.5f, 0.5f), glm::vec3(0, 0.5f, 0.5f), glm::vec3(0, -0.5f, -0.5f),
                      glm::vec3(0, -0.5f, -0.5f), glm::vec3(0, 0.5f, -0.5f), glm::vec3(0, 0.5f, 0.5f)};

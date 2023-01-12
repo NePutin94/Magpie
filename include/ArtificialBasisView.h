@@ -547,7 +547,7 @@ namespace Magpie
 //        }
 
         template<typename Argt>
-        void layout2(const Argt& value,  int col,int col_h)
+        void layout2(const Argt& value, int col, int col_h)
         {
             auto str = vformat("x{}", fmt::make_format_args(value));
             auto size = ImGui::CalcTextSize(str.c_str());
@@ -669,6 +669,8 @@ namespace Magpie
                     }
                     ImGui::EndChild();
                 }
+                if(ImGui::Button("Test save"))
+                    artificialBasis.save("test.json");
                 if(ImGui::BeginChild("##ControlRegion", {0, 45.f}, false, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar |
                                                                           ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings |
                                                                           ImGuiWindowFlags_NoBackground))

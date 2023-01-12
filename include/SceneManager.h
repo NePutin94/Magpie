@@ -9,6 +9,7 @@
 #include "ArtificialBasisView.h"
 #include "GraphicalMethodView.h"
 #include "SimplexMethodView.h"
+#include "GraphicalMethod3DView.h"
 #include <stack>
 
 namespace Magpie
@@ -417,15 +418,15 @@ namespace Magpie
                     switch(globData.type)
                     {
                         case DataStorage::DOUBLE:
-                            addView<GraphicalMethodView<double>>(GraphicalMethodView<double>{"GraphicalMethodView",
+                            addView<GraphicalMethod3DView<double>>(GraphicalMethod3DView<double>{"GraphicalMethod3DView",
                                                                                              Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
                             break;
                         case DataStorage::FLOAT:
-                            addView<GraphicalMethodView<float>>(GraphicalMethodView<float>{"GraphicalMethodView",
+                            addView<GraphicalMethod3DView<float>>(GraphicalMethod3DView<float>{"GraphicalMethod3DView",
                                                                                              Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
                             break;
                         case DataStorage::FRACTUS:
-                            addView<GraphicalMethodView<Fractus>>(GraphicalMethodView<Fractus>{"GraphicalMethodView",
+                            addView<GraphicalMethod3DView<Fractus>>(GraphicalMethod3DView<Fractus>{"GraphicalMethod3DView",
                                                                                            Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
                             break;
                     }

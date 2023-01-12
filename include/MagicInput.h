@@ -4,7 +4,7 @@
 #include "UiView.h"
 #include <implot.h>
 #include <fmt/format.h>
-#include "Solver.h"
+#include "GraphicsMethod2D.h"
 #include <EventManager.h>
 #include "config.h"
 #include <ConsoleLog.h>
