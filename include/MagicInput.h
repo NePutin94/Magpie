@@ -76,7 +76,7 @@ namespace Magpie
         }
 
     private:
-        MatrixStorage<double> storage;
+        MatrixStorage<double> MyStorage;
         Plot<double> Func;
         std::vector<Plot<double>> plots;
         std::vector<palka::Vec2<double>> points;
@@ -98,7 +98,7 @@ namespace Magpie
             if(plots[plotIndex].b == 0)
             {
                 ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.15f);
-                switch((Sign) storage.get(2, plotIndex + 1))
+                switch((Sign) MyStorage.get(2, plotIndex + 1))
                 {
                     case GREATEROREQUAL:
                         ImPlot::PlotShaded(fmt::format("Plot {0}", plotIndex).c_str(), UnionPoints[plotIndex].x.data(),
@@ -115,7 +115,7 @@ namespace Magpie
             } else
             {
                 ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.15f);
-                switch((Sign) storage.get(2, plotIndex + 1))
+                switch((Sign) MyStorage.get(2, plotIndex + 1))
                 {
                     case GREATEROREQUAL:
                         ImPlot::PlotShaded(fmt::format("Plot {0}", plotIndex).c_str(), UnionPoints[plotIndex].x.data(),
@@ -141,14 +141,14 @@ namespace Magpie
 
         void initStorage()
         {
-            storage.alloc_matrix(plots.size() + 1, 4);
+            MyStorage.alloc_matrix(plots.size() + 1, 4);
             int row = 1;
             for(auto& p: plots)
             {
-                storage.get(0, row) = p.a;
-                storage.get(1, row) = p.b;
-                storage.get(2, row) = Sign::EQUAL;
-                storage.get(3, row) = p.c;
+                MyStorage.get(0, row) = p.a;
+                MyStorage.get(1, row) = p.b;
+                MyStorage.get(2, row) = Sign::EQUAL;
+                MyStorage.get(3, row) = p.c;
                 row++;
             }
             int plotIndex = 0;
@@ -167,36 +167,36 @@ namespace Magpie
                     Union u{};
 
                     u.x.emplace_back(p1.x);
-                    u.y.emplace_back(p1.y - 100);
+                    u.y.emplace_back(p1.y - 300);
                     u.x.emplace_back(p1.x);
-                    u.y.emplace_back(p1.y + 100);
+                    u.y.emplace_back(p1.y + 300);
 
-                    u.y.emplace_back(p1.y + 100);
-                    u.x.emplace_back(p1.x + 30);
-                    u.y.emplace_back(p1.y + 100);
-                    u.x.emplace_back(p1.x + 30);
+                    u.y.emplace_back(p1.y + 300);
+                    u.x.emplace_back(p1.x + 300);
+                    u.y.emplace_back(p1.y + 300);
+                    u.x.emplace_back(p1.x + 300);
 
                     u.x2.emplace_back(p1.x);
-                    u.y2.emplace_back(p1.y - 100);
+                    u.y2.emplace_back(p1.y - 300);
                     u.x2.emplace_back(p1.x);
-                    u.y2.emplace_back(p1.y + 100);
-                    u.y2.emplace_back(p1.y + 100);
-                    u.x2.emplace_back(p1.x - 30);
-                    u.y2.emplace_back(p1.y + 100);
-                    u.x2.emplace_back(p1.x - 30);
+                    u.y2.emplace_back(p1.y + 300);
+                    u.y2.emplace_back(p1.y + 300);
+                    u.x2.emplace_back(p1.x - 300);
+                    u.y2.emplace_back(p1.y + 300);
+                    u.x2.emplace_back(p1.x - 300);
                     UnionPoints[plotIndex] = u;
                 } else
                 {
-                    for(auto& p: plots[plotIndex].generateAAB2(p1, 20))
+                    for(auto& p: plots[plotIndex].generateAAB2(p1, 90))
                     {
                         u.x.emplace_back(p.x);
                         u.y.emplace_back(p.y);
                     }
-                    for(auto& p: plots[plotIndex].generateAAB2(p2, 20))
-                    {
-                        u.x.emplace_back(p.x);
-                        u.y.emplace_back(p.y);
-                    }
+//                    for(auto& p: plots[plotIndex].generateAAB2(p2, 20))
+//                    {
+//                        u.x.emplace_back(p.x);
+//                        u.y.emplace_back(p.y);
+//                    }
                 }
                 UnionPoints.emplace(plotIndex, u);
                 plotIndex++;
@@ -204,11 +204,11 @@ namespace Magpie
         }
 
     public:
-        MagicInput() : storage(0, 0), SetIsClosed(false), StorageOnceInit(false)
+        MagicInput() : MyStorage(0, 0), SetIsClosed(false), StorageOnceInit(false)
         {}
 
         MagicInput(std::string_view name, palka::Vec2f size)
-                : UiView(name, size), storage(0, 0), SetIsClosed(false), StorageOnceInit(false)
+                : UiView(name, size), MyStorage(0, 0), SetIsClosed(false), StorageOnceInit(false)
         {}
 
         void render(palka::Window& w) override
@@ -269,9 +269,9 @@ namespace Magpie
                             auto& p1 = points[i];
                             int j = (i + 1 < points.size()) ? i + 1 : 0;
                             auto& p2 = points[j];
-                            if(StorageOnceInit && (Sign) storage.get(2, plotIndex + 1) != Sign::EQUAL)
+                            if(StorageOnceInit && (Sign) MyStorage.get(2, plotIndex + 1) != Sign::EQUAL)
                             {
-                                plots[plotIndex].sign = (Sign) storage.get(2, plotIndex + 1);
+                                plots[plotIndex].sign = (Sign) MyStorage.get(2, plotIndex + 1);
                                 drawUnion(plotIndex);
                             } else
                                 drawLine(p1, p2, plotIndex);
@@ -284,14 +284,14 @@ namespace Magpie
                     {
                         for(auto& p: plots)
                         {
-                            double y[2] = {-20, 20};
-                            double x[2] = {p.getValueAtX(-20), p.getValueAtX(20)};
+                            double y[2] = {-100, 100};
+                            double x[2] = {p.getValueAtX(-100), p.getValueAtX(100)};
                             if(p.a == 0)
                             {
-                                x[0] = -20;
-                                x[1] = 20;
-                                y[0] = p.getValueAtY(-20);
-                                y[1] = p.getValueAtY(20);
+                                x[0] = -100;
+                                x[1] = 100;
+                                y[0] = p.getValueAtY(-100);
+                                y[1] = p.getValueAtY(100);
                             }
                             ImPlot::PlotLine(fmt::format("plot a={:.2f} b={:.2f}, c={:.2f}", p.a, p.b, p.c).c_str(), x, y, 2);
                         }
@@ -323,18 +323,18 @@ namespace Magpie
                     if(ImGui::BeginChild("Edit result"))
                     {
                         ImGui::Text("f = c_1*x_1 + x_2*x_2 + ... + c_n*x_n");
-                        if(ImGui::BeginTable("##table1", storage.columns_count() - 2, ImGuiTableFlags_SizingStretchProp))
+                        if(ImGui::BeginTable("##table1", MyStorage.columns_count() - 2, ImGuiTableFlags_SizingStretchProp))
                         {
                             ImGui::TableNextRow();
-                            for(int column = 0; column < storage.columns_count() - 2; ++column)
+                            for(int column = 0; column < MyStorage.columns_count() - 2; ++column)
                             {
                                 ImGui::PushID(column);
                                 ImGui::TableNextColumn();
                                 std::string label = "X" + std::to_string(column);
-                                if(ImGui::InputScalar(label.c_str(), ImGuiDataType_Double, &storage.get(column, 0)))
+                                if(ImGui::InputScalar(label.c_str(), ImGuiDataType_Double, &MyStorage.get(column, 0)))
                                 {
-                                    Func.a = storage.get(0, 0);
-                                    Func.b = storage.get(1, 0);
+                                    Func.a = MyStorage.get(0, 0);
+                                    Func.b = MyStorage.get(1, 0);
                                 }
                                 ImGui::PopID();
                             }
@@ -353,36 +353,42 @@ namespace Magpie
                         ImGui::SetCursorPos(TextPos);
                         ImGui::Text("a_1*x_1 + a_2*x_2 + ... + a_n*x_n [>=,=,<=] B");
                         int id = 0;
-                        if(ImGui::BeginTable("Layout", storage.columns_count(), flags, {}))
+                        if(ImGui::BeginTable("Layout", MyStorage.columns_count(), flags, {}))
                         {
-                            for(int row = 1; row < storage.rows_count(); row++)
+                            for(int row = 1; row < MyStorage.rows_count(); row++)
                             {
                                 ImGui::TableNextRow(ImGuiTableRowFlags_None, cell_height);
 
                                 ImGui::TableNextColumn();
                                 ImGui::PushID(id++);
-                                layout2("x", storage.get(0, row), 0);
+                                layout2("x", MyStorage.get(0, row), 0);
                                 ImGui::PopID();
 
                                 ImGui::TableNextColumn();
                                 ImGui::PushID(id++);
-                                layout2("y", storage.get(1, row), 0);
+                                layout2("y", MyStorage.get(1, row), 0);
                                 ImGui::PopID();
 
                                 ImGui::TableNextColumn();
                                 ImGui::PushID(id++);
-                                layout_sign(signToStr((Sign) storage.get(storage.columns_count() - 2, row)).data(),
-                                            storage.get(storage.columns_count() - 2, row), 0);
+                                layout_sign(signToStr((Sign) MyStorage.get(MyStorage.columns_count() - 2, row)).data(),
+                                            MyStorage.get(MyStorage.columns_count() - 2, row), 0);
                                 ImGui::TableNextColumn();
-                                layout2("с", storage.get(storage.columns_count() - 1, row), 4);
+                                layout2("c", MyStorage.get(MyStorage.columns_count() - 1, row), 4);
                                 ImGui::PopID();
                             }
 
                             ImGui::EndTable();
                         }
-                        if(ImGui::Button("next"))
+                        if(ImGui::Button("Next", {110.f, 36.f}))
+                        {
+                            storage->data.alloc_matrix(MyStorage.rows_count(), MyStorage.columns_count());
+                            for(int i = 0; i < MyStorage.rows_count(); ++i)
+                                for(int j = 0; j < MyStorage.columns_count(); ++j)
+                                    storage->data.get(j, i) = MyStorage.get(j, i);
+                            nextSatet = States::Menu;
                             sceneCallback();
-
+                        }
                         ImGui::EndChild();
                     }
                 }
@@ -406,11 +412,6 @@ namespace Magpie
                     }
                 }
             });
-        }
-
-        auto getResult()
-        {
-            return storage;
         }
     };
 }

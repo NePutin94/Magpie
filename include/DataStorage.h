@@ -15,9 +15,15 @@ namespace Magpie
         UniversalInput() = default;
 
         template<class T>
+        requires std::is_arithmetic_v<T>
         UniversalInput(const T& value)
         {
             val = std::to_string(value);
+        }
+
+        UniversalInput(const std::string& value)
+        {
+            val = value;
         }
 
         std::string getValueNotNull()
@@ -39,12 +45,19 @@ namespace Magpie
         MatrixStorage<double> data_work;
         enum DataType
         {
-            DOUBLE,
+            DOUBLE = 0,
             FLOAT,
             FRACTUS
         };
+        enum ProblemType
+        {
+            Maximization = 0,
+            Minimization
+        };
         std::array<std::string_view, 3> types{"double", "float", "fractus"};
+        std::array<std::string_view, 2> problemType{"maximization", "minimization"};
         DataType type = DOUBLE;
+        ProblemType ptype = ProblemType::Minimization;
 
         template<class T>
         auto getData()

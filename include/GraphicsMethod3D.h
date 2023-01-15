@@ -36,18 +36,21 @@ namespace Magpie
     private:
         std::vector<palka::Vec3f> normals;
         std::multimap<int, palka::Vec3f> points_faces;
-
+        glm::vec3 result_point;
     public:
         Plot<T> plot_perpendicular;
+        Plot3D<T> target;
 
         GraphicsResult3D() = default;
 
+        GraphicsResult3D(Plot3D<T> target, glm::vec3 result_point, std::multimap<int, palka::Vec3f> plots) : target(target), result_point(result_point),
+                                                                                                           points_faces(plots)
+        {}
     };
 
     template<class T>
     class GraphicMet3D : public Solver<T, GraphicsResult3D<T>>
     {
-
         std::vector<Magpie::Plot3D<T>> Plots;
     public:
         Plot3D<T> target;
@@ -58,9 +61,7 @@ namespace Magpie
         }
 
         void deserialize(const std::string& string) override
-        {
-
-        }
+        {}
 
     public:
         GraphicMet3D() = default;
@@ -93,12 +94,13 @@ namespace Magpie
 #ifdef TracyProfiler
             ZoneScoped;
 #endif
-            T min = std::numeric_limits<T>::max();
-            palka::Vec3<T> resVec;
+            auto min = std::numeric_limits<double>::max();
+            glm::vec3 resVec;
+            auto targetD = Magpie::Plot3D<double>((double)target.a,(double)target.b, (double)target.c, (double)target.d);
             for(auto& vec: points_faces) //find min point and value
             {
-                auto p = palka::Vec3<T>::convertFrom(vec.second);
-                if(auto val = target.a * p.x + target.b * p.y + p.z * target.c;val < min)
+                auto p = vec.second;
+                if(auto val = targetD.a * p.x + targetD.b * p.y + p.z * targetD.c;val < min)
                 {
                     min = val;
                     resVec = p;
@@ -219,8 +221,10 @@ namespace Magpie
 
             filtered_p = deleteBadPoints(filtered_p);
 
-            std::vector<points_store<3>> pointstriangles;
-            std::vector<points_store<4>> pointquads;
+            std::vector<points_store < 3>>
+            pointstriangles;
+            std::vector<points_store < 4>>
+            pointquads;
             for(size_t i = 0; i < filtered_p.size() - 1; ++i)
             {
                 auto& p = filtered_p[i];
@@ -240,10 +244,10 @@ namespace Magpie
                         }
                         if(pointsInSurf.size() == 4) //quads
                         {
-                            pointquads.emplace_back(points_store<4>{{pointsInSurf[0], pointsInSurf[1], pointsInSurf[2], pointsInSurf[3]}, pl.DirNormal()});
+                            pointquads.emplace_back(points_store < 4 > {{pointsInSurf[0], pointsInSurf[1], pointsInSurf[2], pointsInSurf[3]}, pl.DirNormal()});
                         } else if(pointsInSurf.size() == 3) //triangles
                         {
-                            pointstriangles.push_back(points_store<3>{{pointsInSurf[0], pointsInSurf[1], pointsInSurf[2]}, pl.DirNormal()});
+                            pointstriangles.push_back(points_store < 3 > {{pointsInSurf[0], pointsInSurf[1], pointsInSurf[2]}, pl.DirNormal()});
                         } else
                         {
                             palka::Console::addLog("Algorithm did not process the faces", palka::Console::logType::info);
@@ -302,8 +306,8 @@ namespace Magpie
                 face++;
             }
 
-            auto vec = findSolution();
-            return GraphicsResult3D<T>();
+            auto rews = findSolution();
+            return GraphicsResult3D<T>(target, rews.first, points_faces);
         }
 
         std::vector<palka::Vec3f> normals;

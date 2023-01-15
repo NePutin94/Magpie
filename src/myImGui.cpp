@@ -81,8 +81,9 @@ std::pair<bool, std::string> ImGui::FileManager(FileManager_Context& context)
     static bool file_add = false;
     if(context.open)
     {
-        ImGui::Begin(("File Manager ##" + std::to_string(context.curr_id)).c_str(), &context.open);
-
+        ImGui::SetNextWindowFocus();
+        if(!ImGui::Begin(("File Manager ##" + std::to_string(context.curr_id)).c_str(), &context.open))
+            ImGui::End();
         context.windowIsFocus = ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows);
 
         ImVec2 os = ImGui::GetCursorScreenPos();
@@ -94,7 +95,16 @@ std::pair<bool, std::string> ImGui::FileManager(FileManager_Context& context)
             if(fs::exists(p))
             {
                 for(const auto& fyles: fs::directory_iterator(p))
-                    context.files.emplace(fs::path(fyles).generic_string().length(), fyles);
+                    if(fs::is_directory(fyles))
+                    {
+                        context.files.emplace(fs::path(fyles).generic_string().length(), fyles);
+                    } else if(fs::is_regular_file(fyles))
+                    {
+                        if(context.filter.empty())
+                            context.files.emplace(fs::path(fyles).generic_string().length(), fyles);
+                        else if(context.filter == fyles.path().extension())
+                            context.files.emplace(fs::path(fyles).generic_string().length(), fyles);
+                    }
             }
             context.updateDir = false;
         }
@@ -341,22 +351,13 @@ std::pair<bool, std::string> ImGui::FileManager(FileManager_Context& context)
                     }
                     if(out_hovered && ImGui::IsMouseDoubleClicked(0))
                     {
-
                         auto f = fs::path(fyles.second).filename().string();
-                        std::regex word_regex(context.filter);
-                        if(std::regex_match(f, word_regex))
-                        {
-                            ImGui::PopID();
-                            ImGui::EndChild();
-                            ImGui::End();
-                            context.selected_nodes.clear();
-                            context.open = false;
-                            return {true, f};
-                        } else
-                        {
-//                            CAE::Console::AppLog::addLog_("Wrong file extension, filter is %s", CAE::Console::message,
-//                                                          context.filter.c_str());
-                        }
+                        ImGui::PopID();
+                        ImGui::EndChild();
+                        ImGui::End();
+                        context.selected_nodes.clear();
+                        context.open = false;
+                        return {true, f};
                     }
                 }
             } else if(!is_regular && ImGui::IsMouseDoubleClicked(0) && out_hovered)

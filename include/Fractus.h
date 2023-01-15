@@ -309,8 +309,30 @@ namespace Magpie
             {
                 auto nume_str = number.substr(0, slash_pos);
                 auto denu_str = number.substr(slash_pos + 1, number.size() - slash_pos);
+                numerator = std::stol(nume_str);
+                denominator = std::stol(denu_str);
             }
             applySign();
+        }
+
+        static Fractus convertString(const std::string& number)
+        {
+            Fractus f;
+            auto slash_pos = number.find_first_of('/');
+
+            if(slash_pos == std::string::npos)
+            {
+                f.numerator = std::stol(number);
+                f.denominator = 1;
+            } else
+            {
+                auto nume_str = number.substr(0, slash_pos);
+                auto denu_str = number.substr(slash_pos + 1, number.size() - slash_pos);
+                f.numerator = std::stol(nume_str);
+                f.denominator = std::stol(denu_str);
+            }
+            f.applySign();
+            return f;
         }
 
         template<class U>

@@ -21,6 +21,7 @@
 #include "PlaneMesh.h"
 #include "OrbitCamera.h"
 #include "PolygonMesh.h"
+#include "SphereMesh.h"
 
 namespace palka
 {
@@ -249,6 +250,7 @@ namespace palka
 
         void draw(Model& m, RenderContext context);
 
+        void draw(palka::SphereMesh& m, palka::RenderContext context, Vec3f lightPos);
         //void draw(gltf_loader& m, RenderContext context, tinygltf::Model&, VertexArrayObject& vao);
 
         // void draw(assimp_loader& m, RenderContext context);

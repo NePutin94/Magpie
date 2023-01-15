@@ -37,6 +37,19 @@ namespace Magpie
         return "";
     }
 
+    inline constexpr int signFromStr(const std::string& s)
+    {
+        if (s.find('=') != std::string::npos) {
+            return Sign::EQUAL;
+        }
+        if (s.find("<=") != std::string::npos) {
+            return Sign::LESSOREQUAL;
+        }
+        if (s.find(">=") != std::string::npos) {
+            return Sign::GREATEROREQUAL;
+        }
+        return -1;
+    }
     //Agreement:
     //first row of the matrix is the objective function: x_1 x_2 ... x_n
     //remaining lines are constraints: x_1 x_2 [<=, =, >=] x_3; For the nXm matrix sign of the constraint can be obtained: matrix[n][m-1]

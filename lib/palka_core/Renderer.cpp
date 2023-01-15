@@ -98,6 +98,29 @@ void palka::Renderer::draw(palka::StaticMesh& m, palka::RenderContext context, V
     m.render();
 }
 
+void palka::Renderer::draw(palka::SphereMesh& m, palka::RenderContext context, Vec3f lightPos)
+{
+    applyBlend(context.getBlend());
+    auto& shader = *context.getShader();
+    auto& buffer = *context.getUBO();
+    glm::mat4 projection = glm::mat4(1.0f);
+    projection = getProjectionMatrix();
+    auto _view = camera.getViewMatrix();
+
+    shader.bind();
+    shader.setUniform("objectColor", Vec3f{0.2f, 0.1f, 0.9f});
+    shader.setUniform("lightColor", Vec3f{1.f, 0.1f, 0.1f});
+    shader.setUniform("lightPos", lightPos);
+    shader.setUniform("viewPos", camera.getEye());
+    context();
+
+    buffer.setData(glm::value_ptr(projection), sizeof(float[16]), 0);
+    buffer.setData(glm::value_ptr(_view), sizeof(float[16]), sizeof(float[16]));
+    buffer.setData(glm::value_ptr(context.getTransform()), sizeof(float[16]), sizeof(float[16]) * 2);
+
+    m.render();
+}
+
 //void palka::Renderer::draw(palka::gltf_loader& m, palka::RenderContext context, tinygltf::Model& mod, VertexArrayObject& vao)
 //{
 //    applyBlend(context.getBlend());

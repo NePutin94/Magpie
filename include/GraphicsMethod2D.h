@@ -15,6 +15,7 @@
 #include <tracy/Tracy.hpp>
 #include <nlohmann/json.hpp>
 #include <glm/glm.hpp>
+#include "DataStorage.h"
 
 namespace Magpie
 {
@@ -51,9 +52,7 @@ namespace Magpie
                                                                                               resultValue(resultValue),
                                                                                               type(t), target_plot(target_plot),
                                                                                               plot_perpendicular(plot_perpendicular)
-        {
-
-        }
+        {}
 
         std::pair<std::vector<double>, std::vector<double>> getVisualUnion()
         {
@@ -64,13 +63,13 @@ namespace Magpie
             std::vector<double> Y;
             for(auto vec: Union)
             {
-                X.emplace_back((double)vec.x);
-                Y.emplace_back((double)vec.y);
+                X.emplace_back((double) vec.x);
+                Y.emplace_back((double) vec.y);
             }
             if(type == closed)
             {
-                X.emplace_back((double)Union.front().x);
-                Y.emplace_back((double)Union.front().y);
+                X.emplace_back((double) Union.front().x);
+                Y.emplace_back((double) Union.front().y);
             }
             return {X, Y};
         }
@@ -84,15 +83,15 @@ namespace Magpie
             std::vector<double> Y;
             for(auto vec: target_plot)
             {
-                X.emplace_back((double)vec.x);
-                Y.emplace_back((double)vec.y);
+                X.emplace_back((double) vec.x);
+                Y.emplace_back((double) vec.y);
             }
             return {X, Y};
         }
 
         palka::Vec2<double> getResPoint()
         {
-            return {(double)resultPoint.x,(double)resultPoint.y};
+            return {(double) resultPoint.x, (double) resultPoint.y};
         }
 
         double getResultValue()
@@ -168,6 +167,111 @@ namespace Magpie
         }
 
         template<class T>
+        auto solver(std::vector<std::vector<T>> matrix, std::set<int> vars)
+        {
+#ifdef TracyProfiler
+            ZoneScoped;
+#endif
+            int row = 0;
+            for(int col = 0; col < matrix[0].size(); ++col)
+            {
+                if(vars.contains(col))
+                    continue;
+                if(row == matrix.size() - 1)
+                    break;
+                T a = matrix[row][col];
+                if(abs(a) != 1)
+                {
+                    for(T& j: matrix[row])
+                        j = j / a;
+                }
+
+                for(int i = 0; i < matrix.size(); ++i)
+                {
+                    if(i == row) continue;
+                    auto b = matrix[i][col];
+                    for(int j = 0; j < matrix[0].size(); ++j)
+                        matrix[i][j] -= b * matrix[row][j];
+                }
+
+                row++;
+            }
+//            for(int col = 0, col2 = 0; col < matrix[0].size(); ++col)
+//            {
+//                if(vars.contains(col))
+//                    continue;
+//                if(col2 == matrix.size() - 1)
+//                    break;
+//                T a = matrix[col2][col];
+//                if(abs(a) != 1)
+//                {
+//                    for(T& j: matrix[col2])
+//                        j = j / a;
+//                }
+//
+//                for(int i = 0; i < matrix.size(); ++i)
+//                {
+//                    if(i == col) continue;
+//                    auto b = matrix[i][col];
+//                    for(int j = 0; j < matrix[0].size(); ++j)
+//                        matrix[i][j] -= b * matrix[col2][j];
+//                }
+//                col2++;
+//            }
+
+            bool isIdentity = true;
+            row = 0;
+            for(int j = 0; j < matrix[0].size() - 1; ++j)
+            {
+                if(vars.contains(j))
+                    continue;
+                for(int i = 0; i < matrix.size() - 1; ++i)
+                {
+                    if(row == i)
+                    {
+                        if(matrix[i][j] != 1)
+                        {
+                            isIdentity = false;
+                            break;
+                        }
+                    } else
+                    {
+                        if(matrix[i][j] != 0)
+                        {
+                            isIdentity = false;
+                            break;
+                        }
+                    }
+                }
+                row++;
+            }
+
+            if(isIdentity)
+            {
+                std::vector<std::vector<T>> res;
+                res.resize(matrix.size());
+                for(int i = 0; i < matrix.size() - 1; ++i)
+                {
+                    res[i].resize(4);
+                    int j2 = 0;
+                    for(int id: vars)
+                        res[i][j2++] = matrix[i][id];
+                    res[i][j2++] = 1;
+                    res[i][j2++] = matrix[i][matrix[i].size() - 1];
+                }
+                auto last = matrix.size() - 1;
+                res[last].resize(4);
+                int j2 = 0;
+                for(int id: vars)
+                    res[last][j2++] = matrix[last][id];
+                res[last][j2++] = -matrix[last][matrix[0].size() - 1];
+                return std::make_pair(isIdentity, res);
+            }
+
+            return std::make_pair(isIdentity, matrix);
+        }
+
+        template<class T>
         auto solver(std::vector<std::vector<T>> matrix)
         {
 #ifdef TracyProfiler
@@ -218,85 +322,27 @@ namespace Magpie
             {
                 std::vector<std::vector<T>> res;
                 res.resize(matrix.size());
-                for(int i = 0; i < matrix.size(); ++i)
+                for(int i = 0; i < matrix.size() - 1; ++i)
                 {
                     res[i].resize(4);
-                    for(int j = 2, j2 = 0; j < matrix[0].size(); ++j)
+                    for(int j = matrix.size() - 1, j2 = 0; j < matrix[0].size(); ++j)
                     {
+                        auto v = matrix[i][j];
                         res[i][j2++] = matrix[i][j];
                         if(j2 == 2)
                             res[i][j2++] = 1;
                     }
                 }
+                auto last = matrix.size() - 1;
+                res[last].resize(4);
+                int j2 = 0;
+                for(int j = matrix.size() - 1; j < matrix[0].size() - 1; ++j)
+                    res[last][j2++] = matrix[last][j];
+                res[last][j2] = -matrix[last][matrix[0].size() - 1];
                 return std::make_pair(isIdentity, res);
             }
 
             return std::make_pair(isIdentity, matrix);
-        }
-
-        auto solver(MatrixStorage<double> matrix)
-        {
-            for(int col = 1; col < matrix.rows_count(); ++col)
-            {
-                int true_col = col - 1;
-                double a = matrix.get(true_col, col);
-                if(abs(a) != 1)
-                {
-                    for(int i = 0; i < matrix.columns_count(); ++i)
-                    {
-                        if(i == matrix.columns_count() - 2) continue;
-                        matrix.get(i, col) /= a;
-                    }
-                }
-
-                for(int i = 0; i < matrix.rows_count(); ++i)
-                {
-                    if(i == col) continue;
-                    auto b = matrix.get(true_col, i);
-                    for(int j = 0; j < matrix.columns_count(); ++j)
-                    {
-                        if(j == matrix.columns_count() - 2) continue;
-                        matrix.get(j, i) -= b * matrix.get(j, col);
-                    }
-                }
-            }
-
-            bool isIdentity = true;
-            for(int i = 0; i < matrix.rows_count(); ++i)
-            {
-                for(int j = 0; j < matrix.rows_count() - 1; ++j)
-                {
-                    if(i == j)
-                    {
-                        if(matrix.get(j, i) != 1)
-                        {
-                            isIdentity = false;
-                            break;
-                        }
-                    } else
-                    {
-                        if(matrix.get(j, i) != 0)
-                        {
-                            isIdentity = false;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            if(isIdentity)
-            {
-                MatrixStorage<double> res(matrix.rows_count(), 4);
-                for(int i = 0; i < matrix.rows_count(); ++i)
-                {
-                    for(int j = matrix.rows_count() - 1, j2 = 0; j < matrix.columns_count(); ++j)
-                    {
-                        res.get(j2++, i) = matrix.get(j, i);
-                    }
-                }
-                return res;
-            }
-            return MatrixStorage<double>(matrix);
         }
     };
 
@@ -307,11 +353,13 @@ namespace Magpie
         template<class>
         friend
         class GraphPrivateWrapper;
+
         MatrixStorage<T> input;
         Magpie::Plot<T> F;
         std::vector<Magpie::Plot<T>> Plots;
         GraphicsResult<T> result;
         std::vector<palka::Vec2<T>> Union;
+        DataStorage::ProblemType type;
 
         std::string serialize() override
         {
@@ -326,7 +374,7 @@ namespace Magpie
             for(int i = 1; i < input.rows_count(); ++i)
             {
                 auto& lim = inputLayout["Limitations"][fmt::format("Lim_{}", i)];
-                for(int j = 0; j < input.columns_count();++j)
+                for(int j = 0; j < input.columns_count(); ++j)
                     lim.emplace_back(input.get(j, i));
             }
 
@@ -338,6 +386,7 @@ namespace Magpie
 #ifdef TracyProfiler
             ZoneScoped;
 #endif
+
         }
 
         static bool compare(const std::vector<Magpie::Plot<T>>& plots, const Magpie::Plot<T>& plot)
@@ -489,38 +538,21 @@ namespace Magpie
 
         GraphicMet2D() = default;
 
-        GraphicMet2D(const MatrixStorage<T>& data, int var_count, int limitations_count)
-        {
-#ifdef TracyProfiler
-            ZoneScoped;
-#endif
-            F = Magpie::Plot<T>{data.get(0, 0), data.get(1, 0), 0};
-            for(int i = 1; i < limitations_count; ++i)
-            {
-                auto a = data.get(0, i);
-                auto b = data.get(1, i);
-                auto c = data.get(3, i);
-                auto s = (int) data.get(2, i);
-                Plots.emplace_back(Magpie::Plot<T>{a, b, c, (Sign) s});
-            }
-            Plots.emplace_back(Magpie::Plot<T>{1, 0, 0, Sign::GREATEROREQUAL});
-            Plots.emplace_back(Magpie::Plot<T>{0, 1, 0, Sign::GREATEROREQUAL});
-        }
-
-        void init(const MatrixStorage<T>& data, int var_count, int limitations_count)
+        void init(const MatrixStorage<T>& data, int var_count, int limitations_count, DataStorage::ProblemType t)
         {
 #ifdef TracyProfiler
             ZoneScoped;
 #endif
             input = data;
+            type = t;
             if(var_count > 2)
             {
                 TestGetBazis test;
                 auto res = test.solver(data.getMatrix());
-                MatrixStorage<T> data2(data);
+                MatrixStorage<T> data2;
                 data2.setMatrix(res.second);
                 Plots.clear();
-                F = Magpie::Plot<T>(data2.get(0, 0), data2.get(1, 0), 0);
+                F = Magpie::Plot<T>(data2.get(0, 0), data2.get(1, 0), data2.get(2, 0));
                 for(int i = 1; i < limitations_count + 1; ++i)
                 {
                     auto a = data2.get(0, i);
@@ -534,7 +566,7 @@ namespace Magpie
                 return;
             }
             Plots.clear();
-            F = Magpie::Plot<T>{data.get(0, 0), data.get(1, 0), 0};
+            F = Magpie::Plot<T>{data.get(0, 0), data.get(1, 0), data.get(2, 0)};
             for(int i = 1; i < limitations_count + 1; ++i)
             {
                 auto a = data.get(0, i);
@@ -552,17 +584,39 @@ namespace Magpie
 #ifdef TracyProfiler
             ZoneScoped;
 #endif
-            T min = std::numeric_limits<T>::max();
+            T res;
             palka::Vec2<T> resVec;
-            for(auto& vec: Union) //find min point and value
+            switch(type)
             {
-                if(auto val = F.a * vec.x + F.b * vec.y;val < min)
+                case DataStorage::Maximization:
                 {
-                    min = val;
-                    resVec = vec;
+                    res = std::numeric_limits<T>::min();
+                    for(auto& vec: Union) //find min point and value
+                    {
+                        if(auto val = F.a * vec.x + F.b * vec.y + F.c;val > res)
+                        {
+                            res = val;
+                            resVec = vec;
+                        }
+                    }
                 }
+                    break;
+                case DataStorage::Minimization:
+                {
+                    res = std::numeric_limits<T>::max();
+                    for(auto& vec: Union) //find min point and value
+                    {
+                        if(auto val = F.a * vec.x + F.b * vec.y + F.c;val < res)
+                        {
+                            res = val;
+                            resVec = vec;
+                        }
+                    }
+                }
+                    break;
             }
-            return std::make_pair(resVec, min);
+
+            return std::make_pair(resVec, res);
         }
 
         //find all the intersection points
@@ -712,7 +766,7 @@ namespace Magpie
             } else
             {
 
-/////////////////////////////////////////////////////NEW ALGO !!!!!!!!!!//////////////////////////////////
+/////////////////////////////////////////////////////new algorithm///////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                for(int i = 0; i < maps.size(); ++i)
 //                {
@@ -768,8 +822,8 @@ namespace Magpie
                     }
                 }
             }
-            std::vector<palka::Vec2<T>> trg_plot = {{F.getValueAtX(-20), -20},
-                                                    {F.getValueAtX(20),  20}};
+            std::vector<palka::Vec2<T>> trg_plot = {{F.getValueAtXC(-20), -20},
+                                                    {F.getValueAtXC(20),  20}};
             if(!breakPoints.empty() && breakPoints.size() <= 2)
             {
                 std::vector<std::pair<Plot<T>, palka::Vec2<T>>> pos;

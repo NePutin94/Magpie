@@ -102,6 +102,8 @@ namespace Magpie
             T det = a * other.b - other.a * b;
             if(det == 0)
                 return palka::Vec2<T>{std::numeric_limits<T>::min(), std::numeric_limits<T>::min()};
+            if(b == 0)
+                return other.intersection(*this);
             auto xt = -a * other.b;
             auto xt2 = -other.a * b;
             auto xtres = xt - xt2;
@@ -149,9 +151,12 @@ namespace Magpie
                     auto min = pointOnPlot + palka::Vec2<T>{-offset * i, -offset * i};
 
                     p1.emplace_back(max.x, getValueAtY(max.x));
-                    p1.emplace_back(getValueAtX(max.y), max.y);
                     p1.emplace_back(min.x, getValueAtY(min.x));
-                    p1.emplace_back(getValueAtX(min.y), min.y);
+
+//                    p1.emplace_back(max.x, getValueAtY(max.x));
+//                    p1.emplace_back(getValueAtX(max.y), max.y);
+//                    p1.emplace_back(min.x, getValueAtY(min.x));
+//                    p1.emplace_back(getValueAtX(min.y), min.y);
                 }
             }
             return p1;
@@ -233,6 +238,16 @@ namespace Magpie
         T getValueAtX(T y) const
         {
             return (c - b * y) / a;
+        }
+
+        T getValueAtXC(T y) const
+        {
+            return (- b * y) / a;
+        }
+
+        T getValueAtYC(T x) const
+        {
+            return (- a * x) / b;
         }
     };
 

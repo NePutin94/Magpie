@@ -74,7 +74,7 @@ namespace Magpie
                 if(ImGui::Button("Solve"))
                 {
                     auto data = storage->getData<T>();
-                    solver.init(data, data.columns_count() - 2, data.rows_count() - 1);
+                    solver.init(data, data.columns_count() - 2, data.rows_count() - 1, storage->ptype);
                     //solver.init(input, input.columns_count() - 2, input.rows_count() - 1);
                     auto res = solver.solve();
                     auto u = res.getVisualUnion();
@@ -121,7 +121,7 @@ namespace Magpie
                     auto pad = ImGui::GetStyle().WindowPadding;
                     if(ImGui::BeginChild("Plot", ImVec2{actualSize.x - pad.x - 40.f, actualSize.y} * ImVec2{1, 0.6}))
                     {
-                        if(ImPlot::BeginPlot("My Plot", ImVec2{0, 0}, ImPlotFlags_Equal))
+                        if(ImPlot::BeginPlot("My Plot", ImVec2{actualSize.x - pad.x - 40.f, actualSize.y} * ImVec2{1, 0.6}, ImPlotFlags_Equal))
                         {
                             ImPlot::SetupAxis(ImAxis_X2, "X", ImPlotAxisFlags_AuxDefault);
                             ImPlot::SetupAxis(ImAxis_Y2, "Y", ImPlotAxisFlags_AuxDefault);
@@ -152,9 +152,6 @@ namespace Magpie
                 ImGui::End();
             }
         }
-
-        std::pair<int, int> getResul()
-        {}
 
         bool check(palka::Vec2<double> p)
         {

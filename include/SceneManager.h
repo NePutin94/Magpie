@@ -4,7 +4,7 @@
 #include "DataStorage.h"
 #include "MenuView.h"
 #include "InputView.h"
-#include "Test.h"
+#include "InputMatrix.h"
 #include "MagicInput.h"
 #include "ArtificialBasisView.h"
 #include "GraphicalMethodView.h"
@@ -344,6 +344,59 @@ namespace Magpie
                     storage.data.get(3, 2) = (int) Sign::GREATEROREQUAL;
                     storage.data.get(4, 2) = 2;
                     break;
+                case 12: //2d
+                    storage.data.alloc_matrix(3, 6);
+                    storage.data.get(0, 0) = -1;
+                    storage.data.get(1, 0) = 0;
+                    storage.data.get(2, 0) = 0;
+                    storage.data.get(3, 0) = 1;
+
+                    storage.data.get(0, 1) = 1;
+                    storage.data.get(1, 1) = 1;
+                    storage.data.get(2, 1) = 2;
+                    storage.data.get(3, 1) = 1;
+                    storage.data.get(4, 1) = (int) Sign::EQUAL;
+                    storage.data.get(5, 1) = 5;
+
+                    storage.data.get(0, 2) = 1;
+                    storage.data.get(1, 2) = -1;
+                    storage.data.get(2, 2) = -1;
+                    storage.data.get(3, 2) = 2;
+                    storage.data.get(4, 2) = (int) Sign::EQUAL;
+                    storage.data.get(5, 2) = 1;
+                    break;
+                case 13: //-24
+                    storage.data.alloc_matrix(4, 7);
+                    storage.data.get(0, 0) = -2;
+                    storage.data.get(1, 0) = 2;
+                    storage.data.get(2, 0) = -3;
+                    storage.data.get(3, 0) = 3;
+                    storage.data.get(4, 0) = 0;
+
+                    storage.data.get(0, 1) = 1;
+                    storage.data.get(1, 1) = -2;
+                    storage.data.get(2, 1) = 0;
+                    storage.data.get(3, 1) = 1;
+                    storage.data.get(4, 1) = 0;
+                    storage.data.get(5, 1) = (int) Sign::EQUAL;
+                    storage.data.get(6, 1) = 3;
+
+                    storage.data.get(0, 2) = 0;
+                    storage.data.get(1, 2) = 1;
+                    storage.data.get(2, 2) = 1;
+                    storage.data.get(3, 2) = -2;
+                    storage.data.get(4, 2) = 0;
+                    storage.data.get(5, 2) = (int) Sign::EQUAL;
+                    storage.data.get(6, 2) = 5;
+
+                    storage.data.get(0, 3) = 0;
+                    storage.data.get(1, 3) = 3;
+                    storage.data.get(2, 3) = 0;
+                    storage.data.get(3, 3) = 1;
+                    storage.data.get(4, 3) = 1;
+                    storage.data.get(5, 3) = (int) Sign::EQUAL;
+                    storage.data.get(6, 3) = 4;
+                    break;
             }
         }
 
@@ -369,6 +422,7 @@ namespace Magpie
             curr->setCallback([this]()
                               { updateScene(); });
             curr->setData(globData);
+            curr->setEvents();
         }
 
         double t()
@@ -389,8 +443,8 @@ namespace Magpie
                                                  Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
                     break;
                 case States::InputRestriction:
-                    fill(11, globData);
-                    addView<Test>(Test{"Menu", Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                    fill(13, globData);
+                    addView<InputMatrix>(InputMatrix{"InputMatrix", Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
                     break;
                 case States::InputRestrictionGraph:
                     addView<MagicInput>(MagicInput{"MagicInput", Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});

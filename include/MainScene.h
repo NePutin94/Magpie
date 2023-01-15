@@ -2,7 +2,7 @@
 #define BILLET_MAINSCENE_H
 
 #include "UiScene.h"
-#include "Test.h"
+#include "InputMatrix.h"
 #include "InputView.h"
 #include "GraphicalMethodView.h"
 
@@ -51,7 +51,7 @@ namespace Magpie
                     break;
                 case State::Solve:
                 {
-                    auto res = getView<Test>()->getResult();
+                    auto res = getView<InputMatrix>()->getResult();
 //                    GraphicalMethodView s{{0, 0}, Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}, res};
               //      addView<GraphicalMethodView>(std::move(s));
                 }

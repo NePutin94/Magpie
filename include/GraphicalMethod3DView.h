@@ -33,11 +33,13 @@ namespace Magpie
         //3D staff//
         palka::RenderTexture renderTex;
         palka::RenderTexture screenTexture;
-        palka::ShaderProgram material_light;
+        palka::ShaderProgram material_anim;
+        palka::ShaderProgram material;
         palka::ShaderProgram normals;
         palka::ShaderProgram def;
         palka::ShaderProgram outline;
         palka::UniformBuffer ubo;
+        palka::SphereMesh sphere;
         palka::Renderer::Line lx{{-10, 0, 0},
                                  {10, 0, 0},
                                  palka::Color(255, 0, 0)};
@@ -50,7 +52,10 @@ namespace Magpie
         palka::Renderer::Line targetPlaneNormal;
         palka::PolygonMesh polygon;
         palka::PlaneMesh plane;
+
+        //target plane trasnform
         palka::Mat4f plane_trasnform{1.f};
+        palka::Vec3f scale{1.f};
 
         void init3D()
         {
@@ -67,12 +72,20 @@ namespace Magpie
             palka::_Shader l3("Data\\Shaders\\explode.frag", palka::_Shader::FRAGMENT);
             palka::_Shader l4("Data\\Shaders\\explode.vert", palka::_Shader::VERTEX);
             palka::_Shader l5("Data\\Shaders\\explode.gs", palka::_Shader::GEOMETRY);
-            material_light.createProgram();
-            material_light.addShader(l3);
-            material_light.addShader(l4);
-            material_light.addShader(l5);
-            material_light.linkProgram();
-            material_light.UBOBindingTo(material_light.getUBOIndex("matrixBuffer"), 0);
+            material_anim.createProgram();
+            material_anim.addShader(l3);
+            material_anim.addShader(l4);
+            material_anim.addShader(l5);
+            material_anim.linkProgram();
+            material_anim.UBOBindingTo(material_anim.getUBOIndex("matrixBuffer"), 0);
+
+            palka::_Shader l9("Data\\Shaders\\material.frag", palka::_Shader::FRAGMENT);
+            palka::_Shader l10("Data\\Shaders\\material.vert", palka::_Shader::VERTEX);
+            material.createProgram();
+            material.addShader(l9);
+            material.addShader(l10);
+            material.linkProgram();
+            material.UBOBindingTo(material.getUBOIndex("matrixBuffer"), 0);
 
             palka::_Shader l6("Data\\Shaders\\normals.frag", palka::_Shader::FRAGMENT);
             palka::_Shader l7("Data\\Shaders\\normals.vert", palka::_Shader::VERTEX);
@@ -103,13 +116,14 @@ namespace Magpie
             screenTexture.getViewport().setCenter({1920.f / 2.f, 1080.f / 2.f});
 
             plane.init();
+            sphere.init();
         }
 
     public:
         GraphicalMethod3DView(palka::Vec2f pos, palka::Vec2f size, MatrixStorage<T> input, bool open = true,
                               ImGuiWindowFlags w_flag = ImGuiWindowFlags_None)
                 : UiView("GraphicalMethodView", pos, size, open, w_flag), c("./", true), renderTex({1920.f, 1080.f}),
-                  screenTexture({1920.f, 1080.f})
+                  screenTexture({1920.f, 1080.f}), sphere(0.1, 20, 20)
         {
             init3D();
         }
@@ -117,14 +131,15 @@ namespace Magpie
         GraphicalMethod3DView(std::string name, palka::Vec2f size)
                 : UiView(name, size), c("./", true),
                   renderTex({1920.f, 1080.f}),
-                  screenTexture({1920.f, 1080.f})
+                  screenTexture({1920.f, 1080.f}),
+                  sphere(0.1, 20, 20)
         {
             init3D();
         }
 
         GraphicalMethod3DView(GraphicalMethod3DView&& ot) = default;
 
-        void renderScreen(palka::Window& w)
+        void outlineRenderPass(palka::Window& w)
         {
             static palka::Vec3f ambient = palka::Vec3f{1.0f, 0.5f, 0.31f};
             static palka::Vec3f diffuse = palka::Vec3f{1.0f, 0.5f, 0.31f};
@@ -134,7 +149,7 @@ namespace Magpie
             static palka::Vec3f l_specular = palka::Vec3f{1.0f, 1.0f, 1.0f};
             screenTexture.getCamera().updateCamera(w.getWindow());
 
-            palka::RenderContext context2(&material_light, &ubo, palka::Mat4f{1.f}, [](palka::ShaderProgram& shader)
+            palka::RenderContext context2(&material, &ubo, palka::Mat4f{1.f}, [](palka::ShaderProgram& shader)
             {
                 shader.setUniform("material.ambient", ambient);
                 shader.setUniform("material.diffuse", diffuse);
@@ -153,6 +168,9 @@ namespace Magpie
             screenTexture.unbind();
         }
 
+        glm::vec3 RotAxis2;
+        float RotAngle2;
+
         void render(palka::Window& w) override
         {
             static palka::Vec3f ambient = palka::Vec3f{1.0f, 0.5f, 0.31f};
@@ -161,14 +179,19 @@ namespace Magpie
             static palka::Vec3f l_ambient = palka::Vec3f{0.2f, 0.2f, 0.2f};
             static palka::Vec3f l_diffuse = palka::Vec3f{0.5f, 0.5f, 0.5f};
             static palka::Vec3f l_specular = palka::Vec3f{1.0f, 1.0f, 1.0f};
-            //renderScreen(w);
             renderTex.getCamera().updateCamera(w.getWindow());
 
             palka::RenderContext context1(&def, &ubo, palka::Mat4f{1.f}, [](palka::ShaderProgram& shader)
             {});
+
+            plane_trasnform = palka::Mat4f{1.f};
+            plane_trasnform = glm::rotate(plane_trasnform, RotAngle2, RotAxis2);
+            plane_trasnform = glm::scale(plane_trasnform, scale);
             palka::RenderContext context_plane(&def, &ubo, plane_trasnform, [](palka::ShaderProgram& shader)
             {});
-            palka::RenderContext context2(&material_light, &ubo, palka::Mat4f{1.f}, [](palka::ShaderProgram& shader)
+            palka::RenderContext context_sphere(&def, &ubo, palka::Mat4f{1.f}, [](palka::ShaderProgram& shader)
+            {});
+            palka::RenderContext context2(&material_anim, &ubo, palka::Mat4f{1.f}, [](palka::ShaderProgram& shader)
             {
                 shader.setUniform("material.ambient", ambient);
                 shader.setUniform("material.diffuse", diffuse);
@@ -188,19 +211,29 @@ namespace Magpie
             palka::RenderContext context4(&normals, &ubo, palka::Mat4f{1.f}, [&](palka::ShaderProgram& shader)
             {});
 
+            if(ImGui::CollapsingHeader("Viszulization params"))
+            {
+                static float scale_value = 1.f;
+                ImGui::DragFloat("scale", &scale_value, 0.5f, 1.f, 20.f);
+                scale = {scale_value, scale_value, scale_value};
+            }
+            outlineRenderPass(w);
+
             renderTex.bind();
             renderTex.clear(palka::Color(0, 0, 0, 0));
             renderTex.drawLine(lx, context1);
             renderTex.drawLine(ly, context1);
             renderTex.drawLine(lz, context1);
 
+            renderTex.draw(sphere, context_sphere, {1, 0, 1});
+
             if(polygon.isInit())
             {
-                renderTex.draw(polygon, context2, {1, 0, 1});
+                //renderTex.draw(polygon, context2, {1, 0, 1});
                 renderTex.draw(plane, context_plane, {1, 0, 1});
                 renderTex.drawLine(targetPlaneNormal, context1);
                 //renderTex.draw(polygon, context4, {1, 0, 1});
-                // renderTex.draw_t(polygon, context3, {1, 0, 1}, screenTexture.getTexture());
+                renderTex.draw_t(polygon, context3, {1, 0, 1}, screenTexture.getTexture());
             }
             //renderTex.draw(m, context2, {1, 0, 1});
             renderTex.unbind();
@@ -232,12 +265,12 @@ namespace Magpie
                     solver3d.solve();
                     polygon.init(solver3d.points_faces, solver3d.normals);
                     glm::vec3 target_plane = solver3d.target.normal().convert();
-                    auto RotAxis2 = glm::cross(palka::PlaneMesh::normal, target_plane);
-                    auto RotAngle2 = acos(glm::dot(palka::PlaneMesh::normal, target_plane) /
-                                          (glm::length(palka::PlaneMesh::normal) * glm::length(target_plane)));
+                    RotAxis2 = glm::cross(palka::PlaneMesh::normal, target_plane);
+                    RotAngle2 = acos(glm::dot(palka::PlaneMesh::normal, target_plane) /
+                                     (glm::length(palka::PlaneMesh::normal) * glm::length(target_plane)));
                     plane_trasnform = palka::Mat4f{1.f};
                     plane_trasnform = glm::rotate(plane_trasnform, RotAngle2, RotAxis2);
-                    targetPlaneNormal.update({0, 0, 0}, target_plane * 3.f, palka::Color(150, 255, 50));
+                    targetPlaneNormal.update({0, 0, 0}, target_plane * 2.f, palka::Color(255, 80, 160));
                     targetPlaneNormal.init();
                 }
 
@@ -262,10 +295,7 @@ namespace Magpie
         {}
 
         void update() override
-        {
-            palka::debug(renderTex.getCamera(), "camera");
-
-        }
+        {}
 
         void setEvents() override
         {}
