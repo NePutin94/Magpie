@@ -19,7 +19,8 @@ namespace Magpie
         SolverGraphics,
         SolverGraphics3D,
         SolverSimplex,
-        SolverSimplexArtificialBasis
+        SolverSimplexArtificialBasis,
+        SolverSimplexOnePass
     };
 
     class UiView
@@ -30,6 +31,7 @@ namespace Magpie
         palka::Vec2f size;
         palka::Vec2f pos;
         bool open;
+        bool clearState = false;
         States nextSatet;
         DataStorage* storage;
         std::function<void()> sceneCallback; //to link UiScene and UIView, it is expected to be called when you need to switch UIView in the UiScene
@@ -74,6 +76,11 @@ namespace Magpie
 
         virtual void init()
         {}
+
+        auto isGoToState()
+        {
+            return clearState;
+        }
 
         States getState()
         { return nextSatet; }

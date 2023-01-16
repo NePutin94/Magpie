@@ -170,8 +170,9 @@ namespace palka
             buffer.setData(glm::value_ptr(projection), sizeof(float[16]), 0);
             buffer.setData(glm::value_ptr(_view), sizeof(float[16]), sizeof(float[16]));
             buffer.setData(glm::value_ptr(context.getTransform()), sizeof(float[16]), sizeof(float[16]) * 2);
-
+            glLineWidth((GLfloat)4);
             glDrawArrays(GL_LINES, static_cast<GLint>(0), lx.vao.getSize());
+            glLineWidth((GLfloat)0);
         }
 
         void draw(palka::PolygonMesh& m, palka::RenderContext context, Vec3f lightPos)

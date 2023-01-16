@@ -33,14 +33,9 @@ void palka::Window::create(std::string_view name, std::string_view icon_path)
     ImGuiIO& io = ImGui::GetIO();
     (void) io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
-    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-    //io.ConfigViewportsNoAutoMerge = true;
-    //io.ConfigViewportsNoTaskBarIcon = true;
 
-    // Setup Dear ImGui style
     ImGui::StyleColorsDark();
-    //ImGui::StyleColorsClassic();
 
 
     // Setup Platform/Renderer backends
@@ -51,21 +46,10 @@ void palka::Window::create(std::string_view name, std::string_view icon_path)
     {
         GLFWimage images[1];
         images[0].pixels = stbi_load(icon_path.data(), &images[0].width, &images[0].height, 0, 4);
-        glfwSetWindowIcon(window, 2, images);
+        glfwSetWindowIcon(window, 1, images);
         stbi_image_free(images[0].pixels);
     }
-//            initImgui();
-    EventManager::addEvent(_EventType::WINDOWRESIZE, [this](EventData e)
-    {
-        size.x = e.WindowResize.newX;
-        size.y = e.WindowResize.newY;
-        //Console::fmt_log("Window resized new size is w: {} h: {}", Console::info, size.x, size.y);
-    });
-    //int i = 0;
-    //glGetIntegerv(GL_MAX_DRAW_BUFFERS, &i);
-    //Console::fmt_log("Draw buffer count: {}", Console::info, i);
     glEnable(GL_DEPTH_TEST);
-//            init();
 }
 
 void palka::Window::ImGuiNewFrame()

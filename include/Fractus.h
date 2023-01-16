@@ -418,6 +418,34 @@ namespace glm
         return palka::Vec3<Magpie::Fractus>(Magpie::Fractus(res.x), Magpie::Fractus(res.y), Magpie::Fractus(res.z));
     }
 
+    inline auto sqrt(const palka::Vec2<Magpie::Fractus>& vec)
+    {
+        palka::Vec2<double> vec_d = {vec.x.convertTO<double>(), vec.y.convertTO<double>()};
+        auto res = glm::sqrt(vec_d);
+        return palka::Vec2<Magpie::Fractus>(Magpie::Fractus(res.x), Magpie::Fractus(res.y));
+    }
+
+    inline auto sqrt(const glm::vec<2, Magpie::Fractus, glm::defaultp>& vec)
+    {
+        glm::vec<2, double, glm::defaultp> vec_d = {vec.x.convertTO<double>(), vec.y.convertTO<double>()};
+        auto res = glm::sqrt(vec_d);
+        return palka::Vec2<Magpie::Fractus>(Magpie::Fractus(res.x), Magpie::Fractus(res.y));
+    }
+
+    inline auto length(const palka::Vec2<Magpie::Fractus>& vec)
+    {
+        glm::vec<2, double, glm::defaultp> vec_d = {vec.x.convertTO<double>(), vec.y.convertTO<double>()};
+        auto res = glm::length(vec_d);
+        return Magpie::Fractus(res);
+    }
+
+    inline auto length(const glm::vec<2, Magpie::Fractus, glm::defaultp>& vec)
+    {
+        glm::vec<2, double, glm::defaultp> vec_d = {vec.x.convertTO<double>(), vec.y.convertTO<double>()};
+        auto res = glm::length(vec_d);
+        return Magpie::Fractus(res);
+    }
+
     inline auto length(const palka::Vec3<Magpie::Fractus>& vec)
     {
         glm::vec<3, double, glm::defaultp> vec_d = {vec.x.convertTO<double>(), vec.y.convertTO<double>(), vec.z.convertTO<double>()};
@@ -430,6 +458,20 @@ namespace glm
         glm::vec<3, double, glm::defaultp> vec_d = {vec.x.convertTO<double>(), vec.y.convertTO<double>(), vec.z.convertTO<double>()};
         auto res = glm::length(vec_d);
         return Magpie::Fractus(res);
+    }
+
+    inline auto normalize(const palka::Vec2<Magpie::Fractus>& vec)
+    {
+        glm::vec<2, double, glm::defaultp> vec_d = {vec.x.convertTO<double>(), vec.y.convertTO<double>()};
+        auto res = glm::normalize(vec_d);
+        return palka::Vec2<Magpie::Fractus>(Magpie::Fractus(res.x), Magpie::Fractus(res.y));
+    }
+
+    inline auto normalize(const glm::vec<2, Magpie::Fractus, glm::defaultp>& vec)
+    {
+        glm::vec<2, double, glm::defaultp> vec_d = {vec.x.convertTO<double>(), vec.y.convertTO<double>()};
+        auto res = glm::normalize(vec_d);
+        return palka::Vec2<Magpie::Fractus>(Magpie::Fractus(res.x), Magpie::Fractus(res.y));
     }
 
     inline auto normalize(const palka::Vec3<Magpie::Fractus>& vec)
@@ -458,10 +500,10 @@ namespace std
     {
     public:
         static Magpie::Fractus min()
-        { return {std::numeric_limits<long int>::min(), std::numeric_limits<long int>::min()}; };
+        { return {std::numeric_limits<long int>::min(), 1}; };
 
         static Magpie::Fractus max()
-        { return {std::numeric_limits<long int>::max(), std::numeric_limits<long int>::max()}; };
+        { return {std::numeric_limits<long int>::max(), 1}; };
 
 
         static constexpr bool is_iec559 = true;

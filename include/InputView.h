@@ -21,17 +21,19 @@ namespace Magpie
         bool file_browser_op;
         MatrixStorage<UniversalInput> matrix;
         ImGui::FileManager_Context c;
+        palka::Vec2f scale;
     public:
-        InputView(std::string_view name, palka::Vec2f size) : UiView(name, size), rows(0), cols(0), c("./", true, ".json")
+        InputView(std::string_view name, palka::Vec2f scale) : UiView(name, Config::WindowSize * scale), rows(0), cols(0), c("./", true, ".json"), scale(scale)
         {}
 
         void render(palka::Window& w) override
         {
+            size = Config::WindowSize * scale;
             ImGui::SetNextWindowPos(ImVec2((Config::WindowSize.x - (size.x)) / 2,
                                            (Config::WindowSize.y - (size.y)) / 2), ImGuiCond_Always, {0, 0});
             if(ImGui::Begin(name.c_str()))
             {
-                ImGui::SetWindowSize({size.x, size.y});
+                ImGui::SetWindowSize(ImVec2{size.x, size.y});
                 ImGui::PushItemWidth(100);
 
                 ImGui::Spacing();
@@ -59,7 +61,7 @@ namespace Magpie
                     auto path = res.second;
                     std::ifstream f(path);
                     nlohmann::json json = nlohmann::json::parse(f);
-                    auto& inputLayout = json["input"];
+                    auto& inputLayout = json["Input"];
                     matrix.alloc_matrix(inputLayout["Limitations"].size() + 1, inputLayout["Limitations"].begin()->size());
                     int i = 0;
                     for(auto& v: inputLayout["TargetFunc"])

@@ -10,6 +10,12 @@ void Magpie::Application::init()
     setTheme();
     w.getViewport().setCenter({1280.f / 2, 720.f / 2});
     isRuning = true;
+    palka::EventManager::addEvent( palka::_EventType::WINDOWRESIZE, [this]( palka::EventData e)
+    {
+        Config::WindowSize.x = e.WindowResize.newX;
+        Config::WindowSize.y = e.WindowResize.newY;
+        //Console::fmt_log("Window resized new size is w: {} h: {}", Console::info, size.x, size.y);
+    });
     palka::EventManager::addEvent(palka::KBoardEvent::KeyPressed(GLFW_KEY_GRAVE_ACCENT), [this](palka::EventData e)
     {
         console_open = !console_open;

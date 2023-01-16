@@ -23,7 +23,7 @@ namespace palka
 
             palka::VertArray array;
             for(auto& e: plane)
-                array.add(e);
+                array.add(Vertex(e, Color(193, 163, 255)));
 
             vao.create(array.getSize());
             vao.bind();

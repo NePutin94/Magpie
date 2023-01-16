@@ -29,6 +29,7 @@ namespace Magpie
             std::vector<T2> Y;
         };
         bool solveDone = false;
+        bool hasSolution = false;
         //MatrixStorage<T> input;
         GraphicMet2D<T> solver;
 
@@ -45,18 +46,17 @@ namespace Magpie
         float delta = 0;
         palka::Vec2<double> vec;
         bool file_browser_op = false;
-        double resultValue;
         ImGui::FileManager_Context c;
-
+        double resultValue;
+        float offset = 0;
+        float maxDelta;
+        bool animation = true;
+        std::vector<double> unionPointsx;
+        std::vector<double> unionPointsy;
+        palka::Vec2f scale;
     public:
-        GraphicalMethodView(palka::Vec2f pos, palka::Vec2f size, MatrixStorage<T> input, bool open = true,
-                            ImGuiWindowFlags w_flag = ImGuiWindowFlags_None)
-                : UiView("GraphicalMethodView", pos, size, open, w_flag), c("./", true)
-        {
-        }
-
-        GraphicalMethodView(std::string name, palka::Vec2f size)
-                : UiView(name, size), c("./", true)
+        GraphicalMethodView(std::string name, palka::Vec2f scale)
+                : UiView(name, Config::WindowSize * scale), c("./", true), scale(scale)
         {
         }
 
@@ -64,18 +64,19 @@ namespace Magpie
 
         void render(palka::Window& w) override
         {
+            size = Config::WindowSize * scale;
             ImGui::SetNextWindowPos(ImVec2((Config::WindowSize.x - (size.x)) / 2,
                                            (Config::WindowSize.y - (size.y)) / 2), ImGuiCond_Always, {0, 0});
             if(ImGui::Begin(name.c_str(), &open, win_flag))
             {
-                ImGui::SetWindowSize({size.x, size.y});
+                ImGui::SetWindowSize(ImVec2{size.x, size.y});
 
-                ImGui::SliderFloat("animation delta", &delta, -10.f, 10.f);
+                if(ImGui::SliderFloat("delta", &delta, 0, maxDelta))
+                    animation = false;
                 if(ImGui::Button("Solve"))
                 {
                     auto data = storage->getData<T>();
                     solver.init(data, data.columns_count() - 2, data.rows_count() - 1, storage->ptype);
-                    //solver.init(input, input.columns_count() - 2, input.rows_count() - 1);
                     auto res = solver.solve();
                     auto u = res.getVisualUnion();
                     Union.X = u.first;
@@ -84,52 +85,65 @@ namespace Magpie
                     tagetPlot.X = res2.first;
                     tagetPlot.Y = res2.second;
                     tagetPlotAnim = tagetPlot;
-                    auto t_vec = -res.plot_perpendicular.getGrad().convert();
-                    vec = {(double)t_vec.x,(double)t_vec.y};
+                    auto t_vec = (storage->ptype == DataStorage::Minimization) ?
+                                 -res.plot_perpendicular.getGrad().convert() :
+                                 res.plot_perpendicular.getGrad().convert();
+                    vec = {(double) t_vec.x, (double) t_vec.y};
                     GradVec.X = {0, vec.x};
                     GradVec.Y = {0, vec.y};
                     result = res.getResPoint();
+                    auto start_point = result / palka::Vec2<double>{2.f, 2.f};
+                    double l = glm::distance({0.f, 0.f}, start_point.convert());
+                    if(l <= 1.f)
+                        l = 7.f;
                     solveDone = true;
                     resultValue = res.getResultValue();
                     auto szX = sqrt(vec.x * vec.x + vec.y * vec.y);
-                    for(int i = 0; i < tagetPlot.X.size(); ++i)
+                    for(auto& p: res.getUnion())
                     {
-                        tagetPlot.X[i] = tagetPlot.X[i] + 10.f * -vec.x / szX;
-                        tagetPlot.Y[i] = tagetPlot.Y[i] + 10.f * -vec.y / szX;
+                        if(p == result)
+                            continue;
+                        unionPointsx.emplace_back(p.x);
+                        unionPointsy.emplace_back(p.y);
                     }
+                    if(res.getType() != GraphicsResult<T>::Type::openInfinity)
+                    {
+                        for(int i = 0; i < tagetPlot.X.size(); ++i)
+                        {
+                            tagetPlot.X[i] = tagetPlot.X[i] + l * -vec.x / szX;
+                            tagetPlot.Y[i] = tagetPlot.Y[i] + l * -vec.y / szX;
+                        }
 
-                    GradVec.X[0] = GradVec.X[0] + 10.f * -vec.x / szX;
-                    GradVec.Y[0] = GradVec.Y[0] + 10.f * -vec.y / szX;
+                        GradVec.X[0] = GradVec.X[0] + l * -vec.x / szX;
+                        GradVec.Y[0] = GradVec.Y[0] + l * -vec.y / szX;
 
-                    GradVec.X[1] = GradVec.X[1] + 10.f * -vec.x / szX;
-                    GradVec.Y[1] = GradVec.Y[1] + 10.f * -vec.y / szX;
+                        GradVec.X[1] = GradVec.X[1] + l * -vec.x / szX;
+                        GradVec.Y[1] = GradVec.Y[1] + l * -vec.y / szX;
 
-                    GradVecAnim = GradVec;
-                    tagetPlotAnim = tagetPlot;
+                        offset = l / 5;
+                        maxDelta = 3 * l;
+                        GradVecAnim = GradVec;
+                        tagetPlotAnim = tagetPlot;
+                        hasSolution = true;
+                    }
                 }
-
-                file_browser_op = ImGui::Button("Save");
 
                 if(solveDone)
                 {
-                    c.setOpen(file_browser_op);
-                    if(auto res = ImGui::FileManager(c); res.first)
-                    {
-                        solver.save(c.getPath());
-                    }
                     auto actualSize = ImGui::GetWindowContentRegionMax();
                     auto pad = ImGui::GetStyle().WindowPadding;
                     if(ImGui::BeginChild("Plot", ImVec2{actualSize.x - pad.x - 40.f, actualSize.y} * ImVec2{1, 0.6}))
                     {
-                        if(ImPlot::BeginPlot("My Plot", ImVec2{actualSize.x - pad.x - 40.f, actualSize.y} * ImVec2{1, 0.6}, ImPlotFlags_Equal))
+                        if(ImPlot::BeginPlot("Result", ImVec2{actualSize.x - pad.x - 40.f, actualSize.y} * ImVec2{1, 0.6}, ImPlotFlags_Equal))
                         {
                             ImPlot::SetupAxis(ImAxis_X2, "X", ImPlotAxisFlags_AuxDefault);
                             ImPlot::SetupAxis(ImAxis_Y2, "Y", ImPlotAxisFlags_AuxDefault);
                             ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.25f);
-                            ImPlot::PlotLine("My Line Plot", Union.X.data(), Union.Y.data(), Union.X.size());
+                            ImPlot::PlotScatter("Union Points", unionPointsx.data(), unionPointsy.data(), unionPointsx.size());
                             ImPlot::PlotScatter("Result", &result.x, &result.y, 1);
+                            ImPlot::PlotLine("Union", Union.X.data(), Union.Y.data(), Union.X.size());
                             ImPlot::PlotLine("Target Function", tagetPlotAnim.X.data(), tagetPlotAnim.Y.data(), tagetPlotAnim.X.size());
-                            ImPlot::PlotLine("Perp Function", GradVecAnim.X.data(), GradVecAnim.Y.data(), GradVecAnim.X.size());
+                            ImPlot::PlotLine("Gradient", GradVecAnim.X.data(), GradVecAnim.Y.data(), GradVecAnim.X.size());
                             ImPlot::SetAxes(ImAxis_X2, ImAxis_Y2);
                             ImPlot::EndPlot();
                             ImPlot::PopStyleVar();
@@ -138,35 +152,58 @@ namespace Magpie
                     }
                     if(ImGui::CollapsingHeader("Solve results"))
                     {
-                        ImGui::Text("Union points: ");
-                        for(int i = 0; i < Union.X.size(); ++i)
+                        if(hasSolution)
                         {
-                            ImGui::Text("point %i : {%f,%f}", i, Union.X[i], Union.Y[i]);
+                            ImGui::Text("Union points: ");
+                            for(int i = 0; i < Union.X.size(); ++i)
+                                ImGui::Text("Point %i : {%f,%f}", i, Union.X[i], Union.Y[i]);
+                            ImGui::Text("F gradient: {%f, %f}", vec.x, vec.y);
+                            ImGui::Text("X* result: {%f, %f}", result.x, result.y);
+                            ImGui::Text("F* result: %f", resultValue);
+                        } else
+                        {
+                            ImGui::Text("Union points: ");
+                            for(int i = 0; i < Union.X.size(); ++i)
+                                ImGui::Text("Point %i : {%f,%f}", i, Union.X[i], Union.Y[i]);
+                            ImGui::Text("There is no solution to the problem.");
                         }
-                        ImGui::Text("F gradient: {%f, %f}", vec.x, vec.y);
-                        ImGui::Text("X* result: {%f, %f}", result.x, result.y);
-                        ImGui::Text("F* result: %f", resultValue);
                     }
                 }
-
+                navLayout(true);
                 ImGui::End();
+            }
+        }
+
+        void navLayout(bool isReady)
+        {
+            constexpr int b_padding = 40.f;
+            ImVec2 b_size{80.f, 35.f};
+            ImGui::Spacing();
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x * .5f);
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() - b_size.x / 2.f);
+            if(ImGui::Button("Back", b_size))
+            {
+                nextSatet = States::Menu;
+                clearState = true;
+                sceneCallback();
             }
         }
 
         bool check(palka::Vec2<double> p)
         {
             return compare_float<double>((p.x - tagetPlotAnim.X[0]) / (tagetPlotAnim.X[1] - tagetPlotAnim.X[0]),
-                                    (p.y - tagetPlotAnim.Y[0]) / (tagetPlotAnim.Y[1] - tagetPlotAnim.Y[0]), 0.0001);
+                                         (p.y - tagetPlotAnim.Y[0]) / (tagetPlotAnim.Y[1] - tagetPlotAnim.Y[0]), 0.0001);
         }
 
         void update() override
         {
             static bool back = false;
-            if(solveDone)
+            if(solveDone && hasSolution)
             {
-                if(!check(result))
+                if(!check(result) || !animation)
                 {
-                    delta += ImGui::GetIO().DeltaTime * 2;
+                    animation = true;
+                    delta += ImGui::GetIO().DeltaTime * offset;
                     auto szX = std::sqrt(vec.x * vec.x + vec.y * vec.y);
                     for(int i = 0; i < tagetPlot.X.size(); ++i)
                     {

@@ -11,6 +11,7 @@
 #include "SimplexMethodView.h"
 #include "GraphicalMethod3DView.h"
 #include <stack>
+#include "SimplexMethodAllView.h"
 
 namespace Magpie
 {
@@ -365,7 +366,7 @@ namespace Magpie
                     storage.data.get(4, 2) = (int) Sign::EQUAL;
                     storage.data.get(5, 2) = 1;
                     break;
-                case 13: //-24
+                case 13: //-24.2
                     storage.data.alloc_matrix(4, 7);
                     storage.data.get(0, 0) = -2;
                     storage.data.get(1, 0) = 2;
@@ -397,6 +398,24 @@ namespace Magpie
                     storage.data.get(5, 3) = (int) Sign::EQUAL;
                     storage.data.get(6, 3) = 4;
                     break;
+                case 14://3d
+                    storage.data.alloc_matrix(3, 5);
+                    storage.data.get(0, 0) = -1;
+                    storage.data.get(1, 0) = 2;
+                    storage.data.get(2, 0) = -1;
+
+                    storage.data.get(0, 1) = 1;
+                    storage.data.get(1, 1) = 4;
+                    storage.data.get(2, 1) = 1;
+                    storage.data.get(3, 1) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(4, 1) = 5;
+
+                    storage.data.get(0, 2) = 1;
+                    storage.data.get(1, 2) = -2;
+                    storage.data.get(2, 2) = -1;
+                    storage.data.get(3, 2) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(4, 2) = -1;
+                    break;
             }
         }
 
@@ -412,6 +431,12 @@ namespace Magpie
         void updateScene()
         {
             auto st = curr->getState();
+            if(curr->isGoToState())
+            {
+                while(hist.top() != st)
+                    hist.pop();
+                hist.pop();
+            }
             create(st);
         }
 
@@ -425,9 +450,6 @@ namespace Magpie
             curr->setEvents();
         }
 
-        double t()
-        {}
-
         void create(States s, bool save = true)
         {
             if(save && s != States::Back)
@@ -435,36 +457,35 @@ namespace Magpie
             switch(s)
             {
                 case States::Menu:
-                    addView<MenuView>(MenuView{"Menu",
-                                               Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                    addView<MenuView>(MenuView{"Menu", palka::Vec2f{0.9, 0.9}});
                     break;
                 case States::InputNumber:
-                    addView<InputView>(InputView{"InputNumber",
-                                                 Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                    addView<InputView>(InputView{"InputNumber", palka::Vec2f{0.9, 0.9}});
                     break;
                 case States::InputRestriction:
-                    fill(13, globData);
-                    addView<InputMatrix>(InputMatrix{"InputMatrix", Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                    addView<InputMatrix>(InputMatrix{"InputMatrix", palka::Vec2f{0.9, 0.9}});
                     break;
                 case States::InputRestrictionGraph:
-                    addView<MagicInput>(MagicInput{"MagicInput", Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                    addView<MagicInput>(MagicInput{"MagicInput", palka::Vec2f{0.9, 0.9}});
                     break;
                 case States::Back:
                     hist.pop();
-                    create(hist.top(), save = false);
+                    create(hist.top(), false);
                     break;
                 case States::SolverGraphics:
                     switch(globData.type)
                     {
                         case DataStorage::DOUBLE:
                             addView<GraphicalMethodView<double>>(GraphicalMethodView<double>{"GraphicalMethodView",
-                                                                                             Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                                                                                             palka::Vec2f{0.9, 0.9}});
                             break;
                         case DataStorage::FLOAT:
                             addView<GraphicalMethodView<float>>(GraphicalMethodView<float>{"GraphicalMethodView",
-                                                                                           Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                                                                                           palka::Vec2f{0.9, 0.9}});
                             break;
                         case DataStorage::FRACTUS:
+                            addView<GraphicalMethodView<Fractus>>(GraphicalMethodView<Fractus>{"GraphicalMethodView",
+                                                                                               palka::Vec2f{0.9, 0.9}});
                             break;
                     }
                     break;
@@ -473,15 +494,15 @@ namespace Magpie
                     {
                         case DataStorage::DOUBLE:
                             addView<GraphicalMethod3DView<double>>(GraphicalMethod3DView<double>{"GraphicalMethod3DView",
-                                                                                             Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                                                                                                 palka::Vec2f{0.9, 0.9}});
                             break;
                         case DataStorage::FLOAT:
                             addView<GraphicalMethod3DView<float>>(GraphicalMethod3DView<float>{"GraphicalMethod3DView",
-                                                                                             Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                                                                                               palka::Vec2f{0.9, 0.9}});
                             break;
                         case DataStorage::FRACTUS:
                             addView<GraphicalMethod3DView<Fractus>>(GraphicalMethod3DView<Fractus>{"GraphicalMethod3DView",
-                                                                                           Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                                                                                                   palka::Vec2f{0.9, 0.9}});
                             break;
                     }
                     break;
@@ -489,13 +510,13 @@ namespace Magpie
                     switch(globData.type)
                     {
                         case DataStorage::DOUBLE:
-                            addView<SimplexMethodView<double>>(SimplexMethodView<double>{Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                            addView<SimplexMethodView<double>>(SimplexMethodView<double>{palka::Vec2f{0.9, 0.9}});
                             break;
                         case DataStorage::FLOAT:
-                            addView<SimplexMethodView<float>>(SimplexMethodView<float>{Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                            addView<SimplexMethodView<float>>(SimplexMethodView<float>{palka::Vec2f{0.9, 0.9}});
                             break;
                         case DataStorage::FRACTUS:
-                            addView<SimplexMethodView<Fractus>>(SimplexMethodView<Fractus>{Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                            addView<SimplexMethodView<Fractus>>(SimplexMethodView<Fractus>{palka::Vec2f{0.9, 0.9}});
                             break;
                     }
                     break;
@@ -503,13 +524,26 @@ namespace Magpie
                     switch(globData.type)
                     {
                         case DataStorage::DOUBLE:
-                            addView<ArtificialBasisView<double>>(ArtificialBasisView<double>{Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                            addView<ArtificialBasisView<double>>(ArtificialBasisView<double>{palka::Vec2f{0.9, 0.9}});
                             break;
                         case DataStorage::FLOAT:
-                            addView<ArtificialBasisView<float>>(ArtificialBasisView<float>{Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                            addView<ArtificialBasisView<float>>(ArtificialBasisView<float>{palka::Vec2f{0.9, 0.9}});
                             break;
                         case DataStorage::FRACTUS:
-                            addView<ArtificialBasisView<Fractus>>(ArtificialBasisView<Fractus>{Magpie::Config::WindowSize * palka::Vec2f{0.9, 0.9}});
+                            addView<ArtificialBasisView<Fractus>>(ArtificialBasisView<Fractus>{palka::Vec2f{0.9, 0.9}});
+                            break;
+                    }
+                    break;
+                case States::SolverSimplexOnePass:
+                    switch(globData.type)
+                    {
+                        case DataStorage::DOUBLE:
+                            addView<SimplexMethodAllView<double>>(SimplexMethodAllView<double>{palka::Vec2f{0.9, 0.9}});
+                            break;
+                        case DataStorage::FLOAT:
+
+                            break;
+                        case DataStorage::FRACTUS:
                             break;
                     }
 

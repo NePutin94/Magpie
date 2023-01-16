@@ -227,9 +227,15 @@ namespace palka
 namespace glm
 {
     template<class T>
-    auto sqrt(const palka::Vec3 <T>& vec)
+    auto sqrt(const palka::Vec3<T>& vec)
     {
         return palka::Vec3<T>::convertFrom(glm::sqrt(vec.convert()));
+    }
+
+    template<class T>
+    auto sqrt(const palka::Vec2<T>& vec)
+    {
+        return palka::Vec2<T>::convertFrom(glm::sqrt(vec.convert()));
     }
 
     template<class T>
@@ -251,9 +257,21 @@ namespace glm
     }
 
     template<class T>
-    auto distance(const palka::Vec3<T>& vec1, const palka::Vec3<T>& vec2)
+    auto length(const palka::Vec2<T>& vec)
+    {
+        return glm::length(vec.convert());
+    }
+
+    template<class T>
+    T distance(const palka::Vec3<T>& vec1, const palka::Vec3<T>& vec2)
     {
         return glm::distance<3, T, glm::defaultp>(vec1.convert(), vec2.convert());
+    }
+
+    template<class T>
+    T distance(const palka::Vec2<T>& vec1, const palka::Vec2<T>& vec2)
+    {
+        return glm::distance<2, T, glm::defaultp>(vec1.convert(), vec2.convert());
     }
 
     template<class T>

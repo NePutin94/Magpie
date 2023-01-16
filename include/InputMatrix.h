@@ -10,13 +10,37 @@
 #include <imgui_internal.h>
 #include <imgui.h>
 #include "DataStorage.h"
+#include "myImGui.h"
 
 namespace Magpie
 {
     class InputMatrix : public UiView
     {
     private:
+        palka::Vec2f scale;
+        bool file_browser_op = false;
+        ImGui::FileManager_Context c;
         //MatrixStorage<UniversalInput> storage;
+
+        void save(MatrixStorage<double> input, const std::string& path)
+        {
+            nlohmann::json json;
+            auto& inputLayout = json["Input"];
+            for(int i = 0; i < input.columns_count() - 1; ++i)
+                inputLayout["TargetFunc"].emplace_back(input.get(i, 0));
+
+            for(int i = 1; i < input.rows_count(); ++i)
+            {
+                auto& lim = inputLayout["Limitations"][fmt::format("Lim_{}", i)];
+                for(int j = 0; j < input.columns_count(); ++j)
+                    lim.emplace_back(input.get(j, i));
+            }
+
+            std::ofstream out(path);
+            out << json.dump(4);
+            out.close();
+        }
+
         void layout2(const char* label, double& val, int col)
         {
             auto label_sz = ImGui::CalcTextSize("value");
@@ -188,7 +212,7 @@ namespace Magpie
             auto curr_wnd = ImGui::GetCurrentWindow();
             auto contentRect = curr_wnd->ContentRegionRect;
             ImVec2 center_local = contentRect.GetCenter() - curr_wnd->Pos;
-            static int item_current_idx = (int)storage->ptype;
+            static int item_current_idx = (int) storage->ptype;
             const char* combo_preview_value = storage->problemType[item_current_idx].data();
             ImGui::SetCursorPosX(center_local.x - 150 / 2.f);
             ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 40);
@@ -211,7 +235,6 @@ namespace Magpie
             }
             ImGui::PopItemWidth();
             inputDataLayout3();
-            navLayout(inputDone);
         }
 
         void inputDataLayout3()
@@ -287,14 +310,10 @@ namespace Magpie
         }
 
     public:
-        InputMatrix(palka::Vec2f pos, palka::Vec2f size, int n, int m, bool open = true, ImGuiWindowFlags w_flag = ImGuiWindowFlags_None)
-                : UiView("EnteringRestrictions", pos, size, open, w_flag)
-        {}
 
-        InputMatrix(std::string_view name, palka::Vec2f size)
-                : UiView(name, size)
+        InputMatrix(std::string_view name, palka::Vec2f scale)
+                : UiView(name, Config::WindowSize * scale), scale(scale), c("./", true, ".json")
         {
-
             nextSatet = States::Menu;
         }
 
@@ -302,6 +321,16 @@ namespace Magpie
         {
             constexpr int b_padding = 40.f;
             ImVec2 b_size{80.f, 35.f};
+            ImGui::Spacing();
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x * .5f);
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() - ((b_size.x * 2 + b_padding - 10) / 2.f) / 2.f);
+            file_browser_op = ImGui::Button("Save", b_size);
+            c.setOpen(file_browser_op);
+            if(auto res = ImGui::FileManager(c); res.first)
+            {
+                auto matrix = storage->getData<double>();
+                save(matrix, res.second);
+            }
             ImGui::Spacing();
             ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x * .5f);
             ImGui::SetCursorPosX(ImGui::GetCursorPosX() - b_size.x - b_padding / 2.f);
@@ -328,6 +357,7 @@ namespace Magpie
 
         void render(palka::Window& w) override
         {
+            size = Config::WindowSize * scale;
             ImGui::SetNextWindowPos(ImVec2((Config::WindowSize.x - (size.x)) / 2,
                                            (Config::WindowSize.y - (size.y)) / 2), ImGuiCond_Always, {0, 0});
             ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoMove;
@@ -336,83 +366,9 @@ namespace Magpie
             window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
             window_flags |= ImGuiWindowFlags_NoFocusOnAppearing;
             ImGui::Begin(name.c_str(), &open, window_flags);
-            ImGui::SetWindowSize({size.x, size.y});
-
+            ImGui::SetWindowSize(ImVec2{size.x, size.y});
             inputLayout();
-
-//            ImGui::Text("f = c_1*x_1 + x_2*x_2 + ... + c_n*x_n");
-//            if(ImGui::BeginTable("##table1", storage->data.columns_count() - 2, ImGuiTableFlags_SizingStretchProp))
-//            {
-//                ImGui::TableNextRow();
-//                for(int column = 0; column < storage->data.columns_count() - 2; ++column)
-//                {
-//                    ImGui::PushID(column);
-//                    ImGui::TableNextColumn();
-//                    std::string label = "x" + std::to_string(column);
-//                    layout_universal(label.c_str(), storage->data.get(column, 0), column);
-//                    ImGui::PopID();
-//                }
-//                ImGui::EndTable();
-//            }
-
-//            constexpr int cell_height = 60; //stores the height of the table element,
-//            // this is a constant value, but it is different for different table elements
-//            const float textPaddingY = 10.f;
-//            auto curr_wnd = ImGui::GetCurrentWindow();
-//            auto contentRect = curr_wnd->ContentRegionRect;
-//            palka::Vec2f sz = {contentRect.GetWidth(), contentRect.GetHeight()};
-//            //  ImVec2 center = contentRect.GetCenter();
-//            ImVec2 center_local = contentRect.GetCenter() - curr_wnd->Pos;
-//            ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
-//            ImVec2 TextPos{center_local.x - ImGui::CalcTextSize("a_1*x_1 + a_2*x_2 + ... + a_n*x_n [>=,=,<=] B").x / 2.f,
-//                           ImGui::GetCursorPosY() + textPaddingY};
-//            ImGui::SetCursorPos(TextPos);
-//            ImGui::Text("a_1*x_1 + a_2*x_2 + ... + a_n*x_n [>=,=,<=] B");
-//            ImVec2 barrier = TextPos + ImVec2{0, 60.f};
-//
-//            if(auto pos = center_local.y - cell_height * storage->data.rows_count() / 2.f; barrier.y < pos) //center, 3 -> row count
-//                ImGui::SetCursorPosY(center_local.y - cell_height * storage->data.rows_count() / 2.f);
-//            else
-//                ImGui::SetCursorPosY(barrier.y);
-//
-//            int id = 0;
-//            if(ImGui::BeginTable("Layout", storage->data.columns_count(), flags, {}))
-//            {
-//                auto t = ImGui::GetCurrentTable();
-//                for(int row = 1; row < storage->data.rows_count(); row++)
-//                {
-//                    ImGui::TableNextRow(ImGuiTableRowFlags_None, cell_height);
-//                    for(int column = 0; column < storage->data.columns_count() - 2; column++)
-//                    {
-//                        ImGui::TableNextColumn();
-//                        static int c = 0;
-//                        ImGui::PushID(id++);
-//                        layout_universal("value", storage->data.get(column, row), column);
-//                        ImGui::PopID();
-//                    }
-//                    ImGui::TableNextColumn();
-//                    ImGui::PushID(id++);
-//                    layout_sign_universal("##sign", storage->data.get(storage->data.columns_count() - 2, row), 0);
-//
-//                    ImGui::TableNextColumn();
-//                    layout_universal("asd", storage->data.get(storage->data.columns_count() - 1, row), 4);
-//                    ImGui::PopID();
-//                }
-//
-//                ImGui::EndTable();
-//                ImGui::GetForegroundDrawList()->AddRect(t->OuterRect.Min, t->OuterRect.Max, IM_COL32(0, 255, 255, 255));
-//            }
-            //      ImGui::PopStyleVar();
-//            if(ImGui::Button("next"))
-//                sceneCallback();
-//            if(ImGui::Button("back"))
-//            {
-//                nextSatet = States::Back;
-//                sceneCallback();
-//            }
-            //ImGui::GetForegroundDrawList()->AddRect(contentRect.Min, contentRect.Max, IM_COL32(255, 0, 255, 255));
-            //ImGui::GetForegroundDrawList()->AddCircle(center, 4, IM_COL32(255, 255, 0, 255));
-
+            navLayout(inputDone);
             ImGui::End();
         }
 

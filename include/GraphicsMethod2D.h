@@ -26,7 +26,8 @@ namespace Magpie
         enum Type
         {
             closed,
-            open
+            open,
+            openInfinity
         };
         enum Result
         {
@@ -53,6 +54,14 @@ namespace Magpie
                                                                                               type(t), target_plot(target_plot),
                                                                                               plot_perpendicular(plot_perpendicular)
         {}
+
+        std::vector<palka::Vec2<double>> getUnion() const
+        {
+            std::vector<palka::Vec2<double>> UnionDouble;
+            for(auto& vec: Union)
+                UnionDouble.emplace_back((double) vec.x, (double) vec.y);
+            return UnionDouble;
+        }
 
         std::pair<std::vector<double>, std::vector<double>> getVisualUnion()
         {
@@ -87,6 +96,11 @@ namespace Magpie
                 Y.emplace_back((double) vec.y);
             }
             return {X, Y};
+        }
+
+        auto getType()
+        {
+            return type;
         }
 
         palka::Vec2<double> getResPoint()
@@ -126,45 +140,11 @@ namespace Magpie
         }
     };
 
-    class TestGetBazis
+    class ExcludeVariables
     {
     public:
-        TestGetBazis()
+        ExcludeVariables()
         {}
-
-
-        void init(int var_count, int limits)
-        {
-//            std::vector<std::pair<int, short>> new_vars; //saves the string in which the new variable will be added
-//            for(int i = 1; i < limits; ++i)
-//            {
-//                if(auto s = (Sign) data.get(var_count - 1, i); s != Sign::EQUAL)
-//                    new_vars.emplace_back(i, (s == Sign::LESSOREQUAL) ? 1 : -1);
-//            }
-//            MatrixStorage<double> kanonical_data(limits, var_count + new_vars.size());
-//            for(int i = 0; i < limits; ++i)
-//            {
-//                int j = 0;
-//                for(; j < var_count; ++j)
-//                {
-//                    kanonical_data.get(j, i);
-//                }
-//                for(auto& nv: new_vars)
-//                {
-//                    if(nv.first == i)
-//                    {
-//                        kanonical_data.get(++j, i) = 1;
-//                        if(nv.second == -1)
-//                        {
-//                            for(int _i = 0; _i < var_count; ++_i)
-//                                kanonical_data.get(_i, i) *= -1;
-//                        }
-//                    } else
-//                        kanonical_data.get(++j, i) = 0;
-//                }
-//            }
-//            data = kanonical_data;
-        }
 
         template<class T>
         auto solver(std::vector<std::vector<T>> matrix, std::set<int> vars)
@@ -196,28 +176,6 @@ namespace Magpie
 
                 row++;
             }
-//            for(int col = 0, col2 = 0; col < matrix[0].size(); ++col)
-//            {
-//                if(vars.contains(col))
-//                    continue;
-//                if(col2 == matrix.size() - 1)
-//                    break;
-//                T a = matrix[col2][col];
-//                if(abs(a) != 1)
-//                {
-//                    for(T& j: matrix[col2])
-//                        j = j / a;
-//                }
-//
-//                for(int i = 0; i < matrix.size(); ++i)
-//                {
-//                    if(i == col) continue;
-//                    auto b = matrix[i][col];
-//                    for(int j = 0; j < matrix[0].size(); ++j)
-//                        matrix[i][j] -= b * matrix[col2][j];
-//                }
-//                col2++;
-//            }
 
             bool isIdentity = true;
             row = 0;
@@ -547,7 +505,8 @@ namespace Magpie
             type = t;
             if(var_count > 2)
             {
-                TestGetBazis test;
+                palka::Console::addLog("[GraphicalMethod] var_count > 2 init [ExcludeVariables] algorithm", palka::Console::logType::info);
+                ExcludeVariables test;
                 auto res = test.solver(data.getMatrix());
                 MatrixStorage<T> data2;
                 data2.setMatrix(res.second);
@@ -590,7 +549,7 @@ namespace Magpie
             {
                 case DataStorage::Maximization:
                 {
-                    res = std::numeric_limits<T>::min();
+                    res = -std::numeric_limits<T>::max();
                     for(auto& vec: Union) //find min point and value
                     {
                         if(auto val = F.a * vec.x + F.b * vec.y + F.c;val > res)
@@ -824,8 +783,15 @@ namespace Magpie
             }
             std::vector<palka::Vec2<T>> trg_plot = {{F.getValueAtXC(-20), -20},
                                                     {F.getValueAtXC(20),  20}};
-            if(!breakPoints.empty() && breakPoints.size() <= 2)
+            if(!breakPoints.empty())
             {
+                palka::Console::addLog("[GraphicalMethod] holes are found in the set", palka::Console::logType::info);
+                if(breakPoints.size() > 2)
+                {
+                    palka::Console::addLog("[GraphicalMethod] there are more holes than can be processed", palka::Console::logType::error);
+                    return result = GraphicsResult<T>(GraphicsResult<T>::openInfinity, Union, palka::Vec2<T>(), 0, trg_plot, F);
+                }
+
                 std::vector<std::pair<Plot<T>, palka::Vec2<T>>> pos;
                 for(auto& h: breakPoints)
                 {
@@ -898,7 +864,12 @@ namespace Magpie
 
                 auto vec1 = pos[0].second - breakPoints[0].p;
                 auto vec2 = pos[1].second - breakPoints[1].p;
-                auto vec = palka::Vec2<T>{-F.a, -F.b};
+                auto vec = palka::Vec2<T>{0, 0};
+
+                if(type == DataStorage::Minimization)
+                    vec = palka::Vec2<T>{-F.a, -F.b};
+                else
+                    vec = palka::Vec2<T>{F.a, F.b};
 
                 auto check1 = glm::dot(vec, vec1);
                 auto check2 = glm::dot(vec, vec2);
@@ -906,7 +877,7 @@ namespace Magpie
 
                 if(check1 > 0 || check2 > 0) //the solution goes on infinity
                 {
-                    return result = GraphicsResult<T>(GraphicsResult<T>::open, Union, palka::Vec2<T>(), 0, trg_plot, F);
+                    return result = GraphicsResult<T>(GraphicsResult<T>::openInfinity, Union, palka::Vec2<T>(), 0, trg_plot, F);
                 } else//there is 1 solution
                 {
                     auto resValue = findSolution();
@@ -915,7 +886,6 @@ namespace Magpie
             }
 
             auto resValue = findSolution();
-
             return result = GraphicsResult<T>(GraphicsResult<T>::closed, Union, resValue.first, resValue.second, trg_plot, F);
             return result;
         }

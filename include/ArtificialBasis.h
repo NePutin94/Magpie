@@ -60,23 +60,26 @@ namespace Magpie
             return true;
         }
 
+        static void reset()
+        {
+            arti_basis_iters = 0;
+        }
+
         void updateState(ArtificialBasisState siState)
         {
             switch(siState)
             {
                 case ArtificialBasisState::WAIT_DATA:
-                    arti_basis_iters = 0;
+                    arti_basis_iters = -1;
                     break;
                 case ArtificialBasisState::CANONICAL_FORM:
-                    arti_basis_iters = 0;
                     answer_str = "canonical form";
                     break;
                 case ArtificialBasisState::SIXPLEX_MET:
-                    arti_basis_iters = 0;
                     answer_str = "simplex method iteration";
                     break;
                 case ArtificialBasisState::SELECT_SUPPORT_ELEM:
-                    arti_basis_iters = 0;
+                    arti_basis_iters++;
                     answer_str = "selection support elem";
                     break;
                 case ArtificialBasisState::SELECT_ARTI_SUPPORT_ELEM:
@@ -84,14 +87,15 @@ namespace Magpie
                     answer_str = "selection support elem";
                     break;
                 case ArtificialBasisState::DONE_HAS_RESULT:
-                    arti_basis_iters = 0;
+                    arti_basis_iters = -1;
                     answer_str = "Result";
                     break;
                 case ArtificialBasisState::DONE_CANT_SOLVE:
-                    arti_basis_iters = 0;
+                    arti_basis_iters = -1;
                     answer_str = "Can't solve";
                     break;
                 case ArtificialBasisState::BAZIS_FIND:
+                    arti_basis_iters = -1;
                     answer_str = "find bazis";
                     break;
             }
@@ -386,15 +390,20 @@ namespace Magpie
             return SimplexResult3<T>();
         }
 
-        SimplexResultIterative3<T> init(const MatrixStorage<T>& data)
+        SimplexResultIterative3<T> init(const MatrixStorage<T>& data, DataStorage::ProblemType type)
         {
 #ifdef TracyProfiler
             ZoneScoped;
 #endif
             input = data;
+            if(type == DataStorage::Maximization)
+                for(int i = 0; i < input.columns_count(); ++i)
+                {
+                    input.get(i, 0) = -input.get(i, 0);
+                }
             vars_count = input.columns_count() - 2;
             limit_count = input.rows_count() - 2;
-            this->data = data.dropRow(0);
+            this->data = input.dropRow(0);
             for(int i = 0; i < input.columns_count() - 1; ++i)
                 target_function.emplace_back(input.get(i, 0));
             alg_state = ArtificialBasisState::CANONICAL_FORM;
@@ -626,7 +635,10 @@ namespace Magpie
         {
             data = data.dropRow(data.rows_count() - 2);
             if(!positiveDeltaCheck())
+            {
+                SimplexResultIterative3<T>::reset();
                 alg_state = ArtificialBasisState::SELECT_SUPPORT_ELEM;
+            }
             else
                 alg_state = ArtificialBasisState::DONE_HAS_RESULT;
         }

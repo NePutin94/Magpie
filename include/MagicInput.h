@@ -203,28 +203,65 @@ namespace Magpie
             }
         }
 
+        void navLayout(bool isReady)
+        {
+            constexpr int b_padding = 40.f;
+            ImVec2 b_size{80.f, 35.f};
+            ImGui::Spacing();
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x * .5f);
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() - b_size.x - b_padding / 2.f);
+            if(ImGui::Button("Back", b_size))
+            {
+                nextSatet = States::Back;
+                sceneCallback();
+            }
+            ImGui::SameLine();
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + b_padding / 2.f);
+            if(!isReady)
+            {
+                ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+                ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+            }
+            if(ImGui::Button("Next", b_size))
+            {
+                storage->data.alloc_matrix(MyStorage.rows_count(), MyStorage.columns_count());
+                for(int i = 0; i < MyStorage.rows_count(); ++i)
+                    for(int j = 0; j < MyStorage.columns_count(); ++j)
+                        storage->data.get(j, i) = MyStorage.get(j, i);
+                nextSatet = States::Menu;
+                sceneCallback();
+            }
+            if(!isReady)
+            {
+                ImGui::PopItemFlag();
+                ImGui::PopStyleVar();
+            }
+        }
+
+        palka::Vec2f scale;
     public:
         MagicInput() : MyStorage(0, 0), SetIsClosed(false), StorageOnceInit(false)
         {}
 
-        MagicInput(std::string_view name, palka::Vec2f size)
-                : UiView(name, size), MyStorage(0, 0), SetIsClosed(false), StorageOnceInit(false)
+        MagicInput(std::string_view name, palka::Vec2f scale)
+                : UiView(name, Config::WindowSize * scale), MyStorage(0, 0), SetIsClosed(false), StorageOnceInit(false), scale(scale)
         {}
 
         void render(palka::Window& w) override
         {
+            size = Config::WindowSize * scale;
             ImGui::SetNextWindowPos(ImVec2((Config::WindowSize.x - (size.x)) / 2,
                                            (Config::WindowSize.y - (size.y)) / 2), ImGuiCond_Always, {0, 0});
             if(ImGui::Begin("Magic Input"))
             {
-                ImGui::SetWindowSize({size.x, size.y});
+                ImGui::SetWindowSize(ImVec2{size.x, size.y});
                 static int prec = 1;
                 if(!SetIsClosed)
                     ImGui::DragInt("Precision", &prec, 0.4f, 0, 4);
                 else
                     ImGui::DragScalar("C", ImGuiDataType_::ImGuiDataType_Double, reinterpret_cast<void*>(&Func.c), 1 / std::pow(10, (double) prec));
 
-                if(ImPlot::BeginPlot("Create union"))
+                if(ImPlot::BeginPlot("Create union", {-1.f, size.y * 0.6f}))
                 {
                     if(ImPlot::IsPlotHovered() && ImGui::IsMouseClicked(0) && ImGui::GetIO().KeyCtrl && !SetIsClosed)
                     {
@@ -319,8 +356,12 @@ namespace Magpie
 
                 if(SetIsClosed) //when set is closed
                 {
+                    constexpr int cell_height = 60; //stores the height of the table element,
+                    // this is a constant value, but it is different for different table elements
+                    const float textPaddingY = 65.f;
                     ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 40.f);
-                    if(ImGui::BeginChild("Edit result"))
+                    auto table_sz = ImVec2{MyStorage.columns_count() * 150.f, static_cast<float>((MyStorage.rows_count() - 1) * cell_height)};
+                    if(ImGui::BeginChild("Edit result", {0, table_sz.y + 90}))
                     {
                         ImGui::Text("f = c_1*x_1 + x_2*x_2 + ... + c_n*x_n");
                         if(ImGui::BeginTable("##table1", MyStorage.columns_count() - 2, ImGuiTableFlags_SizingStretchProp))
@@ -340,20 +381,19 @@ namespace Magpie
                             }
                             ImGui::EndTable();
                         }
-                        constexpr int cell_height = 60; //stores the height of the table element,
-                        // this is a constant value, but it is different for different table elements
-                        const float textPaddingY = 65.f;
+
                         auto curr_wnd = ImGui::GetCurrentWindow();
                         auto contentRect = curr_wnd->ContentRegionRect;
                         palka::Vec2f sz = {contentRect.GetWidth(), contentRect.GetHeight()};
                         //  ImVec2 center = contentRect.GetCenter();
                         ImVec2 center_local = contentRect.GetCenter() - curr_wnd->Pos;
                         ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
+
                         ImVec2 TextPos{center_local.x - ImGui::CalcTextSize("a_1*x_1 + a_2*x_2 + ... + a_n*x_n [>=,=,<=] B").x / 2.f, textPaddingY};
                         ImGui::SetCursorPos(TextPos);
                         ImGui::Text("a_1*x_1 + a_2*x_2 + ... + a_n*x_n [>=,=,<=] B");
                         int id = 0;
-                        if(ImGui::BeginTable("Layout", MyStorage.columns_count(), flags, {}))
+                        if(ImGui::BeginTable("Layout", MyStorage.columns_count(), flags))
                         {
                             for(int row = 1; row < MyStorage.rows_count(); row++)
                             {
@@ -380,18 +420,10 @@ namespace Magpie
 
                             ImGui::EndTable();
                         }
-                        if(ImGui::Button("Next", {110.f, 36.f}))
-                        {
-                            storage->data.alloc_matrix(MyStorage.rows_count(), MyStorage.columns_count());
-                            for(int i = 0; i < MyStorage.rows_count(); ++i)
-                                for(int j = 0; j < MyStorage.columns_count(); ++j)
-                                    storage->data.get(j, i) = MyStorage.get(j, i);
-                            nextSatet = States::Menu;
-                            sceneCallback();
-                        }
                         ImGui::EndChild();
                     }
                 }
+                navLayout(SetIsClosed);
                 ImGui::End();
             }
         }

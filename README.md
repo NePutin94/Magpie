@@ -11,13 +11,13 @@
 
 
 ### Features:
-
-- [X] Graphical method (2D). 
-- [X] Graphical method (3D). 
-- [X] Simplex method. 
-- [X] Artificial basis method. 
-- [X] Step-by-step solution.
 - [X] Solution with different types: ```float, double, simple fractions```.
+  - [X] Graphical method (2D). 
+    - [X] Method of excluding variables.
+  - [X] Graphical method (3D).
+  - [X] Step-by-step solution.
+    - [X] Artificial basis method.
+    - [X] Simplex method.
 - [ ] Saving to a file.
 - [ ] Gomori method.
 - [ ] Solving a dual problem.

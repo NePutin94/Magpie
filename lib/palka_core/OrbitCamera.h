@@ -157,7 +157,6 @@ namespace palka
                 rotatingCamera = false;
             }
 
-            // Check, if user started to move with orbit camera with middle mouse button
             const auto middleMouseButtonState = glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_MIDDLE);
             if(middleMouseButtonState == GLFW_PRESS)
             {
@@ -173,7 +172,6 @@ namespace palka
 
             if(!(!rotatingCamera && !movingCamera))
             {
-                // Only if we're rotating or moving we should calculate delta of mouse movement
                 glfwGetCursorPos(w, &curMousePosX, &curMousePosY);
                 const auto deltaX = static_cast<float>(curMousePosX - prevMousePosX);
                 const auto deltaY = static_cast<float>(curMousePosY - prevMousePosY);

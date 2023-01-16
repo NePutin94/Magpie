@@ -19,6 +19,7 @@ void EventManager::bindEvents(GLFWwindow* w)
     glfwSetCursorPosCallback(w, &EventManager::MouseMotionEventHolder);
     glfwSetKeyCallback(w, &EventManager::KeyBoardEventHolder);
     glfwSetScrollCallback(w, &EventManager::MouseScrollEventHolder);
+    glfwSetWindowSizeCallback(w, &EventManager::WindowResizeEventHolder);
     glfwSetWindowCloseCallback(w, &EventManager::WindowCloseEventHolder);
 }
 

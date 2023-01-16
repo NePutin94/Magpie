@@ -10,6 +10,7 @@
 #include <implot.h>
 #include <fmt/format.h>
 #include "config.h"
+#include "imgui_internal.h"
 
 namespace Magpie
 {
@@ -17,24 +18,37 @@ namespace Magpie
     {
     private:
         States res;
+        palka::Vec2f scale;
+        void navLayout(bool isReady)
+        {
+            constexpr int b_padding = 40.f;
+            ImVec2 b_size{80.f, 35.f};
+            ImGui::Spacing();
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x * .5f);
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() - b_size.x / 2.f);
+            if(ImGui::Button("Back", b_size))
+            {
+                nextSatet = States::Back;
+                sceneCallback();
+            }
+        }
     public:
 
-        MenuView(std::string_view name, palka::Vec2f size) : UiView(name, size)
+        MenuView(std::string_view name, palka::Vec2f scale) : UiView(name, Config::WindowSize * scale), scale(scale)
         {
-
         }
 
         void render(palka::Window& w) override
         {
-            auto menuWindowSz = ImVec2((Config::WindowSize.x - (size.x)) / 2,
-                                       (Config::WindowSize.y - (size.y)) / 2);
-            ImGui::SetNextWindowPos(menuWindowSz, ImGuiCond_Always, {0, 0});
+            size = {Config::WindowSize.x * scale.x, Config::WindowSize.y * scale.y};
+            auto menuWindowPos = ImVec2((Config::WindowSize.x - (size.x)) / 2,
+                                        (Config::WindowSize.y - (size.y)) / 2);
+            ImGui::SetNextWindowPos(menuWindowPos, ImGuiCond_Always, {0, 0});
             if(ImGui::Begin("Menu"))
             {
                 ImGui::SetWindowSize({size.x, size.y});
-
                 static int item_current_idx = 0;
-                constexpr auto itemWidth = 150.f;
+                constexpr auto itemWidth = 230.f;
                 constexpr auto yOffsetConst = 50.f;
                 constexpr auto itemHeight = 36.f;
                 constexpr auto menuButtonSz = ImVec2{itemWidth, 36};
@@ -89,7 +103,14 @@ namespace Magpie
                     nextSatet = States::SolverSimplexArtificialBasis;
                     sceneCallback();
                 }
-
+                ImGui::Spacing();
+                ImGui::SetCursorPosX((ImGui::GetWindowWidth() - itemWidth) / 2.f);
+                if(ImGui::Button("Simplex method (one pass)", menuButtonSz))
+                {
+                    nextSatet = States::SolverSimplexOnePass;
+                    sceneCallback();
+                }
+                navLayout(true);
                 ImGui::End();
             }
         }

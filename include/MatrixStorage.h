@@ -37,7 +37,7 @@ namespace Magpie
         return "";
     }
 
-    inline constexpr int signFromStr(const std::string& s)
+    inline int signFromStr(const std::string& s)
     {
         if (s.find('=') != std::string::npos) {
             return Sign::EQUAL;

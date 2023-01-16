@@ -1,111 +1,3 @@
-#cmake_minimum_required(VERSION 3.21)
-#project(Magpie)
-#
-#set(CMAKE_CXX_STANDARD 20)
-#set(CMAKE_CXX_STANDARD_REQUIRED ON)
-#
-#set(CMAKE_COLOR_DIAGNOSTICS ON)
-#set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
-#if (TracyProfiler AND NOT MSVC)
-#    message(FATAL_ERROR "Tracy profiler can only be used with the msvc compiler")
-#endif ()
-#
-#if (MSVC)
-#    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-#    set(BUILD_SHARED_LIBS TRUE)
-#
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -DDEBUG ")
-#    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG -DTracyProfiler /Ox /Ob2 /Oi /Ot /Zi /OPT:REF /GF /MT ")
-#else ()
-#    if (WIN32)
-#        if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
-#            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -DDEBUG")
-#        else ()
-#            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DDEBUG -mwindows -s")
-#        endif ()
-#    ENDIF ()
-#endif ()
-#
-#IF (UNIX)
-#    if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
-#        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -DDEBUG")
-#    else ()
-#        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -s")
-#    endif ()
-#    set(CMAKE_THREAD_LIBS_INIT "-lpthread")
-#    set(CMAKE_HAVE_THREADS_LIBRARY 1)
-#    set(CMAKE_USE_WIN32_THREADS_INIT 0)
-#    set(CMAKE_USE_PTHREADS_INIT 1)
-#    set(THREADS_PREFER_PTHREAD_FLAG ON)
-#    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-#ENDIF ()
-#
-#
-#file(GLOB Magpie_SRC RELATIVE "${CMAKE_SOURCE_DIR}/" "src/*.cpp")
-#file(GLOB IMGUI_SRC RELATIVE "${CMAKE_SOURCE_DIR}/" "lib/imgui/*.cpp")
-#if (NOT MSVC)
-#    add_executable(Magpie src/main.cpp ${Magpie_SRC} include/config.h include/DataSets.h)
-#else ()
-#    add_executable(Magpie src/main.cpp ${Magpie_SRC} ${IMGUI_SRC} include/config.h include/DataSets.h)
-#endif ()
-#if (MSVC)
-#    set_target_properties(Magpie PROPERTIES
-#            LINK_FLAGS /SUBSYSTEM:CONSOLE
-#            )
-#endif ()
-#add_subdirectory(lib)
-#if (NOT MSVC)
-#    add_subdirectory(tests)
-#endif ()
-#FetchContent_Declare(
-#        tracy
-#        GIT_REPOSITORY https://github.com/wolfpld/tracy.git
-#        GIT_TAG "v0.9"
-#)
-#set(TRACY_NO_VSYNC_CAPTURE ON)
-#FetchContent_MakeAvailable(tracy)
-#
-#FetchContent_Declare(nlohmannjson
-#        GIT_REPOSITORY https://github.com/nlohmann/json.git
-#        GIT_TAG "v3.11.2")
-#set(JSON_BuildTests OFF)
-#FetchContent_MakeAvailable(nlohmannjson)
-#
-#target_include_directories(Magpie PUBLIC lib/palka_core)
-#target_link_libraries(Magpie PUBLIC palka TracyClient nlohmann_json::nlohmann_json)
-#
-#if (NOT MSVC)
-#    add_library(MagpieLib SHARED ${Magpie_SRC})
-#    target_include_directories(MagpieLib PUBLIC lib/palka_core)
-#    target_link_libraries(MagpieLib PUBLIC palka TracyClient nlohmann_json::nlohmann_json)
-#    target_include_directories(MagpieLib PUBLIC .)
-#endif ()
-#
-#add_custom_command(TARGET Magpie POST_BUILD
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:palka> $<TARGET_FILE_DIR:Magpie>
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:RTTR::Core> $<TARGET_FILE_DIR:Magpie>
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:glfw> $<TARGET_FILE_DIR:Magpie>
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:assimp::assimp> $<TARGET_FILE_DIR:Magpie>
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:tinygltf> $<TARGET_FILE_DIR:Magpie>
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:fmt::fmt> $<TARGET_FILE_DIR:Magpie>
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:TracyClient> $<TARGET_FILE_DIR:Magpie>
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:imgui::imgui> $<TARGET_FILE_DIR:Magpie>
-#
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:palka> "${CMAKE_BINARY_DIR}/tests"
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:fmt::fmt> "${CMAKE_BINARY_DIR}/tests"
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:assimp::assimp> "${CMAKE_BINARY_DIR}/tests"
-#
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:RTTR::Core> "${CMAKE_BINARY_DIR}/tests"
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:glfw> "${CMAKE_BINARY_DIR}/tests"
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:tinygltf> "${CMAKE_BINARY_DIR}/tests")
-#
-#if (NOT MSVC)
-#    add_custom_command(TARGET Magpie POST_BUILD
-#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:MagpieLib> "${CMAKE_BINARY_DIR}/tests")
-#endif ()
-#
-
-
 cmake_minimum_required(VERSION 3.21)
 project(Magpie)
 
@@ -121,8 +13,12 @@ endif ()
 if (MSVC)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
     set(BUILD_SHARED_LIBS TRUE)
-
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -DDEBUG ")
+    if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -DDEBUG ")
+    else ()
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MD /O1 /Ob1 /DNDEBUG")
+    endif ()
     #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG -DTracyProfiler /Ox /Ob2 /Oi /Ot /Zi /OPT:REF /GF /MT ")
 else ()
     if (WIN32)
@@ -150,36 +46,6 @@ IF (UNIX)
 ENDIF ()
 
 file(GLOB Magpie_SRC RELATIVE "${CMAKE_SOURCE_DIR}/" "src/*.cpp")
-
-if (MSVC)
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-    set(BUILD_SHARED_LIBS TRUE)
-    #    if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
-    #        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG /DEBUG /INCREMENTAL:NO /O1 ")
-    #    else ()
-    #        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG /Ox /Ob2 /Oi /Ot /Zi /OPT:REF /GF /MT ")
-    #    endif ()
-else ()
-    if (WIN32)
-        if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
-        else ()
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -mwindows -s")
-        endif ()
-    ENDIF ()
-endif ()
-IF (UNIX)
-    if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
-    else ()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -s ")
-    endif ()
-    set(CMAKE_THREAD_LIBS_INIT "-lpthread")
-    set(CMAKE_HAVE_THREADS_LIBRARY 1)
-    set(CMAKE_USE_WIN32_THREADS_INIT 0)
-    set(CMAKE_USE_PTHREADS_INIT 1)
-    set(THREADS_PREFER_PTHREAD_FLAG ON)
-ENDIF ()
 
 include(FetchContent)
 
@@ -272,22 +138,15 @@ FetchContent_Declare(nlohmannjson
 set(JSON_BuildTests OFF)
 FetchContent_MakeAvailable(nlohmannjson)
 
-
 add_subdirectory(lib/glad)
-#add_subdirectory(imgui_glfw)
 add_subdirectory(lib/imgui)
 add_subdirectory(lib/stb)
-#add_subdirectory(palka_core)
-
-#add_library(palka SHARED PalkaCore)
-#target_link_libraries(palka PUBLIC PalkaCore)
 
 file(GLOB CORE_SRC RELATIVE "${CMAKE_SOURCE_DIR}/" "lib/palka_core/*.cpp")
 file(GLOB_RECURSE GLAD_SRC RELATIVE "${CMAKE_SOURCE_DIR}/" "lib/glad/src/*.c")
 set(HEADER_SOURCE lib/palka_core/ReflectionDebug.h lib/palka_core/Drawable.h)
 set(GLAD_INCLUDE "lib/glad/include")
 find_package(OpenGL REQUIRED)
-#IMGUI_GLFW
 
 if (WIN32)
     file(GLOB IMGUI_SRC RELATIVE "${CMAKE_SOURCE_DIR}/" "lib/imgui/*.cpp")
@@ -299,6 +158,13 @@ endif ()
 
 if (WIN32)
     target_link_libraries(Magpie PUBLIC ${OPENGL_LIBRARIES} TracyClient nlohmann_json::nlohmann_json tinygltf EnTT::EnTT assimp::assimp imgui::imgui fmt::fmt glm::glm glfw RTTR::Core GLAD STB imm32 ws2_32 dwmapi)
+    if (MSVC)
+        set_target_properties(
+                Magpie
+                PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE"
+                LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup"
+        )
+    endif ()
 endif ()
 IF (UNIX)
     target_link_libraries(Magpie PUBLIC ${OPENGL_LIBRARIES} TracyClient nlohmann_json::nlohmann_json tinygltf EnTT::EnTT assimp::assimp fmt::fmt glm::glm glfw RTTR::Core STB imgui::imgui GLAD)
@@ -316,69 +182,3 @@ add_custom_command(TARGET Magpie POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:fmt::fmt> $<TARGET_FILE_DIR:Magpie>
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:TracyClient> $<TARGET_FILE_DIR:Magpie>
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:imgui::imgui> $<TARGET_FILE_DIR:Magpie>)
-
-
-#
-#if (NOT MSVC)
-#    add_executable(Magpie src/main.cpp ${Magpie_SRC} include/config.h include/DataSets.h)
-#else ()
-#    add_executable(Magpie src/main.cpp ${Magpie_SRC} ${IMGUI_SRC} include/config.h include/DataSets.h)
-#endif ()
-#if (MSVC)
-#    set_target_properties(Magpie PROPERTIES
-#            LINK_FLAGS /SUBSYSTEM:CONSOLE
-#            )
-#endif ()
-#add_subdirectory(lib)
-#if (NOT MSVC)
-#    add_subdirectory(tests)
-#endif ()
-#FetchContent_Declare(
-#        tracy
-#        GIT_REPOSITORY https://github.com/wolfpld/tracy.git
-#        GIT_TAG "v0.9"
-#)
-#set(TRACY_NO_VSYNC_CAPTURE ON)
-#FetchContent_MakeAvailable(tracy)
-#
-#FetchContent_Declare(nlohmannjson
-#        GIT_REPOSITORY https://github.com/nlohmann/json.git
-#        GIT_TAG "v3.11.2")
-#set(JSON_BuildTests OFF)
-#FetchContent_MakeAvailable(nlohmannjson)
-#
-#target_include_directories(Magpie PUBLIC lib/palka_core)
-#target_link_libraries(Magpie PUBLIC palka TracyClient nlohmann_json::nlohmann_json)
-#
-#if (NOT MSVC)
-#    add_library(MagpieLib SHARED ${Magpie_SRC})
-#    target_include_directories(MagpieLib PUBLIC lib/palka_core)
-#    target_link_libraries(MagpieLib PUBLIC palka TracyClient nlohmann_json::nlohmann_json)
-#    target_include_directories(MagpieLib PUBLIC .)
-#endif ()
-#
-#add_custom_command(TARGET Magpie POST_BUILD
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:palka> $<TARGET_FILE_DIR:Magpie>
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:RTTR::Core> $<TARGET_FILE_DIR:Magpie>
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:glfw> $<TARGET_FILE_DIR:Magpie>
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:assimp::assimp> $<TARGET_FILE_DIR:Magpie>
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:tinygltf> $<TARGET_FILE_DIR:Magpie>
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:fmt::fmt> $<TARGET_FILE_DIR:Magpie>
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:TracyClient> $<TARGET_FILE_DIR:Magpie>
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:imgui::imgui> $<TARGET_FILE_DIR:Magpie>
-#
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:palka> "${CMAKE_BINARY_DIR}/tests"
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:fmt::fmt> "${CMAKE_BINARY_DIR}/tests"
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:assimp::assimp> "${CMAKE_BINARY_DIR}/tests"
-#
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:RTTR::Core> "${CMAKE_BINARY_DIR}/tests"
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:glfw> "${CMAKE_BINARY_DIR}/tests"
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:tinygltf> "${CMAKE_BINARY_DIR}/tests")
-#
-#if (NOT MSVC)
-#    add_custom_command(TARGET Magpie POST_BUILD
-#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:MagpieLib> "${CMAKE_BINARY_DIR}/tests")
-#endif ()
-
-
-

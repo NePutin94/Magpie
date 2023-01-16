@@ -81,9 +81,8 @@ std::pair<bool, std::string> ImGui::FileManager(FileManager_Context& context)
     static bool file_add = false;
     if(context.open)
     {
-        ImGui::SetNextWindowFocus();
-        if(!ImGui::Begin(("File Manager ##" + std::to_string(context.curr_id)).c_str(), &context.open))
-            ImGui::End();
+        ImGui::Begin(("File Manager ##" + std::to_string(context.curr_id)).c_str(), &context.open);
+
         context.windowIsFocus = ImGui::IsWindowFocused(ImGuiFocusedFlags_ChildWindows);
 
         ImVec2 os = ImGui::GetCursorScreenPos();

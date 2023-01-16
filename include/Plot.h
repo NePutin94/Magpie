@@ -100,9 +100,9 @@ namespace Magpie
         auto intersection(const Plot& other) const
         {
             T det = a * other.b - other.a * b;
-            if(det == 0)
+            if(det == (T)0)
                 return palka::Vec2<T>{std::numeric_limits<T>::min(), std::numeric_limits<T>::min()};
-            if(b == 0)
+            if(b == (T)0)
                 return other.intersection(*this);
             auto xt = -a * other.b;
             auto xt2 = -other.a * b;
@@ -116,7 +116,7 @@ namespace Magpie
         std::vector<palka::Vec2<T>> generateAAB2(const palka::Vec2<T>& pointOnPlot, T offset = 1, int count = 1) const
         {
             std::vector<palka::Vec2<T>> p1;
-            if(a == 0)
+            if(a == (T)0)
             {
                 for(int i = 1; i < count + 1; ++i)
                 {
@@ -126,14 +126,14 @@ namespace Magpie
                     p1.emplace_back(max.x, getValueAtY(max.x));
                     p1.emplace_back(min.x, getValueAtY(min.x));
                 }
-            } else if(b == 0)
+            } else if(b == (T)0)
             {
                 for(int i = 1; i < count + 1; ++i)
                 {
                     auto max = pointOnPlot + palka::Vec2<T>{offset * i, offset * i};
                     auto min = pointOnPlot + palka::Vec2<T>{-offset * i, -offset * i};
 
-                    if(containsPoint({0, 0}))
+                    if(containsPoint({(T)0, (T)0}))
                     {
                         p1.emplace_back(pointOnPlot.x - offset, max.y);
                         p1.emplace_back(pointOnPlot.x - offset, min.y);
@@ -166,7 +166,7 @@ namespace Magpie
         {
             std::vector<palka::Vec2<T>> p1;
 
-            if(a == 0)
+            if(a == (T)0)
             {
                 for(int i = 1; i < count + 1; ++i)
                 {
@@ -176,7 +176,7 @@ namespace Magpie
                     p1.emplace_back(max.x, getValueAtY(max.x));
                     p1.emplace_back(min.x, getValueAtY(min.x));
                 }
-            } else if(b == 0)
+            } else if(b == (T)0)
             {
                 for(int i = 1; i < count + 1; ++i)
                 {
@@ -222,7 +222,7 @@ namespace Magpie
 
         bool passesOrigin()
         {
-            return (a == 0 || b == 0) ? true : getValueAtY(0) == 0;
+            return (a == 0 || b == 0) ? true : getValueAtY(0) ==(T)0;
         }
 
         T getValue(T x, T y)
@@ -280,6 +280,11 @@ namespace Magpie
         bool operator!=(const Plot3D& other) const
         {
             return !(*this == other);
+        }
+
+        palka::Vec3<T> getGrad()
+        {
+            return glm::normalize(palka::Vec3<T>((T) a, (T) b, (T)c));
         }
 
         palka::Vec3<T> normal() const
