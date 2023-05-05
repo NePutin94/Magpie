@@ -8,3 +8,4 @@ Release/
 build/
 cmake-build-debugmsvc/
 lib/palka_core_2
+lib/Qhull

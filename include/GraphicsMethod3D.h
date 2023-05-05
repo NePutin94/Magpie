@@ -20,7 +20,9 @@
 #include <tracy/Tracy.hpp>
 #include <nlohmann/json.hpp>
 #include <glm/glm.hpp>
-
+#include <libqhullcpp/Qhull.h>
+#include <libqhullcpp/QhullFacetList.h>
+#include <libqhullcpp/QhullVertexSet.h>
 namespace Magpie
 {
 
@@ -200,7 +202,7 @@ namespace Magpie
                         palka::Vec3<T> t2;
                         if(v.isect_plane_plane_to_normal_ray(v2, t1, t2))
                         {
-                            rays.emplace_back(t1, t2);
+                            rays.emplace_back(t1 - t2 * 120.f, t2 + t2 * 120.f);
                         }
                     }
                 }
@@ -233,123 +235,165 @@ namespace Magpie
                 }
             }
 
-            auto find_delte = [](std::vector<palka::Vec3<T>>& points2)
+
+//            auto find_delte = [](std::vector<palka::Vec3<T>>& points2)
+//            {
+//                T maxDist = std::numeric_limits<T>::min();
+//                int pi1 = -1;
+//                int pi2 = -1;
+//                for(int i = 0; i < points2.size(); ++i)
+//                {
+//                    for(int j = i + 1; j < points2.size(); ++j)
+//                    {
+//                        auto& p1 = points2[i];
+//                        auto& p2 = points2[j];
+//                        if(auto d = glm::distance(p1, p2); d > maxDist)
+//                        {
+//                            maxDist = d;
+//                            pi1 = i;
+//                            pi2 = j;
+//                        }
+//                    }
+//                }
+//                return std::vector<palka::Vec3<T>>{points2[pi1], points2[pi2]};
+//            };
+
+            std::vector<palka::Vec3<T>> filtered_p = points;
+            std::vector<double> points_3D;
+
+            for(auto& pp: filtered_p)
             {
-                T maxDist = std::numeric_limits<T>::min();
-                int pi1 = -1;
-                int pi2 = -1;
-                for(int i = 0; i < points2.size(); ++i)
+                points_3D.emplace_back(pp.x);
+                points_3D.emplace_back(pp.y);
+                points_3D.emplace_back(pp.z);
+            }
+            int ndim = 3;
+            int num_points = points_3D.size() / ndim;
+
+            std::string comment = "";
+            std::string qhull_command = "Qt"; 
+
+            try
+            {
+                orgQhull::Qhull qhull = orgQhull::Qhull(comment.c_str(), ndim, num_points, points_3D.data(), qhull_command.c_str());
+                for(auto& face: qhull.facetList())
                 {
-                    for(int j = i + 1; j < points2.size(); ++j)
+                    std::cout << face << "\n";
+                    for(auto& face_p: face.vertices().toStdVector())
                     {
-                        auto& p1 = points2[i];
-                        auto& p2 = points2[j];
-                        if(auto d = glm::distance(p1, p2); d > maxDist)
-                        {
-                            maxDist = d;
-                            pi1 = i;
-                            pi2 = j;
-                        }
+                        palka::Vec3f point;
+                        auto face_p_vec = face_p.point().toStdVector();
+                        point.x = (float) face_p_vec[0];
+                        point.y = (float) face_p_vec[2];
+                        point.z = (float) face_p_vec[1];
+                        points_faces.emplace(face.id(), point);
                     }
+                    palka::Vec3f norm;
+                    norm.x = *(face.getFacetT()->normal);
+                    norm.y = *(face.getFacetT()->normal + 1);
+                    norm.z = *(face.getFacetT()->normal + 2);
+                    normals.emplace_back(norm);
                 }
-                return std::vector<palka::Vec3<T>>{points2[pi1], points2[pi2]};
-            };
 
-            std::vector<palka::Vec3<T>> filtered_p;
-
-            for(int i = 0; i < points.size() - 1; ++i) //delete duplicates
+            }
+            catch (orgQhull::QhullError& e)
             {
-                auto& v = points[i];
-                for(auto& l: rays)
-                {
-                    if(l.containsPoint(v))
-                    {
-                        std::vector<palka::Vec3<T>> points2;
-                        points2.emplace_back(v);
-                        for(int j = 0; j < points.size(); ++j)
-                        {
-                            if(i == j)
-                                continue;
-                            auto& v2 = points[j];
-                            if(l.containsPoint(v2))
-                                points2.emplace_back(v2);
-                        }
-                        if(points2.size() >= 2)
-                        {
-                            auto vec = find_delte(points2);
-                            std::move(vec.begin(), vec.end(), std::back_inserter(filtered_p));
-                        }
-                    }
-                }
+                std::cerr << e.what() << std::endl;
             }
 
-            auto end = filtered_p.end();
-
-            for(auto it = filtered_p.begin(); it != end; ++it)
-                end = std::remove_if(it + 1, end, [&](const auto& elem) //the default comparison operator is not suitable
-                {
-                    return PlotCompare(elem.x, (*it).x) && PlotCompare(elem.y, (*it).y) && PlotCompare(elem.z, (*it).z);
-                });
-            filtered_p.erase(end, filtered_p.end());
-
-            filtered_p = deleteBadPoints(filtered_p);
-
-            std::vector<points_store<3>> pointstriangles;
-            std::vector<points_store<4>> pointquads;
-            for(size_t i = 0; i < filtered_p.size() - 1; ++i)
-            {
-                auto& p = filtered_p[i];
-                for(auto& pl: Plots)
-                {
-                    if(pl.on_line(p))
-                    {
-                        std::vector<palka::Vec3<T>> pointsInSurf;
-                        pointsInSurf.emplace_back(p);
-                        for(size_t j = 0; j < filtered_p.size(); ++j)
-                        {
-                            auto& p2 = filtered_p[j];
-                            if(i == j)
-                                continue;
-                            if(pl.on_line(p2))
-                                pointsInSurf.emplace_back(p2);
-                        }
-                        if(pointsInSurf.size() == 4) //quads
-                        {
-                            pointquads.emplace_back(points_store<4>{{pointsInSurf[0], pointsInSurf[1], pointsInSurf[2], pointsInSurf[3]}, pl.DirNormal()});
-                        } else if(pointsInSurf.size() == 3) //triangles
-                        {
-                            pointstriangles.push_back(points_store<3>{{pointsInSurf[0], pointsInSurf[1], pointsInSurf[2]}, pl.DirNormal()});
-                        } else
-                        {
-                            palka::Console::addLog("Algorithm did not process the faces", palka::Console::logType::info);
-                        }
-                    }
-                }
-            }
-
-            remove(pointquads);
-            int face = 0;
-            for(auto& q: pointquads)
-            {
-                auto qpoints = q.getPoints();
-                points_faces.emplace(face, qpoints[0].convert());
-                points_faces.emplace(face, qpoints[1].convert());
-                points_faces.emplace(face, qpoints[2].convert());
-                points_faces.emplace(face, qpoints[1].convert());
-                points_faces.emplace(face, qpoints[2].convert());
-                points_faces.emplace(face, qpoints[3].convert());
-                normals.emplace_back(q.normal.convert());
-                face++;
-            }
-            remove(pointstriangles);
-            points.clear();
-            for(auto& t: pointstriangles)
-            {
-                for(auto p: t.getPoints())
-                    points_faces.emplace(face, p.convert());
-                normals.emplace_back(t.normal.convert());
-                face++;
-            }
+//            for(int i = 0; i < points.size() - 1; ++i) //delete duplicates
+//            {
+//                auto& v = points[i];
+//                for(auto& l: rays)
+//                {
+//                    if(l.containsPoint(v))
+//                    {
+//                        std::vector<palka::Vec3<T>> points2;
+//                        points2.emplace_back(v);
+//                        for(int j = 0; j < points.size(); ++j)
+//                        {
+//                            if(i == j)
+//                                continue;
+//                            auto& v2 = points[j];
+//                            if(l.containsPoint(v2))
+//                                points2.emplace_back(v2);
+//                        }
+//                        if(points2.size() >= 2)
+//                        {
+//                            auto vec = find_delte(points2);
+//                            std::move(vec.begin(), vec.end(), std::back_inserter(filtered_p));
+//                        }
+//                    }
+//                }
+//            }
+//
+//            auto end = filtered_p.end();
+//
+//            for(auto it = filtered_p.begin(); it != end; ++it)
+//                end = std::remove_if(it + 1, end, [&](const auto& elem) //the default comparison operator is not suitable
+//                {
+//                    return PlotCompare(elem.x, (*it).x) && PlotCompare(elem.y, (*it).y) && PlotCompare(elem.z, (*it).z);
+//                });
+//            filtered_p.erase(end, filtered_p.end());
+//
+//            filtered_p = deleteBadPoints(filtered_p);
+//
+//            std::vector<points_store<3>> pointstriangles;
+//            std::vector<points_store<4>> pointquads;
+//            for(size_t i = 0; i < filtered_p.size() - 1; ++i)
+//            {
+//                auto& p = filtered_p[i];
+//                for(auto& pl: Plots)
+//                {
+//                    if(pl.on_line(p))
+//                    {
+//                        std::vector<palka::Vec3<T>> pointsInSurf;
+//                        pointsInSurf.emplace_back(p);
+//                        for(size_t j = 0; j < filtered_p.size(); ++j)
+//                        {
+//                            auto& p2 = filtered_p[j];
+//                            if(i == j)
+//                                continue;
+//                            if(pl.on_line(p2))
+//                                pointsInSurf.emplace_back(p2);
+//                        }
+//                        if(pointsInSurf.size() == 4) //quads
+//                        {
+//                            pointquads.emplace_back(points_store<4>{{pointsInSurf[0], pointsInSurf[1], pointsInSurf[2], pointsInSurf[3]}, pl.DirNormal()});
+//                        } else if(pointsInSurf.size() == 3) //triangles
+//                        {
+//                            pointstriangles.push_back(points_store<3>{{pointsInSurf[0], pointsInSurf[1], pointsInSurf[2]}, pl.DirNormal()});
+//                        } else
+//                        {
+//                            palka::Console::addLog("Algorithm did not process the faces", palka::Console::logType::info);
+//                        }
+//                    }
+//                }
+//            }
+//
+//            remove(pointquads);
+//            int face = 0;
+//            for(auto& q: pointquads)
+//            {
+//                auto qpoints = q.getPoints();
+//                points_faces.emplace(face, qpoints[0].convert());
+//                points_faces.emplace(face, qpoints[1].convert());
+//                points_faces.emplace(face, qpoints[2].convert());
+//                points_faces.emplace(face, qpoints[1].convert());
+//                points_faces.emplace(face, qpoints[2].convert());
+//                points_faces.emplace(face, qpoints[3].convert());
+//                normals.emplace_back(q.normal.convert());
+//                face++;
+//            }
+//            remove(pointstriangles);
+//            points.clear();
+//            for(auto& t: pointstriangles)
+//            {
+//                for(auto p: t.getPoints())
+//                    points_faces.emplace(face, p.convert());
+//                normals.emplace_back(t.normal.convert());
+//                face++;
+//            }
 
             auto rews = findSolution();
             return GraphicsResult3D<T>(target, rews.first, points_faces, rews.second);

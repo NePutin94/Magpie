@@ -110,6 +110,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(tinygltf)
 
+set(INCLUDE_INSTALL_DIR ON)
+set(QHULL_ENABLE_TESTING OFF)
+set(BUILD_APPLICATIONS OFF)
+FetchContent_Declare(
+        QHULLLIB
+        GIT_REPOSITORY https://github.com/qhull/qhull.git
+)
+FetchContent_MakeAvailable(QHULLLIB)
+
 FetchContent_Declare(
         assimp
         GIT_REPOSITORY https://github.com/assimp/assimp.git
@@ -157,7 +166,8 @@ endif ()
 
 
 if (WIN32)
-    target_link_libraries(Magpie PUBLIC ${OPENGL_LIBRARIES} TracyClient nlohmann_json::nlohmann_json tinygltf EnTT::EnTT assimp::assimp imgui::imgui fmt::fmt glm::glm glfw RTTR::Core GLAD STB imm32 ws2_32 dwmapi)
+    MESSAGE(STATUS SRC: ${libqhullcpp_SOURCES})
+    target_link_libraries(Magpie PUBLIC ${OPENGL_LIBRARIES} TracyClient nlohmann_json::nlohmann_json tinygltf EnTT::EnTT assimp::assimp imgui::imgui fmt::fmt glm::glm glfw RTTR::Core GLAD STB imm32 ws2_32 dwmapi qhullstatic_r qhullcpp)
     if (MSVC)
         set_target_properties(
                 Magpie
@@ -173,6 +183,7 @@ endif ()
 target_compile_definitions(Magpie PUBLIC IMGUI_IMPL_OPENGL_LOADER_GLAD GL_GLEXT_PROTOTYPES=1)
 target_include_directories(Magpie PUBLIC ${OPENGL_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS} ../lib/imgui)
 include_directories(lib/palka_core)
+include_directories(lib/QHull)
 
 add_custom_command(TARGET Magpie POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:RTTR::Core> $<TARGET_FILE_DIR:Magpie>

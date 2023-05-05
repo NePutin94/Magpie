@@ -21,6 +21,7 @@ int main()
 //    auto res = p1.isect_plane_plane_to_normal_ray(p2, t1, t2);
 //    auto res2 = p2.isect_plane_plane_to_normal_ray(p1, t1, t2);
 //    // auto res2 = Magpie::Plot3D<float>::threePlaneIntersection(p1, p2, p3);
+
     Magpie::Application app(Magpie::Config::WindowSize);
     app.run();
 

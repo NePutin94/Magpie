@@ -399,22 +399,28 @@ namespace Magpie
                     storage.data.get(6, 3) = 4;
                     break;
                 case 14://3d
-                    storage.data.alloc_matrix(3, 5);
-                    storage.data.get(0, 0) = -1;
-                    storage.data.get(1, 0) = 2;
+                    storage.data.alloc_matrix(4, 5);
+                    storage.data.get(0, 0) = 1;
+                    storage.data.get(1, 0) = 1;
                     storage.data.get(2, 0) = -1;
 
                     storage.data.get(0, 1) = 1;
-                    storage.data.get(1, 1) = 4;
+                    storage.data.get(1, 1) = 1;
                     storage.data.get(2, 1) = 1;
                     storage.data.get(3, 1) = (int) Sign::LESSOREQUAL;
-                    storage.data.get(4, 1) = 5;
+                    storage.data.get(4, 1) = 8;
 
                     storage.data.get(0, 2) = 1;
-                    storage.data.get(1, 2) = -2;
-                    storage.data.get(2, 2) = -1;
-                    storage.data.get(3, 2) = (int) Sign::LESSOREQUAL;
-                    storage.data.get(4, 2) = -1;
+                    storage.data.get(1, 2) = 1;
+                    storage.data.get(2, 2) = 1;
+                    storage.data.get(3, 2) = (int) Sign::GREATEROREQUAL;
+                    storage.data.get(4, 2) = 2;
+
+                    storage.data.get(0, 3) = 1;
+                    storage.data.get(1, 3) = 0;
+                    storage.data.get(2, 3) = 0;
+                    storage.data.get(3, 3) = (int) Sign::LESSOREQUAL;
+                    storage.data.get(4, 3) = 3;
                     break;
             }
         }
